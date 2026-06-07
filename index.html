@@ -2,11 +2,88 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=public_html/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ABJ Shop</title>
+  <title>ABJ</title>
+  <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-  <p>Weiterleitung läuft. Falls nicht, gehe zu <a href="public_html/">public_html/</a>.</p>
+  <a class="skip-link" href="#main">Zum Inhalt springen</a>
+  <div class="scroll-progress" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="container header-inner">
+      <button class="icon-btn nav-toggle" aria-label="Menü öffnen" aria-expanded="false">☰</button>
+      <a class="brand brand-logo" href="./" aria-label="Startseite"><span class="brand-mark">ABJ</span></a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a class="active" href="./">Start</a>
+        <a href="shop/">Shop</a>
+        <a href="contact/">Kontakt</a>
+      </nav>
+      <div class="header-actions">
+        <a class="icon-btn" href="cart/" aria-label="Warenkorb">🛒 <span class="badge-count">0</span></a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="hero-media"></div>
+      <div class="hero-overlay"></div>
+      <div class="container hero-inner">
+        <p class="hero-sale-pill">SUMMER SALE</p>
+        <h1 class="hero-title">Up To 70% Discount</h1>
+        <div class="hero-countdown">
+          <div><strong>00</strong><span>Tage</span></div>
+          <div><strong>00</strong><span>Std</span></div>
+          <div><strong>00</strong><span>Min</span></div>
+          <div><strong>00</strong><span>Sek</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="brand-logo-marquee" aria-label="Marken">
+      <div class="brand-logo-track">
+        <span class="brand-logo-word">Nike</span><span class="brand-logo-word">Adidas</span><span class="brand-logo-word">Stone Island</span><span class="brand-logo-word">Moncler</span><span class="brand-logo-word">C.P. Company</span><span class="brand-logo-word">Ralph Lauren</span><span class="brand-logo-word">Carhartt</span><span class="brand-logo-word">Stussy</span><span class="brand-logo-word">Trapstar</span><span class="brand-logo-word">The North Face</span><span class="brand-logo-word">Lacoste</span><span class="brand-logo-word">Diesel</span>
+        <span class="brand-logo-word">Nike</span><span class="brand-logo-word">Adidas</span><span class="brand-logo-word">Stone Island</span><span class="brand-logo-word">Moncler</span><span class="brand-logo-word">C.P. Company</span><span class="brand-logo-word">Ralph Lauren</span><span class="brand-logo-word">Carhartt</span><span class="brand-logo-word">Stussy</span><span class="brand-logo-word">Trapstar</span><span class="brand-logo-word">The North Face</span><span class="brand-logo-word">Lacoste</span><span class="brand-logo-word">Diesel</span>
+      </div>
+    </section>
+
+    <section class="container section">
+      <h2 class="section-title">Bestseller</h2>
+      <div class="product-grid">
+        <article class="product-card"><div class="product-card-media"><a class="media-link" href="product/"><span class="fake-img"></span></a><span class="badge-sale">-30%</span></div><div class="product-card-body"><span class="product-cat">Hoodie</span><h3 class="product-name"><a href="product/">Classic Hoodie</a></h3><div class="product-price"><span class="price-sale">CHF 69.00</span><span class="price-old">CHF 99.00</span></div></div></article>
+        <article class="product-card"><div class="product-card-media"><a class="media-link" href="product/"><span class="fake-img"></span></a></div><div class="product-card-body"><span class="product-cat">Jacket</span><h3 class="product-name"><a href="product/">Vintage Jacket</a></h3><div class="product-price"><span class="price-now">CHF 129.00</span></div></div></article>
+        <article class="product-card"><div class="product-card-media"><a class="media-link" href="product/"><span class="fake-img"></span></a><span class="badge-soldout">Ausverkauft</span></div><div class="product-card-body"><span class="product-cat">T-Shirt</span><h3 class="product-name"><a href="product/">Graphic Tee</a></h3><div class="product-price"><span class="price-now">CHF 39.00</span></div></div></article>
+        <article class="product-card"><div class="product-card-media"><a class="media-link" href="product/"><span class="fake-img"></span></a></div><div class="product-card-body"><span class="product-cat">Pants</span><h3 class="product-name"><a href="product/">Cargo Pants</a></h3><div class="product-price"><span class="price-now">CHF 84.00</span></div></div></article>
+      </div>
+    </section>
+
+    <section class="container section customer-reviews">
+      <h2 class="section-title">Was unsere Kunden sagen</h2>
+      <div class="review-strip">
+        <article class="review-card"><div class="review-stars">★★★★★</div><p>Sehr sauber verpackt, gute Qualität und die Teile wirkten wirklich handverlesen.</p><div class="review-author"><span>L</span><strong>Lena M.</strong><em>verifiziert</em></div></article>
+        <article class="review-card"><div class="review-stars">★★★★★</div><p>Schneller Versand und die Auswahl hat genau zu meinem Style gepasst.</p><div class="review-author"><span>J</span><strong>Jonas K.</strong><em>verifiziert</em></div></article>
+        <article class="review-card"><div class="review-stars">★★★★★</div><p>Schöne Vintage-Pieces, gepflegter Zustand und kein komischer Second-Hand-Geruch.</p><div class="review-author"><span>S</span><strong>Sara B.</strong><em>verifiziert</em></div></article>
+        <article class="review-card"><div class="review-stars">★★★★★</div><p>Unkomplizierte Bestellung, faire Preise und der Hoodie saß direkt perfekt.</p><div class="review-author"><span>M</span><strong>Milan R.</strong><em>verifiziert</em></div></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-wave"></div>
+    <div class="container footer-newsletter" id="newsletter">
+      <div class="newsletter">
+        <div class="newsletter-text">
+          <h2>Sichere dir die nächsten Drops</h2>
+          <p class="muted">Trag dich ein und erfahre als Erster von neuen Boxen & exklusiven Rabatten.</p>
+        </div>
+        <form class="newsletter-form">
+          <input type="email" placeholder="deine@email.de">
+          <button class="btn btn-primary" type="button">Anmelden</button>
+        </form>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/site.js"></script>
 </body>
 </html>

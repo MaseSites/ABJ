@@ -7,23 +7,7 @@
   <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-  <a class="skip-link" href="#main">Zum Inhalt springen</a>
-  <div class="scroll-progress" aria-hidden="true"></div>
-  <header class="site-header">
-    <div class="container header-inner">
-      <button class="icon-btn nav-toggle" aria-label="Menü öffnen" aria-expanded="false">☰</button>
-      <nav class="main-nav" aria-label="Hauptnavigation">
-        <a class="active" href="./">Start</a>
-        <a href="shop/">Shop</a>
-        <a href="contact/">Kontakt</a>
-      </nav>
-      <a class="brand brand-logo" href="./" aria-label="Startseite"><img src="img/abj-logo.jpg" alt="ABJ"></a>
-      <div class="header-actions">
-        <a class="icon-btn" href="shop/" aria-label="Shop">Shop</a>
-        <a class="icon-btn" href="cart/" aria-label="Warenkorb">🛒 <span class="badge-count">0</span></a>
-      </div>
-    </div>
-  </header>
+  <div data-include="header"></div>
 
   <main id="main">
     <section class="hero">
@@ -69,26 +53,9 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="footer-wave" aria-hidden="true">
-      <svg viewBox="0 0 1440 90" preserveAspectRatio="none">
-        <path d="M0 40 C180 80 340 8 520 34 C720 62 860 88 1050 42 C1210 4 1320 18 1440 52 V90 H0 Z"></path>
-      </svg>
-    </div>
-    <div class="container footer-newsletter" id="newsletter">
-      <div class="newsletter">
-        <div class="newsletter-text">
-          <h2>Sichere dir die nächsten Drops</h2>
-          <p class="muted">Trag dich ein und erfahre als Erster von neuen Boxen & exklusiven Rabatten.</p>
-        </div>
-        <form class="newsletter-form">
-          <input type="email" placeholder="deine@email.de">
-          <button class="btn btn-primary" type="button">Anmelden</button>
-        </form>
-      </div>
-    </div>
-  </footer>
+  <div data-include="footer"></div>
 
   <script src="assets/site.js"></script>
+  <script src="assets/includes.js"></script>
 </body>
 </html>

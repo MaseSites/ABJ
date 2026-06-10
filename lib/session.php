@@ -31,11 +31,12 @@ function last_order_set(?string $ref): void {
     $_SESSION['lastOrder'] = $ref;
 }
 
-function admin_login(string $hash): void {
+function admin_login(int $userId, string $username): void {
     session_start_once();
     session_regenerate_id(true);
     $_SESSION['admin'] = true;
-    $_SESSION['admin_hash'] = $hash;
+    $_SESSION['admin_id'] = $userId;
+    $_SESSION['admin_username'] = $username;
 }
 
 function admin_logout(): void {

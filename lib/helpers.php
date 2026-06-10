@@ -56,12 +56,12 @@ function placeholder_svg(string $name): string {
     return 'data:image/svg+xml,' . $svg;
 }
 
-function redirect(string $url): never {
+function redirect(string $url): void {
     header('Location: ' . $url);
     exit;
 }
 
-function json_response(array $data, int $code = 200): never {
+function json_response(array $data, int $code = 200): void {
     http_response_code($code);
     header('Content-Type: application/json');
     echo json_encode($data);
@@ -71,4 +71,8 @@ function json_response(array $data, int $code = 200): never {
 function current_path(): string {
     $p = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     return rtrim($p ?: '/', '/') ?: '/';
+}
+
+function str_has(string $haystack, string $needle): bool {
+    return strpos($haystack, $needle) !== false;
 }

@@ -43,7 +43,7 @@ function inv_stock_for_variant(int $productId, string $size = '', string $color 
 function inv_total_stock(int $productId): int {
     $rows = inv_by_product($productId);
     if (empty($rows)) return inv_product_stock_fallback($productId);
-    return array_sum(array_map(fn($r) => max(0, $r['stock'] - $r['reserved']), $rows));
+    return array_sum(array_map(function($r) { return max(0, $r['stock'] - $r['reserved']); }, $rows));
 }
 
 function inv_upsert(array $data): void {

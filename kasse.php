@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $country        = trim($_POST['country']        ?? 'DE');
     $payment_method = trim($_POST['payment_method'] ?? 'vorkasse');
 
-    if (!$firstname || !$lastname || !str_contains($email, '@') || !$street || !$zip || !$city) {
+    if (!$firstname || !$lastname || !str_has($email, '@') || !$street || !$zip || !$city) {
         redirect('/kasse?error=validation');
     }
     if ($payment_method === 'kreditkarte') {

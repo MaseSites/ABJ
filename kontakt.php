@@ -5,7 +5,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name    = trim($_POST['name']    ?? '');
     $email   = trim($_POST['email']   ?? '');
     $message = trim($_POST['message'] ?? '');
-    if (mb_strlen($name) < 2 || !str_contains($email, '@') || mb_strlen($message) < 5) {
+    if (mb_strlen($name) < 2 || !str_has($email, '@') || mb_strlen($message) < 5) {
         redirect('/kontakt?error=1');
     }
     $stmt = db()->prepare("INSERT INTO messages (name,email,message) VALUES (?,?,?)");

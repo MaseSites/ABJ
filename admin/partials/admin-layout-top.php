@@ -22,17 +22,17 @@ $adminPageTitle = isset($adminTitle) ? $adminTitle . ' – Admin' : 'Admin – A
       $cur = basename($_SERVER['PHP_SELF']);
       $dir = basename(dirname($_SERVER['PHP_SELF']));
       function alink($href, $label, $cur, $match) {
-          $active = str_contains($cur, $match) || str_contains($href, $cur) ? ' active' : '';
+          $active = str_has($cur, $match) || str_has($href, $cur) ? ' active' : '';
           echo "<a href=\"$href\" class=\"admin-nav-link$active\">$label</a>";
       }
       ?>
       <a href="/admin/" class="admin-nav-link<?= $cur === 'index.php' && $dir === 'admin' ? ' active' : '' ?>">Dashboard</a>
-      <a href="/admin/produkte.php" class="admin-nav-link<?= str_contains($cur, 'produkt') ? ' active' : '' ?>">Produkte</a>
-      <a href="/admin/bestellungen.php" class="admin-nav-link<?= str_contains($cur, 'bestellung') ? ' active' : '' ?>">Bestellungen</a>
-      <a href="/admin/lager.php" class="admin-nav-link<?= str_contains($cur, 'lager') ? ' active' : '' ?>">Lager</a>
-      <a href="/admin/nachrichten.php" class="admin-nav-link<?= str_contains($cur, 'nachricht') ? ' active' : '' ?>">Nachrichten</a>
-      <a href="/admin/newsletter.php" class="admin-nav-link<?= str_contains($cur, 'newsletter') ? ' active' : '' ?>">Newsletter</a>
-      <a href="/admin/einstellungen.php" class="admin-nav-link<?= str_contains($cur, 'einstell') ? ' active' : '' ?>">Einstellungen</a>
+      <a href="/admin/produkte.php" class="admin-nav-link<?= str_has($cur, 'produkt') ? ' active' : '' ?>">Produkte</a>
+      <a href="/admin/bestellungen.php" class="admin-nav-link<?= str_has($cur, 'bestellung') ? ' active' : '' ?>">Bestellungen</a>
+      <a href="/admin/lager.php" class="admin-nav-link<?= str_has($cur, 'lager') ? ' active' : '' ?>">Lager</a>
+      <a href="/admin/nachrichten.php" class="admin-nav-link<?= str_has($cur, 'nachricht') ? ' active' : '' ?>">Nachrichten</a>
+      <a href="/admin/newsletter.php" class="admin-nav-link<?= str_has($cur, 'newsletter') ? ' active' : '' ?>">Newsletter</a>
+      <a href="/admin/einstellungen.php" class="admin-nav-link<?= str_has($cur, 'einstell') ? ' active' : '' ?>">Einstellungen</a>
       <a href="/admin/logout.php" class="admin-nav-link" style="margin-top:auto">Abmelden</a>
     </nav>
   </aside>

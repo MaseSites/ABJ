@@ -13,7 +13,7 @@ $sale     = !empty($_GET['sale']);
 
 $all = $q ? products_search($q, $category ?: null) : products_list_public($category ?: null);
 
-if ($sale) $all = array_filter($all, fn($p) => $p['sale_price_cents']);
+if ($sale) $all = array_filter($all, function($p) { return $p['sale_price_cents']; });
 
 usort($all, function($a, $b) use ($sort) {
     $ea = $a['sale_price_cents'] ?? $a['price_cents'];

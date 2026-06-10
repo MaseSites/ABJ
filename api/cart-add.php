@@ -6,7 +6,7 @@ $size      = trim($_POST['size'] ?? '');
 $qty       = max(1, (int)($_POST['qty'] ?? 1));
 $slug      = trim($_POST['slug'] ?? '');
 
-$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) || str_has($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
 
 $p = product_by_id($productId);
 if (!$p || !$p['is_active']) {

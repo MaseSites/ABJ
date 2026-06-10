@@ -69,7 +69,7 @@ include __DIR__ . '/partials/header.php';
   </div>
   <?php endif; ?>
 
-  <?php $activeItems = array_filter($items, fn($it) => $it['qty'] > 0); ?>
+  <?php $activeItems = array_filter($items, function($it) { return $it['qty'] > 0; }); ?>
   <?php if (empty($activeItems)): ?>
     <div class="cart-empty-state">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">

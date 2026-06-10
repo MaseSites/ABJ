@@ -5,7 +5,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 
 $stats       = orders_stats(7);
 $products    = products_list_all();
-$activeCount = count(array_filter($products, fn($p) => $p['is_active']));
+$activeCount = count(array_filter($products, function($p) { return $p['is_active']; }));
 $lowStock    = inv_low_stock();
 $currency    = setting_get('currency') ?: 'EUR';
 ?>

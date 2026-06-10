@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([mb_substr($email, 0, 200)]);
         } catch (Exception $e) {}
     }
-    $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
+    $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) || str_has($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
     if ($isAjax) json_response(['ok' => true]);
     redirect('/?newsletter=ok');
 }

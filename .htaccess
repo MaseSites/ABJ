@@ -45,7 +45,3 @@ RewriteRule ^admin/lager/([0-9]+)/?$           /admin/lager-edit.php?id=$1    [L
 
 # 404-Handler
 ErrorDocument 404 /404.php
-
-# PHP-Einstellungen
-php_value upload_max_filesize 20M
-php_value post_max_size 22M

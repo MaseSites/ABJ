@@ -96,6 +96,33 @@ function db_init(PDO $pdo): void {
             created_at TEXT DEFAULT (datetime('now'))
         );
     ");
+    // Migrate: add columns that may be missing in older DB versions
+    $inv_cols = array_column($pdo->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    $inv_add = [
+        'option_values'       => "TEXT DEFAULT '[]'",
+        'title'               => "TEXT DEFAULT ''",
+        'images'              => "TEXT DEFAULT '[]'",
+        'variant_price_cents' => 'INTEGER',
+        'is_default'          => 'INTEGER DEFAULT 0',
+    ];
+    foreach ($inv_add as $col => $def) {
+        if (!in_array($col, $inv_cols)) {
+            $pdo->exec("ALTER TABLE inventory ADD COLUMN $col $def");
+        }
+    }
+    $prod_cols = array_column($pdo->query("PRAGMA table_info(products)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    $prod_add = [
+        'option_groups' => "TEXT DEFAULT '[]'",
+        'sizes'         => "TEXT DEFAULT '[]'",
+    ];
+    foreach ($prod_add as $col => $def) {
+        if (!in_array($col, $prod_cols)) {
+            $pdo->exec("ALTER TABLE products ADD COLUMN $col $def");
+        }
+    }
+    // Ensure the unique index exists (required for ON CONFLICT upsert)
+    $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_inv_pid_size_color ON inventory(product_id, size, color)");
+
     $cnt = (int)$pdo->query("SELECT COUNT(*) AS n FROM users")->fetch()['n'];
     if ($cnt === 0) {
         $hash = password_hash('abj', PASSWORD_DEFAULT);

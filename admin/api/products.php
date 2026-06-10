@@ -23,84 +23,87 @@ if ($method === 'POST') {
 
     $saleCents = api_parse_cents($_POST['sale_price'] ?? '');
 
-    /* Bilder */
-    $images = json_decode($_POST['existing_images'] ?? '[]', true) ?: [];
-    $urlLines = array_filter(array_map('trim', explode("\n", $_POST['image_urls'] ?? '')));
-    foreach ($urlLines as $url) {
-        if (filter_var($url, FILTER_VALIDATE_URL)) {
-            $images[] = ['type' => 'url', 'src' => $url];
-        }
-    }
-
-    /* Varianten */
-    $hasVariants = ($_POST['has_variants'] ?? '0') === '1';
-    $optionGroups = json_decode($_POST['option_groups'] ?? '[]', true) ?: [];
-    $variants     = $hasVariants ? (json_decode($_POST['variants'] ?? '[]', true) ?: []) : [];
-    $stock        = $hasVariants ? 0 : (int)($_POST['stock'] ?? 0);
-
-    $sizes = [];
-    foreach ($optionGroups as $g) {
-        if (($g['key'] ?? '') === 'size') { $sizes = $g['values'] ?? []; break; }
-    }
-
-    $data = [
-        'name'             => $name,
-        'description'      => trim($_POST['description'] ?? ''),
-        'category'         => trim($_POST['category'] ?? '') ?: 'Allgemein',
-        'price_cents'      => $priceCents,
-        'sale_price_cents' => $saleCents,
-        'stock'            => $stock,
-        'is_bestseller'    => !empty($_POST['is_bestseller']),
-        'is_active'        => !empty($_POST['is_active']),
-        'images'           => $images,
-        'sizes'            => $sizes,
-        'option_groups'    => $optionGroups,
-    ];
-
-    if ($id) {
-        product_update($id, $data);
-        $productId = $id;
-    } else {
-        $new = product_create($data);
-        $productId = $new['id'];
-    }
-
-    /* Lager-Einträge speichern */
-    if ($hasVariants && !empty($variants)) {
-        inv_delete_by_product($productId);
-        $invRows = [];
-        foreach ($variants as $v) {
-            $size  = '';
-            $color = '';
-            foreach ($v['option_values'] ?? [] as $ov) {
-                if ($ov['key'] === 'size')  $size  = $ov['value'];
-                if ($ov['key'] === 'color') $color = $ov['value'];
+    try {
+        /* Bilder */
+        $images = json_decode($_POST['existing_images'] ?? '[]', true) ?: [];
+        $urlLines = array_filter(array_map('trim', explode("\n", $_POST['image_urls'] ?? '')));
+        foreach ($urlLines as $url) {
+            if (filter_var($url, FILTER_VALIDATE_URL)) {
+                $images[] = ['type' => 'url', 'src' => $url];
             }
-            $imgUrl = trim($v['image_url'] ?? '');
-            $invRows[] = [
-                'product_id'          => $productId,
-                'sku'                 => $v['sku'] ?? '',
-                'size'                => $size,
-                'color'               => $color,
-                'option_values'       => $v['option_values'] ?? [],
-                'stock'               => (int)($v['stock'] ?? 0),
-                'reserved'            => 0,
-                'min_stock'           => (int)($v['min_stock'] ?? 3),
-                'next_delivery'       => '',
-                'notes'               => '',
-                'title'               => '',
-                'images'              => $imgUrl ? [['src' => $imgUrl]] : [],
-                'variant_price_cents' => isset($v['variant_price_cents']) && $v['variant_price_cents'] !== null
-                                         ? (int)$v['variant_price_cents'] : null,
-                'is_default'          => !empty($v['is_default']),
-            ];
         }
-        foreach ($invRows as $row) inv_upsert($row);
-    } elseif (!$hasVariants) {
-        inv_delete_by_product($productId);
-    }
 
-    json_response(['ok' => true, 'id' => $productId]);
+        /* Varianten */
+        $hasVariants  = ($_POST['has_variants'] ?? '0') === '1';
+        $optionGroups = json_decode($_POST['option_groups'] ?? '[]', true) ?: [];
+        $variants     = $hasVariants ? (json_decode($_POST['variants'] ?? '[]', true) ?: []) : [];
+        $stock        = $hasVariants ? 0 : (int)($_POST['stock'] ?? 0);
+
+        $sizes = [];
+        foreach ($optionGroups as $g) {
+            if (($g['key'] ?? '') === 'size') { $sizes = $g['values'] ?? []; break; }
+        }
+
+        $data = [
+            'name'             => $name,
+            'description'      => trim($_POST['description'] ?? ''),
+            'category'         => trim($_POST['category'] ?? '') ?: 'Allgemein',
+            'price_cents'      => $priceCents,
+            'sale_price_cents' => $saleCents,
+            'stock'            => $stock,
+            'is_bestseller'    => !empty($_POST['is_bestseller']),
+            'is_active'        => !empty($_POST['is_active']),
+            'images'           => $images,
+            'sizes'            => $sizes,
+            'option_groups'    => $optionGroups,
+        ];
+
+        if ($id) {
+            product_update($id, $data);
+            $productId = $id;
+        } else {
+            $new = product_create($data);
+            $productId = $new['id'];
+        }
+
+        /* Lager-Einträge speichern */
+        if ($hasVariants && !empty($variants)) {
+            inv_delete_by_product($productId);
+            foreach ($variants as $v) {
+                $size  = '';
+                $color = '';
+                foreach ($v['option_values'] ?? [] as $ov) {
+                    if (($ov['key'] ?? '') === 'size')  $size  = $ov['value'] ?? '';
+                    if (($ov['key'] ?? '') === 'color') $color = $ov['value'] ?? '';
+                }
+                $imgUrl = trim($v['image_url'] ?? '');
+                inv_upsert([
+                    'product_id'          => $productId,
+                    'sku'                 => $v['sku'] ?? '',
+                    'size'                => $size,
+                    'color'               => $color,
+                    'option_values'       => $v['option_values'] ?? [],
+                    'stock'               => (int)($v['stock'] ?? 0),
+                    'reserved'            => 0,
+                    'min_stock'           => (int)($v['min_stock'] ?? 3),
+                    'next_delivery'       => '',
+                    'notes'               => '',
+                    'title'               => implode(' / ', array_column($v['option_values'] ?? [], 'value')),
+                    'images'              => $imgUrl ? [['src' => $imgUrl]] : [],
+                    'variant_price_cents' => ($v['variant_price_cents'] !== null && $v['variant_price_cents'] !== '')
+                                             ? (int)$v['variant_price_cents'] : null,
+                    'is_default'          => !empty($v['is_default']),
+                ]);
+            }
+        } elseif (!$hasVariants) {
+            inv_delete_by_product($productId);
+        }
+
+        json_response(['ok' => true, 'id' => $productId]);
+
+    } catch (Throwable $e) {
+        json_response(['ok' => false, 'error' => 'DB-Fehler: ' . $e->getMessage()], 500);
+    }
 }
 
 json_response(['ok' => false, 'error' => 'Method not allowed'], 405);

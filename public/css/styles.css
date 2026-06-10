@@ -462,21 +462,12 @@ h1, h2, h3, h4 {
 .product-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0;
-  border-top: 1px solid var(--line);
-  border-left: 1px solid var(--line);
-}
-.product-card-filler {
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: var(--bg);
+  gap: 1rem;
 }
 .product-card {
   background: var(--bg);
   position: relative;
   overflow: hidden;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
 }
 .product-card-media {
   position: relative;

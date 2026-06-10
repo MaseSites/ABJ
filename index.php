@@ -42,17 +42,24 @@ include __DIR__ . '/partials/header.php';
     <div class="hero-inner">
       <div class="hero-inner-wrap">
         <div>
-          <span class="hero-sale-pill">ABJ Collection</span>
-          <h1 class="hero-title">Defined<br>by the<br><em>Detail.</em></h1>
+          <div class="hero-sale-pill">
+            <span>Summer Sale</span>
+            <span class="hero-sale-pct">bis zu &minus;70&thinsp;%</span>
+          </div>
+          <h1 class="hero-title">Premium<br>Style zum<br><em>besten Preis.</em></h1>
+          <p class="hero-cd-label">Angebot endet in</p>
           <div class="hero-countdown">
-            <div><strong data-cd="days">00</strong><span>Tage</span></div>
-            <div><strong data-cd="hours">00</strong><span>Std</span></div>
-            <div><strong data-cd="mins">00</strong><span>Min</span></div>
-            <div><strong data-cd="secs">00</strong><span>Sek</span></div>
+            <div class="cd-box"><strong data-cd="days">00</strong><span>Tage</span></div>
+            <span class="cd-sep">:</span>
+            <div class="cd-box"><strong data-cd="hours">00</strong><span>Std</span></div>
+            <span class="cd-sep">:</span>
+            <div class="cd-box"><strong data-cd="mins">00</strong><span>Min</span></div>
+            <span class="cd-sep">:</span>
+            <div class="cd-box"><strong data-cd="secs">00</strong><span>Sek</span></div>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.6rem;padding-bottom:.4rem">
-          <a href="/shop" class="btn btn-line">Shop Now</a>
+          <a href="/shop" class="btn btn-primary">Zum Sale &rarr;</a>
         </div>
       </div>
     </div>

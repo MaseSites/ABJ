@@ -342,16 +342,24 @@ h1, h2, h3, h4 {
   gap: 2rem;
 }
 .hero-sale-pill {
-  display: inline-block;
-  padding: .35em .85em;
-  border: 1px solid rgba(196,163,90,.45);
-  color: var(--gold);
-  font-size: .65rem;
-  font-weight: 800;
-  letter-spacing: .3em;
+  display: inline-flex;
+  align-items: center;
+  gap: .7em;
+  padding: .5em 1.1em;
+  background: var(--gold);
+  color: #0a0a0b;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .18em;
   text-transform: uppercase;
-  margin: 0 0 1.4rem;
-  border-radius: 0;
+  margin: 0 0 1.6rem;
+}
+.hero-sale-pct {
+  background: #0a0a0b;
+  color: var(--gold);
+  padding: .18em .6em;
+  font-size: .95em;
+  letter-spacing: .1em;
 }
 .hero-title {
   font-size: clamp(3.4rem, 8vw, 7rem);
@@ -366,32 +374,52 @@ h1, h2, h3, h4 {
   color: var(--gold);
 }
 
-/* Countdown — inline, minimal */
+/* Countdown — boxed sale style */
+.hero-cd-label {
+  font-size: .6rem;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 0 0 .7rem;
+}
 .hero-countdown {
   display: flex;
-  gap: 1.8rem;
-  align-items: baseline;
+  align-items: center;
+  gap: .5rem;
   padding: 1.4rem 0 0;
 }
-.hero-countdown div {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: .1rem;
+.cd-box {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(196,163,90,.45);
+  padding: .7rem .9rem .5rem;
+  text-align: center;
+  min-width: 64px;
 }
 .hero-countdown strong {
-  font-size: clamp(2rem, 3.5vw, 3rem);
+  display: block;
+  font-size: clamp(2rem, 3.8vw, 3rem);
   font-weight: 900;
-  letter-spacing: -.04em;
+  letter-spacing: -.03em;
   line-height: 1;
-  color: var(--ink);
+  color: var(--gold);
   font-variant-numeric: tabular-nums;
 }
 .hero-countdown span {
-  font-size: .6rem;
-  letter-spacing: .2em;
+  display: block;
+  font-size: .52rem;
+  letter-spacing: .22em;
   text-transform: uppercase;
   color: var(--ink-dim);
+  margin-top: .3rem;
+}
+.cd-sep {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--gold);
+  opacity: .55;
+  line-height: 1;
+  align-self: flex-start;
+  margin-top: .6rem;
 }
 
 /* ================================================================
@@ -1157,7 +1185,8 @@ body.no-scroll { overflow: hidden; }
   .main-nav       { display: none; }
   .nav-toggle     { display: inline-flex; }
   .hero-inner-wrap { grid-template-columns: 1fr; }
-  .hero-countdown { padding: 1.2rem 0 0; gap: 1.2rem; }
+  .hero-countdown { padding: 1.2rem 0 0; gap: .35rem; }
+  .cd-box { min-width: 52px; padding: .5rem .6rem .35rem; }
   .cart-row       { grid-template-columns: 60px 1fr; }
   .cart-line-total, .cart-qty { grid-column: 2; text-align: left; }
   .newsletter     { flex-direction: column; align-items: stretch; }
@@ -1168,7 +1197,8 @@ body.no-scroll { overflow: hidden; }
   .review-strip { grid-template-columns: 1fr; }
   .hero-title   { font-size: clamp(2.6rem, 11vw, 4rem); }
   .hero-countdown { gap: .9rem; }
-  .hero-countdown strong { font-size: 2rem; }
+  .hero-countdown strong { font-size: 1.7rem; }
+  .cd-sep { font-size: 1.4rem; margin-top: .45rem; }
   .product-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -27,7 +27,7 @@ function setting_get(string $key): ?string {
 }
 
 function setting_set(string $key, string $value): void {
-    $stmt = db()->prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+    $stmt = db()->prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)");
     $stmt->execute([$key, $value]);
 }
 
@@ -41,6 +41,6 @@ function settings_all(): array {
 
 function settings_set_many(array $data): void {
     $pdo = db();
-    $stmt = $pdo->prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+    $stmt = $pdo->prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)");
     foreach ($data as $k => $v) $stmt->execute([$k, $v ?? '']);
 }

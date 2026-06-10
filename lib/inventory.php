@@ -47,26 +47,43 @@ function inv_total_stock(int $productId): int {
 }
 
 function inv_upsert(array $data): void {
-    $stmt = db()->prepare("
-        INSERT INTO inventory (product_id,sku,size,color,option_values,stock,reserved,min_stock,next_delivery,notes,title,images,variant_price_cents,is_default)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        ON CONFLICT(product_id,size,color) DO UPDATE SET
-            sku=excluded.sku, stock=excluded.stock, min_stock=excluded.min_stock,
-            next_delivery=excluded.next_delivery, notes=excluded.notes, title=excluded.title,
-            option_values=excluded.option_values, images=excluded.images,
-            variant_price_cents=excluded.variant_price_cents, is_default=excluded.is_default,
+    $pdo  = db();
+    $pid  = $data['product_id'];
+    $size = $data['size'] ?? '';
+    $col  = $data['color'] ?? '';
+
+    $ov    = json_encode(is_array($data['option_values'] ?? null) ? $data['option_values'] : []);
+    $imgs  = json_encode(is_array($data['images'] ?? null) ? $data['images'] : []);
+    $vpc   = ($data['variant_price_cents'] !== null && $data['variant_price_cents'] !== '')
+             ? (int)$data['variant_price_cents'] : null;
+
+    $check = $pdo->prepare('SELECT id FROM inventory WHERE product_id=? AND size=? AND color=?');
+    $check->execute([$pid, $size, $col]);
+    if ($check->fetch()) {
+        $pdo->prepare("UPDATE inventory SET
+            sku=?, stock=?, min_stock=?, next_delivery=?, notes=?, title=?,
+            option_values=?, images=?, variant_price_cents=?, is_default=?,
             updated_at=datetime('now')
-    ");
-    $stmt->execute([
-        $data['product_id'], $data['sku'] ?? '', $data['size'] ?? '', $data['color'] ?? '',
-        json_encode(is_array($data['option_values'] ?? null) ? $data['option_values'] : []),
-        max(0, (int)($data['stock'] ?? 0)), max(0, (int)($data['reserved'] ?? 0)),
-        max(0, (int)($data['min_stock'] ?? 3)), $data['next_delivery'] ?? '',
-        $data['notes'] ?? '', $data['title'] ?? '',
-        json_encode(is_array($data['images'] ?? null) ? $data['images'] : []),
-        isset($data['variant_price_cents']) && $data['variant_price_cents'] !== '' ? (int)$data['variant_price_cents'] : null,
-        $data['is_default'] ? 1 : 0,
-    ]);
+            WHERE product_id=? AND size=? AND color=?")
+        ->execute([
+            $data['sku'] ?? '', max(0, (int)($data['stock'] ?? 0)),
+            max(0, (int)($data['min_stock'] ?? 3)), $data['next_delivery'] ?? '',
+            $data['notes'] ?? '', $data['title'] ?? '',
+            $ov, $imgs, $vpc, $data['is_default'] ? 1 : 0,
+            $pid, $size, $col,
+        ]);
+    } else {
+        $pdo->prepare("INSERT INTO inventory
+            (product_id,sku,size,color,option_values,stock,reserved,min_stock,next_delivery,notes,title,images,variant_price_cents,is_default)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        ->execute([
+            $pid, $data['sku'] ?? '', $size, $col, $ov,
+            max(0, (int)($data['stock'] ?? 0)), max(0, (int)($data['reserved'] ?? 0)),
+            max(0, (int)($data['min_stock'] ?? 3)), $data['next_delivery'] ?? '',
+            $data['notes'] ?? '', $data['title'] ?? '', $imgs, $vpc,
+            $data['is_default'] ? 1 : 0,
+        ]);
+    }
 }
 
 function inv_upsert_many(array $rows): void {

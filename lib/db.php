@@ -120,7 +120,7 @@ function db_init(PDO $pdo): void {
             $pdo->exec("ALTER TABLE products ADD COLUMN $col $def");
         }
     }
-    // Ensure the unique index exists (required for ON CONFLICT upsert)
+    // Ensure unique index exists for data integrity
     $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_inv_pid_size_color ON inventory(product_id, size, color)");
 
     $cnt = (int)$pdo->query("SELECT COUNT(*) AS n FROM users")->fetch()['n'];

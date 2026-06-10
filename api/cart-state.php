@@ -22,18 +22,18 @@ foreach ($cart as $line) {
     $imgSrc = $imgSrc ?: ($p['images'][0]['src'] ?? null);
     $total += $unit * $safeQty;
     $items[] = [
-        'productId' => $p['id'], 'slug' => $p['slug'], 'name' => $p['name'],
+        'productId' => $p['id'],
+        'name'      => $p['name'],
+        'url'       => '/produkt/' . $p['slug'],
         'size'      => $variantRow ? ($variantRow['title'] ?: $line['size']) : ($line['size'] ?? ''),
-        'qty'  => $safeQty, 'unitCents' => $unit, 'lineCents' => $unit * $safeQty,
-        'image' => $imgSrc,
-        'unitFormatted' => format_price($unit, $currency),
-        'lineFormatted' => format_price($unit * $safeQty, $currency),
+        'qty'       => $safeQty,
+        'image'     => $imgSrc,
+        'lineText'  => format_price($unit * $safeQty, $currency),
     ];
 }
 
 echo json_encode([
-    'items'          => $items,
-    'count'          => array_sum(array_column($items, 'qty')),
-    'total'          => $total,
-    'totalFormatted' => format_price($total, $currency),
+    'items'     => $items,
+    'count'     => array_sum(array_column($items, 'qty')),
+    'totalText' => format_price($total, $currency),
 ]);

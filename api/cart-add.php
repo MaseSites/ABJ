@@ -38,7 +38,39 @@ if ($existing) {
 cart_set($cart);
 
 if ($isAjax) {
-    $count = cart_count();
-    json_response(['ok' => true, 'cartCount' => $count]);
+    $currency = setting_get('currency') ?: 'EUR';
+    $items    = [];
+    $total    = 0;
+    foreach (cart_get() as $line) {
+        $cp = product_by_id($line['productId']);
+        if (!$cp || !$cp['is_active']) continue;
+        $vr   = inv_by_variant($line['productId'], $line['size'] ?? '', '');
+        $unit = ($vr && $vr['variant_price_cents'] !== null)
+            ? (int)$vr['variant_price_cents']
+            : (int)($cp['sale_price_cents'] ?? $cp['price_cents']);
+        $avl     = inv_stock_for_variant($line['productId'], $line['size'] ?? '', '');
+        $safeQty = min($line['qty'], max(0, $avl));
+        if ($safeQty === 0) continue;
+        $img = null;
+        if ($vr) { $imgs = safe_parse($vr['images'] ?? '[]', []); $img = $imgs[0]['src'] ?? null; }
+        $img = $img ?: ($cp['images'][0]['src'] ?? null);
+        $total += $unit * $safeQty;
+        $items[] = [
+            'productId' => $cp['id'],
+            'name'      => $cp['name'],
+            'url'       => '/produkt/' . $cp['slug'],
+            'size'      => $vr ? ($vr['title'] ?: $line['size']) : ($line['size'] ?? ''),
+            'qty'       => $safeQty,
+            'image'     => $img,
+            'lineText'  => format_price($unit * $safeQty, $currency),
+        ];
+    }
+    json_response([
+        'ok'        => true,
+        'added'     => $p['name'],
+        'count'     => array_sum(array_column($items, 'qty')),
+        'totalText' => format_price($total, $currency),
+        'items'     => $items,
+    ]);
 }
 redirect('/warenkorb');

@@ -12,7 +12,6 @@ $membersCount = setting_get('members_count') ?: '20000';
 $ratingsCount = setting_get('ratings_count') ?: '1000';
 
 $featured = products_shuffle(products_bestsellers(12));
-$featured = array_slice($featured, 0, 4);
 
 $BRANDS = ['Nike', 'Adidas', 'Stone Island', 'Moncler', 'C.P. Company', 'Ralph Lauren', 'Carhartt', 'Stussy', 'Trapstar', 'The North Face', 'Lacoste', 'Diesel'];
 $REVIEWS = [

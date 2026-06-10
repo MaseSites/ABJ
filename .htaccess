@@ -33,6 +33,7 @@ RewriteRule ^newsletter$        /newsletter.php   [L,QSA]
 
 # Dynamische Routen
 RewriteRule ^produkt/([^/]+)/?$          /produkt.php?slug=$1          [L,QSA]
+RewriteRule ^bestellung$                 /bestellung.php               [L,QSA]
 RewriteRule ^bestellung/([^/]+)/?$       /bestellung.php?ref=$1        [L,QSA]
 
 # Warenkorb-API

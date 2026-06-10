@@ -35,6 +35,11 @@ RewriteRule ^newsletter$        /newsletter.php   [L,QSA]
 RewriteRule ^produkt/([^/]+)/?$          /produkt.php?slug=$1          [L,QSA]
 RewriteRule ^bestellung/([^/]+)/?$       /bestellung.php?ref=$1        [L,QSA]
 
+# Admin-API
+RewriteRule ^admin/api/products/(\d+)$         /admin/api/products.php?id=$1  [L,QSA]
+RewriteRule ^admin/api/products$               /admin/api/products.php        [L,QSA]
+RewriteRule ^admin/api/upload$                 /admin/api/upload.php          [L,QSA]
+
 # Admin ohne .php
 RewriteRule ^admin/?$                          /admin/index.php            [L,QSA]
 RewriteRule ^admin/login$                      /admin/login.php            [L,QSA]

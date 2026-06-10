@@ -889,7 +889,48 @@ h1, h2, h3, h4 {
   border-top: 1px solid var(--line);
   margin-top: 2rem;
 }
-.footer-newsletter { padding: 48px 0 64px; }
+.footer-newsletter {
+  padding: 72px 0 88px;
+  text-align: center;
+}
+.newsletter-wrap {
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.newsletter-badge {
+  display: inline-block;
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid rgba(196,163,90,.35);
+  border-radius: 999px;
+  padding: .3em 1em;
+}
+.newsletter-heading {
+  font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+  letter-spacing: -.04em;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--ink);
+}
+.newsletter-sub {
+  color: var(--ink-soft);
+  font-size: .88rem;
+  margin: 0;
+  line-height: 1.6;
+}
+.footer-newsletter .newsletter-form {
+  width: 100%;
+  max-width: 420px;
+  margin-top: .4rem;
+}
+.footer-newsletter .newsletter-form input { flex: 1; min-width: 0; }
 .newsletter {
   display: flex;
   align-items: center;

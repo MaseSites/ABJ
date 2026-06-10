@@ -27,9 +27,25 @@ $variants = array_map(function($r) {
     ];
 }, $invRows);
 
+// Reconstruct option_groups from inventory if not stored on the product
+if (empty($product['option_groups']) && !empty($variants)) {
+    $groupsMap = [];
+    foreach ($variants as $v) {
+        foreach ($v['option_values'] as $ov) {
+            $k = $ov['key'] ?? '';
+            $val = $ov['value'] ?? '';
+            if (!$k || !$val) continue;
+            if (!isset($groupsMap[$k])) $groupsMap[$k] = ['key' => $k, 'label' => $ov['label'] ?? $k, 'values' => []];
+            if (!in_array($val, $groupsMap[$k]['values'])) $groupsMap[$k]['values'][] = $val;
+        }
+    }
+    $product['option_groups'] = array_values($groupsMap);
+}
+
 $related    = products_related($product['category'], $product['id'], 4);
 $mainImg    = $product['images'][0]['src'] ?? placeholder_svg($product['name']);
 $totalAvail = array_sum($inventoryMap);
+$availableStock = empty($invRows) ? (int)$product['stock'] : $totalAvail;
 $currency   = setting_get('currency') ?: 'EUR';
 
 $errorMsg = null;
@@ -98,7 +114,7 @@ include __DIR__ . '/partials/header.php';
         <label class="field-label" for="qty">Menge</label>
         <input class="qty-input" type="number" id="qty" name="qty" value="1" min="1" max="99">
 
-        <?php if ((int)$product['stock'] > 0): ?>
+        <?php if ($availableStock > 0): ?>
           <button class="btn btn-primary btn-block" type="submit" style="max-width:100%">In den Warenkorb</button>
         <?php else: ?>
           <button class="btn btn-primary btn-block" disabled style="max-width:100%">Ausverkauft</button>

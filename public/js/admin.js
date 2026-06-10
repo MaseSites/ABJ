@@ -277,12 +277,51 @@
               <label class="field"><span>SKU</span><input name="variant_sku" value="${esc(saved.sku || '')}" maxlength="100" placeholder="optional"></label>
               <label class="field"><span>Bestand</span><input type="number" name="variant_stock" min="0" value="${Number(saved.stock || 0)}"></label>
               <label class="field"><span>Preis (€) <small class="muted">optional</small></span><input type="text" name="variant_price" value="${saved.variant_price_cents != null ? (Number(saved.variant_price_cents) / 100).toFixed(2) : ''}" placeholder="wie Produktpreis"></label>
-              <label class="field span-2"><span>Bild-URL <small class="muted">optional</small></span><input type="text" name="variant_image_url" value="${esc(imageUrl)}" placeholder="https://..."></label>
+              <label class="field span-2"><span>Variantenbild <small class="muted">optional</small></span><input type="text" name="variant_image_url" value="${esc(imageUrl)}" placeholder="https://... oder Datei hochladen"></label>
             </div>
             <p class="muted small">${esc(combo.values.map((entry) => `${entry.label}: ${entry.value}`).join(' · '))}</p>
           </div>
         `;
       }).join('');
+
+      // Attach upload buttons next to each variant image URL input
+      $$('.variant-row [name="variant_image_url"]', previewWrap).forEach((urlInput) => {
+        const wrap = urlInput.closest('.field');
+        if (!wrap) return;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-ghost btn-sm';
+        btn.style.cssText = 'margin-top:4px;font-size:.75rem';
+        btn.textContent = '↑ Bild hochladen';
+        const fi = document.createElement('input');
+        fi.type = 'file';
+        fi.accept = 'image/*';
+        fi.style.display = 'none';
+        btn.addEventListener('click', () => fi.click());
+        fi.addEventListener('change', async () => {
+          const file = fi.files[0];
+          if (!file) return;
+          btn.disabled = true; btn.textContent = 'Lädt…';
+          try {
+            const fd = new FormData();
+            fd.append('image', file);
+            const res = await fetch(BASE_PATH + '/admin/api/upload', { method: 'POST', body: fd });
+            const data = await res.json().catch(() => ({}));
+            if (data.ok && data.src) {
+              urlInput.value = data.src;
+              btn.textContent = '✓ Hochgeladen';
+            } else {
+              window.alert('Upload fehlgeschlagen');
+              btn.disabled = false; btn.textContent = '↑ Bild hochladen';
+            }
+          } catch {
+            window.alert('Netzwerkfehler beim Upload');
+            btn.disabled = false; btn.textContent = '↑ Bild hochladen';
+          }
+        });
+        wrap.appendChild(btn);
+        wrap.appendChild(fi);
+      });
     }
 
     function addOption(kind) {

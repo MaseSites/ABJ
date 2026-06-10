@@ -462,20 +462,23 @@ h1, h2, h3, h4 {
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1px;
-  background: var(--line);
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
 }
 .product-card {
   background: var(--bg);
   position: relative;
   overflow: hidden;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 .product-card-media {
   position: relative;
   display: block;
   aspect-ratio: 3/4;
   overflow: hidden;
-  background: var(--bg-2);
+  background: var(--bg);
 }
 .product-card-media img {
   width: 100%;

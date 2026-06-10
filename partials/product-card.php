@@ -1,6 +1,6 @@
 <?php
 // $p must be set before including this partial
-$_imgSrc = (!empty($p['images'][0]['src'])) ? $p['images'][0]['src'] : placeholder_svg($p['name']);
+$_imgSrc = (!empty($p['images'][0]['src'])) ? $p['images'][0]['src'] : null;
 $_hasSizes = !empty($p['sizes']);
 $_priceCents = (int)$p['price_cents'];
 $_saleCents  = isset($p['sale_price_cents']) && $p['sale_price_cents'] ? (int)$p['sale_price_cents'] : null;
@@ -9,7 +9,9 @@ $_currency   = setting_get('currency') ?: 'EUR';
 <article class="product-card" data-product-card>
   <div class="product-card-media">
     <a href="/produkt/<?= h($p['slug']) ?>" class="media-link" aria-label="<?= h($p['name']) ?>">
+      <?php if ($_imgSrc): ?>
       <img src="<?= h($_imgSrc) ?>" alt="<?= h($p['name']) ?>" loading="lazy">
+      <?php endif; ?>
       <span class="card-shine" aria-hidden="true"></span>
     </a>
     <?php if ($_saleCents): ?>

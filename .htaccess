@@ -1,0 +1,51 @@
+Options -Indexes
+RewriteEngine On
+
+# Datenbank und lib schützen
+RewriteRule ^data/        - [F,L]
+RewriteRule ^lib/         - [F,L]
+RewriteRule ^partials/    - [F,L]
+RewriteRule ^src/         - [F,L]
+
+# Statische Dateien direkt ausliefern
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Saubere URLs ohne .php
+RewriteRule ^shop$              /shop.php         [L,QSA]
+RewriteRule ^warenkorb$         /warenkorb.php    [L,QSA]
+RewriteRule ^kasse$             /kasse.php        [L,QSA]
+RewriteRule ^kontakt$           /kontakt.php      [L,QSA]
+RewriteRule ^impressum$         /impressum.php    [L,QSA]
+RewriteRule ^datenschutz$       /datenschutz.php  [L,QSA]
+RewriteRule ^agb$               /agb.php          [L,QSA]
+RewriteRule ^widerruf$          /widerruf.php     [L,QSA]
+RewriteRule ^wunschliste$       /wunschliste.php  [L,QSA]
+RewriteRule ^newsletter$        /newsletter.php   [L,QSA]
+
+# Dynamische Routen
+RewriteRule ^produkt/([^/]+)/?$          /produkt.php?slug=$1          [L,QSA]
+RewriteRule ^bestellung/([^/]+)/?$       /bestellung.php?ref=$1        [L,QSA]
+
+# Admin ohne .php
+RewriteRule ^admin/?$                          /admin/index.php            [L,QSA]
+RewriteRule ^admin/login$                      /admin/login.php            [L,QSA]
+RewriteRule ^admin/logout$                     /admin/logout.php           [L,QSA]
+RewriteRule ^admin/produkte$                   /admin/produkte.php         [L,QSA]
+RewriteRule ^admin/bestellungen$               /admin/bestellungen.php     [L,QSA]
+RewriteRule ^admin/lager$                      /admin/lager.php            [L,QSA]
+RewriteRule ^admin/nachrichten$                /admin/nachrichten.php      [L,QSA]
+RewriteRule ^admin/newsletter$                 /admin/newsletter.php       [L,QSA]
+RewriteRule ^admin/einstellungen$              /admin/einstellungen.php    [L,QSA]
+RewriteRule ^admin/produkt/([0-9]+)/?$         /admin/produkt-edit.php?id=$1  [L,QSA]
+RewriteRule ^admin/produkt/neu$                /admin/produkt-edit.php     [L,QSA]
+RewriteRule ^admin/bestellung/([^/]+)/?$       /admin/bestellung.php?ref=$1   [L,QSA]
+RewriteRule ^admin/lager/([0-9]+)/?$           /admin/lager-edit.php?id=$1    [L,QSA]
+
+# 404-Handler
+ErrorDocument 404 /404.php
+
+# PHP-Einstellungen
+php_value upload_max_filesize 20M
+php_value post_max_size 22M

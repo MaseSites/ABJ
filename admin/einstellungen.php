@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../lib/bootstrap.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fields = ['shop_name','tagline','currency','hero_title','hero_subtitle','contact_email','announcement','members_count','ratings_count','sale_ends_at','hero_image','accent','accent_2','accent_3'];
+    $fields = ['shop_name','tagline','currency','hero_title','hero_subtitle','contact_email','announcement','members_count','ratings_count','sale_ends_at','hero_image','accent','accent_2','accent_3','stripe_publishable_key','stripe_secret_key','stripe_webhook_secret'];
     $data = [];
     foreach ($fields as $f) $data[$f] = trim($_POST[$f] ?? '');
     if (!empty($_POST['new_password'])) {
@@ -40,6 +40,19 @@ $s = settings_all();
     <label class="field"><span>Akzentfarbe 1</span><input type="color" name="accent" value="<?= h($s['accent']) ?>"></label>
     <label class="field"><span>Akzentfarbe 2</span><input type="color" name="accent_2" value="<?= h($s['accent_2']) ?>"></label>
   </div>
+
+  <h2 style="margin:1.5rem 0 1rem">Zahlungen (Stripe)</h2>
+  <p style="font-size:.82rem;color:var(--ink-dim);margin-bottom:.8rem">
+    Schlüssel findest du im <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener">Stripe Dashboard</a>.
+    Nutze <code>pk_test_…</code> / <code>sk_test_…</code> zum Testen, <code>pk_live_…</code> / <code>sk_live_…</code> für echte Zahlungen.
+  </p>
+  <label class="field"><span>Publishable Key (pk_live_… oder pk_test_…)</span><input type="text" name="stripe_publishable_key" value="<?= h($s['stripe_publishable_key'] ?? '') ?>" placeholder="pk_live_…" autocomplete="off"></label>
+  <label class="field"><span>Secret Key (sk_live_… oder sk_test_…)</span><input type="password" name="stripe_secret_key" value="<?= h($s['stripe_secret_key'] ?? '') ?>" placeholder="sk_live_…" autocomplete="new-password"></label>
+  <label class="field">
+    <span>Webhook Secret (whsec_…)</span>
+    <input type="password" name="stripe_webhook_secret" value="<?= h($s['stripe_webhook_secret'] ?? '') ?>" placeholder="whsec_…" autocomplete="new-password">
+    <small style="color:var(--ink-dim);font-size:.75rem">Webhook-Endpoint: <code><?= h((isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'deineshop.de') . '/api/stripe-webhook') ?></code></small>
+  </label>
 
   <h2 style="margin:1.5rem 0 1rem">Sicherheit</h2>
   <label class="field"><span>Neues Admin-Passwort (leer = unverändert)</span><input type="password" name="new_password" autocomplete="new-password"></label>

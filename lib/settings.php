@@ -11,10 +11,13 @@ $SETTINGS_DEFAULTS = [
     'contact_email'   => 'kontakt@example.com',
     'announcement'    => 'Authentizität garantiert  ·  Versicherter Versand in der EU  ·  Käuferschutz',
     'gate_password_hash' => '',
-    'accent'          => '#B89C67',
-    'accent_2'        => '#B89C67',
-    'accent_3'        => '#CDB27E',
-    'hero_image'      => '/img/img.png',
+    'accent'                  => '#B89C67',
+    'accent_2'                => '#B89C67',
+    'accent_3'                => '#CDB27E',
+    'hero_image'              => '/img/img.png',
+    'stripe_publishable_key'  => '',
+    'stripe_secret_key'       => '',
+    'stripe_webhook_secret'   => '',
 ];
 
 function setting_get(string $key): ?string {

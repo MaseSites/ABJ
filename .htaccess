@@ -39,6 +39,10 @@ RewriteRule ^bestellung/([^/]+)/?$       /bestellung.php?ref=$1        [L,QSA]
 RewriteRule ^warenkorb/api/add$     /api/cart-add.php    [L,QSA]
 RewriteRule ^warenkorb/api/state$   /api/cart-state.php  [L,QSA]
 
+# Checkout API
+RewriteRule ^api/checkout$           /api/checkout.php          [L,QSA]
+RewriteRule ^api/stripe-webhook$     /api/stripe-webhook.php    [L,QSA]
+
 # Admin-API
 RewriteRule ^admin/api/products/(\d+)$         /admin/api/products.php?id=$1  [L,QSA]
 RewriteRule ^admin/api/products$               /admin/api/products.php        [L,QSA]

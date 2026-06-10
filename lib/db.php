@@ -123,6 +123,11 @@ function db_init(PDO $pdo): void {
     // Ensure unique index exists for data integrity
     $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_inv_pid_size_color ON inventory(product_id, size, color)");
 
+    $ord_cols = array_column($pdo->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    if (!in_array('stripe_payment_intent_id', $ord_cols)) {
+        $pdo->exec("ALTER TABLE orders ADD COLUMN stripe_payment_intent_id TEXT DEFAULT ''");
+    }
+
     $cnt = (int)$pdo->query("SELECT COUNT(*) AS n FROM users")->fetch()['n'];
     if ($cnt === 0) {
         $hash = password_hash('abj', PASSWORD_DEFAULT);

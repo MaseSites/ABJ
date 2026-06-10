@@ -1,26 +1,138 @@
 <?php
 require_once __DIR__ . '/lib/bootstrap.php';
 
-$reference    = trim($_GET['ref'] ?? '');
-$contactEmail = setting_get('contact_email') ?: '';
-$cartCount    = cart_count();
-$currentPath  = '/bestellung';
-$pageTitle    = 'Bestellung eingegangen';
+$reference      = trim($_GET['ref'] ?? '');
+$redirectStatus = trim($_GET['redirect_status'] ?? '');
+$contactEmail   = setting_get('contact_email') ?: '';
+$cartCount      = cart_count();
+$currentPath    = '/bestellung';
+
+$order = $reference ? order_by_ref($reference) : null;
+
+// If Stripe confirmed payment on return, update status immediately as fallback
+// (webhook is the primary handler, this is just a safety net)
+if ($order && $redirectStatus === 'succeeded' && $order['payment_status'] !== 'bezahlt') {
+    order_update_status($reference, 'in_bearbeitung', 'bezahlt');
+    $order['payment_status'] = 'bezahlt';
+    $order['status']         = 'in_bearbeitung';
+}
+
+$pageTitle = 'Bestellung eingegangen';
 include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/header.php';
 ?>
 
 <main id="main" class="container section narrow center">
-  <div class="confirmation-icon">✓</div>
-  <h1>Bestellung eingegangen!</h1>
-  <p class="muted">Deine Bestellnummer: <strong><?= h($reference) ?></strong></p>
-  <p class="muted">
-    Wir haben deine Bestellung erhalten und melden uns bald.
+
+  <?php if ($redirectStatus === 'requires_payment_method'): ?>
+
+    <div class="confirmation-icon confirmation-icon--fail">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+    <h1>Zahlung fehlgeschlagen</h1>
+    <p class="muted">Deine Zahlung konnte leider nicht verarbeitet werden. Bitte versuche es erneut.</p>
+    <a class="btn btn-primary" href="/kasse">Erneut versuchen</a>
+
+  <?php elseif ($redirectStatus === 'processing'): ?>
+
+    <div class="confirmation-icon confirmation-icon--pending">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <h1>Zahlung wird verarbeitet</h1>
+    <p class="muted">Deine Bestellnummer: <strong><?= h($reference) ?></strong></p>
+    <p class="muted">Deine Zahlung wird gerade verarbeitet. Du erhältst eine Bestätigung per E-Mail, sobald alles abgeschlossen ist.</p>
     <?php if ($contactEmail): ?>
-      Fragen? <a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a>
+    <p class="muted">Fragen? <a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a></p>
     <?php endif; ?>
-  </p>
-  <a class="btn btn-primary" href="/shop">Weiter einkaufen</a>
+    <a class="btn btn-primary" href="/shop">Weiter einkaufen</a>
+
+  <?php else: ?>
+
+    <div class="confirmation-icon">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h1>Bestellung eingegangen!</h1>
+
+    <?php if ($reference): ?>
+    <p class="order-ref"><?= h($reference) ?></p>
+    <?php endif; ?>
+
+    <?php if ($order): ?>
+      <?php if ($order['payment_status'] === 'bezahlt'): ?>
+        <p class="muted">Zahlung erfolgreich &mdash; deine Bestellung wird bearbeitet.</p>
+      <?php else: ?>
+        <p class="muted">Wir haben deine Bestellung erhalten und melden uns bald.</p>
+      <?php endif; ?>
+
+      <?php
+        $addr = is_array($order['address']) ? $order['address'] : [];
+        $currency = setting_get('currency') ?: 'EUR';
+      ?>
+      <div class="order-confirm-box">
+
+        <?php if (!empty($order['items'])): ?>
+        <div class="order-confirm-section">
+          <div class="order-confirm-label">Artikel</div>
+          <?php foreach ($order['items'] as $it): ?>
+          <div class="order-confirm-row">
+            <span><?= h($it['name'] ?? '') ?><?= !empty($it['size']) ? ' (' . h($it['size']) . ')' : '' ?> &times; <?= (int)($it['qty'] ?? 1) ?></span>
+            <span><?= format_price((int)($it['lineCents'] ?? 0), $currency) ?></span>
+          </div>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+
+        <div class="order-confirm-section">
+          <div class="order-confirm-label">Summe</div>
+          <?php if ($order['shipping_cents'] > 0): ?>
+          <div class="order-confirm-row"><span>Versand</span><span><?= format_price((int)$order['shipping_cents'], $currency) ?></span></div>
+          <?php else: ?>
+          <div class="order-confirm-row"><span>Versand</span><span style="color:#a8e6b8">Kostenlos</span></div>
+          <?php endif; ?>
+          <div class="order-confirm-row" style="font-weight:700">
+            <span>Gesamt</span>
+            <span style="color:var(--gold)"><?= format_price((int)$order['total_cents'], $currency) ?></span>
+          </div>
+        </div>
+
+        <?php if ($addr): ?>
+        <div class="order-confirm-section">
+          <div class="order-confirm-label">Lieferadresse</div>
+          <div style="font-size:.85rem;color:var(--ink-soft);line-height:1.65">
+            <?= h(($addr['firstname'] ?? '') . ' ' . ($addr['lastname'] ?? '')) ?><br>
+            <?= h(($addr['street'] ?? '') . ' ' . ($addr['housenr'] ?? '')) ?><br>
+            <?= h(($addr['zip'] ?? '') . ' ' . ($addr['city'] ?? '')) ?><br>
+            <?= h($addr['country'] ?? '') ?>
+          </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($order['payment_method'] === 'vorkasse'): ?>
+        <div class="order-confirm-section">
+          <div class="order-confirm-label">Zahlung per Banküberweisung</div>
+          <div class="bank-info">
+            <div><span>Empfänger</span><strong>ABJ Store GmbH</strong></div>
+            <div><span>IBAN</span><strong>DE89 3704 0044 0532 0130 00</strong></div>
+            <div><span>BIC</span><strong>COBADEFFXXX</strong></div>
+            <div><span>Verwendungszweck</span><strong><?= h($reference) ?></strong></div>
+          </div>
+        </div>
+        <?php endif; ?>
+
+      </div>
+
+    <?php else: ?>
+      <p class="muted">Wir haben deine Bestellung erhalten und melden uns bald.</p>
+    <?php endif; ?>
+
+    <?php if ($contactEmail): ?>
+    <p class="muted" style="margin-top:1rem">Fragen? <a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a></p>
+    <?php endif; ?>
+
+    <a class="btn btn-primary" href="/shop" style="margin-top:1.5rem">Weiter einkaufen</a>
+
+  <?php endif; ?>
+
 </main>
 
 <?php include __DIR__ . '/partials/footer.php'; ?>

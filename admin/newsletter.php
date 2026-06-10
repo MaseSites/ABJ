@@ -11,11 +11,11 @@ include __DIR__ . '/partials/admin-layout-top.php';
 
 $subs = db()->query('SELECT * FROM newsletter ORDER BY created_at DESC')->fetchAll();
 ?>
-<div class="admin-header">
+<div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Newsletter (<?= count($subs) ?>)</h1>
 </div>
 
-<table class="admin-table">
+<table class="data-table">
   <thead><tr><th>E-Mail</th><th>Datum</th><th></th></tr></thead>
   <tbody>
     <?php foreach ($subs as $s): ?>

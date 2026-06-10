@@ -6,12 +6,16 @@ include __DIR__ . '/partials/admin-layout-top.php';
 $products = products_list_all();
 $currency = setting_get('currency') ?: 'EUR';
 ?>
-<div class="admin-header">
+<div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Produkte</h1>
   <a href="/admin/produkt-edit.php" class="btn btn-primary">+ Neues Produkt</a>
 </div>
 
-<table class="admin-table">
+<?php if (!empty($products)): ?>
+<input type="search" class="admin-search" data-product-filter placeholder="Produkte filtern… (Name, Kategorie)" aria-label="Produkte filtern">
+<?php endif; ?>
+
+<table class="data-table">
   <thead>
     <tr><th>Bild</th><th>Name</th><th>Kategorie</th><th>Preis</th><th>Bestand</th><th>Status</th><th></th></tr>
   </thead>
@@ -30,7 +34,7 @@ $currency = setting_get('currency') ?: 'EUR';
         <?php endif; ?>
       </td>
       <td><?= (int)$p['stock'] ?></td>
-      <td><span class="badge <?= $p['is_active'] ? 'badge-ok' : 'badge-off' ?>"><?= $p['is_active'] ? 'Aktiv' : 'Inaktiv' ?></span></td>
+      <td><span class="tag <?= $p['is_active'] ? 'tag-ok' : 'tag-off' ?>"><?= $p['is_active'] ? 'aktiv' : 'inaktiv' ?></span></td>
       <td>
         <a href="/admin/produkt-edit.php?id=<?= $p['id'] ?>" class="btn btn-ghost btn-sm">Bearbeiten</a>
         <form method="post" action="/admin/produkt-delete.php" style="display:inline" onsubmit="return confirm('Produkt löschen?')">

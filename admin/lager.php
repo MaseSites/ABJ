@@ -4,11 +4,11 @@ $adminTitle = 'Lager';
 include __DIR__ . '/partials/admin-layout-top.php';
 $inventory = inv_all();
 ?>
-<div class="admin-header">
+<div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Lager</h1>
 </div>
 
-<table class="admin-table">
+<table class="data-table">
   <thead><tr><th>Produkt</th><th>Grösse</th><th>SKU</th><th>Bestand</th><th>Reserviert</th><th>Verfügbar</th><th>Min.</th><th></th></tr></thead>
   <tbody>
     <?php foreach ($inventory as $row): ?>

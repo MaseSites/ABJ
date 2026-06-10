@@ -33,7 +33,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 $currency = setting_get('currency') ?: 'EUR';
 $saved    = !empty($_GET['saved']);
 ?>
-<div class="admin-header">
+<div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1><?= $p ? 'Produkt bearbeiten' : 'Neues Produkt' ?></h1>
   <a href="/admin/produkte.php" class="btn btn-ghost">← Zurück</a>
 </div>

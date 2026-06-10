@@ -12,7 +12,6 @@ $pageTitle = isset($pageTitle) ? $pageTitle . ' – ' . $shopName : $shopName;
   <title><?= h($pageTitle) ?></title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/admin.css">
   <style>
   <?php
   $accent  = setting_get('accent')  ?: '#B89C67';

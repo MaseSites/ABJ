@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $adminTitle = 'Lager bearbeiten';
 include __DIR__ . '/partials/admin-layout-top.php';
 ?>
-<div class="admin-header">
+<div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Lager: <?= h($row['product_name']) ?> <?= $row['size'] ? '(' . h($row['size']) . ')' : '' ?></h1>
   <a href="/admin/lager.php" class="btn btn-ghost">← Zurück</a>
 </div>

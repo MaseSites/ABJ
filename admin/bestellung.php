@@ -14,7 +14,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 $currency = setting_get('currency') ?: 'EUR';
 $addr     = is_array($order['address']) ? $order['address'] : ['raw' => $order['address']];
 ?>
-<div class="admin-header">
+<div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Bestellung <?= h($ref) ?></h1>
   <a href="/admin/bestellungen.php" class="btn btn-ghost">← Zurück</a>
 </div>
@@ -40,7 +40,7 @@ $addr     = is_array($order['address']) ? $order['address'] : ['raw' => $order['
   </div>
 
   <h2 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;opacity:.5;margin-bottom:.5rem">Artikel</h2>
-  <table class="admin-table" style="margin-bottom:1.5rem">
+  <table class="data-table" style="margin-bottom:1.5rem">
     <thead><tr><th>Produkt</th><th>Variante</th><th>Menge</th><th>Preis</th></tr></thead>
     <tbody>
       <?php foreach ($order['items'] as $item): ?>

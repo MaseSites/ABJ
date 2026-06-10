@@ -27,38 +27,30 @@ include __DIR__ . '/partials/header.php';
 ?>
 
 <main id="main">
-  <!-- Countdown / Hero -->
-  <section class="hero-section" id="hero" data-countdown="<?= h($saleEndsAt) ?>">
-    <?php if ($announcement): ?>
-    <div class="announcement-bar">
-      <p class="announcement-text"><?= h($announcement) ?></p>
+  <!-- Hero / Countdown -->
+  <section class="hero" id="hero" data-countdown="<?= h($saleEndsAt) ?>">
+    <?php if ($heroImage): ?>
+    <div class="hero-media" aria-hidden="true">
+      <img src="<?= h($heroImage) ?>" alt="" class="hero-bg-img">
     </div>
     <?php endif; ?>
+    <div class="hero-overlay" aria-hidden="true"></div>
 
     <div class="hero-inner">
-      <div class="hero-content">
-        <h1 class="hero-title"><?= $heroTitle ?></h1>
-        <p class="hero-subtitle"><?= h($heroSubtitle) ?></p>
-        <div class="hero-ctas">
-          <a href="/shop" class="btn btn-primary">Shop entdecken</a>
-          <a href="/shop?sale=1" class="btn btn-ghost">Sale ansehen</a>
-        </div>
-        <div class="hero-stats">
-          <div class="stat"><strong><?= h($membersCount) ?>+</strong><span>Kunden</span></div>
-          <div class="stat"><strong><?= h($ratingsCount) ?>+</strong><span>Bewertungen</span></div>
-        </div>
-        <div class="countdown-wrap" data-countdown-display style="display:none">
-          <p class="countdown-label">Sale endet in</p>
-          <div class="countdown-timer">
-            <div class="countdown-unit"><span data-cd-days>00</span><em>Tage</em></div>
-            <div class="countdown-unit"><span data-cd-hours>00</span><em>Std</em></div>
-            <div class="countdown-unit"><span data-cd-mins>00</span><em>Min</em></div>
-            <div class="countdown-unit"><span data-cd-secs>00</span><em>Sek</em></div>
+      <div class="hero-inner-wrap">
+        <div>
+          <span class="hero-sale-pill">ABJ Collection</span>
+          <h1 class="hero-title">Defined<br>by the<br><em>Detail.</em></h1>
+          <div class="hero-countdown">
+            <div><strong data-cd="days">00</strong><span>Tage</span></div>
+            <div><strong data-cd="hours">00</strong><span>Std</span></div>
+            <div><strong data-cd="mins">00</strong><span>Min</span></div>
+            <div><strong data-cd="secs">00</strong><span>Sek</span></div>
           </div>
         </div>
-      </div>
-      <div class="hero-media">
-        <img src="<?= h($heroImage) ?>" alt="Hero" class="hero-img">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.6rem;padding-bottom:.4rem">
+          <a href="/shop" class="btn btn-line">Shop Now</a>
+        </div>
       </div>
     </div>
   </section>

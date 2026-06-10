@@ -15,7 +15,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 
 $msgs = db()->query('SELECT * FROM messages ORDER BY created_at DESC')->fetchAll();
 ?>
-<div class="admin-header"><h1>Nachrichten</h1></div>
+<div class="admin-head-row" style="margin-bottom:1.4rem"><h1>Nachrichten</h1></div>
 
 <?php if (empty($msgs)): ?>
   <p class="muted">Keine Nachrichten.</p>

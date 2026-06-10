@@ -16,7 +16,7 @@ $adminTitle = 'Einstellungen';
 include __DIR__ . '/partials/admin-layout-top.php';
 $s = settings_all();
 ?>
-<div class="admin-header"><h1>Einstellungen</h1></div>
+<div class="admin-head-row" style="margin-bottom:1.4rem"><h1>Einstellungen</h1></div>
 <?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
 
 <form method="post" class="admin-form" style="max-width:600px">

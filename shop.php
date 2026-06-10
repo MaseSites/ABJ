@@ -70,6 +70,9 @@ include __DIR__ . '/partials/header.php';
       <?php foreach ($items as $p): ?>
         <?php include __DIR__ . '/partials/product-card.php'; ?>
       <?php endforeach; ?>
+      <?php $fillers = (5 - count($items) % 5) % 5; for ($i = 0; $i < $fillers; $i++): ?>
+        <div class="product-card-filler"></div>
+      <?php endfor; ?>
     </div>
     <?php if ($totalPages > 1): ?>
     <nav class="pagination" aria-label="Seiten">

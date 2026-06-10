@@ -11,7 +11,7 @@ $announcement = setting_get('announcement') ?: '';
 $membersCount = setting_get('members_count') ?: '20000';
 $ratingsCount = setting_get('ratings_count') ?: '1000';
 
-$featured = products_shuffle(products_bestsellers(12));
+$featured = array_slice(products_shuffle(products_bestsellers(12)), 0, 5);
 
 $BRANDS = ['Nike', 'Adidas', 'Stone Island', 'Moncler', 'C.P. Company', 'Ralph Lauren', 'Carhartt', 'Stussy', 'Trapstar', 'The North Face', 'Lacoste', 'Diesel'];
 $REVIEWS = [
@@ -72,6 +72,9 @@ include __DIR__ . '/partials/header.php';
       <?php foreach ($featured as $p): ?>
         <?php include __DIR__ . '/partials/product-card.php'; ?>
       <?php endforeach; ?>
+      <?php $fillers = (5 - count($featured) % 5) % 5; for ($i = 0; $i < $fillers; $i++): ?>
+        <div class="product-card-filler"></div>
+      <?php endfor; ?>
     </div>
   </section>
   <?php endif; ?>

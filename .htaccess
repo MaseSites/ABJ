@@ -7,6 +7,16 @@ RewriteRule ^lib/         - [F,L]
 RewriteRule ^partials/    - [F,L]
 RewriteRule ^src/         - [F,L]
 
+# Theme-CSS dynamisch
+RewriteRule ^css/theme\.css$ /css/theme.css.php [L]
+
+# Statische Assets aus public/ ausliefern
+RewriteRule ^css/(.+)$      /public/css/$1     [L]
+RewriteRule ^js/(.+)$       /public/js/$1      [L]
+RewriteRule ^img/(.+)$      /public/img/$1     [L]
+RewriteRule ^assets/(.+)$   /public/assets/$1  [L]
+RewriteRule ^uploads/(.+)$  /public/uploads/$1 [L]
+
 # Statische Dateien direkt ausliefern
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d

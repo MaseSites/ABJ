@@ -12,6 +12,6 @@ $pageTitle = isset($pageTitle) ? $pageTitle . ' – ' . $shopName : $shopName;
   <title><?= h($pageTitle) ?></title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/theme.css.php">
 </head>
 <body>

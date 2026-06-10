@@ -4,34 +4,43 @@ import { customAlphabet } from 'nanoid';
 const refId = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 8);
 
 const insertStmt = db.prepare(`
-  INSERT INTO orders (reference, customer_name, email, address, items, total_cents, status, payment_status)
-  VALUES (@reference, @customer_name, @email, @address, @items, @total_cents, @status, @payment_status)
+  INSERT INTO orders (reference, customer_name, email, phone, address, items, total_cents, shipping_cents, status, payment_status, payment_method)
+  VALUES (@reference, @customer_name, @email, @phone, @address, @items, @total_cents, @shipping_cents, @status, @payment_status, @payment_method)
 `);
-const listStmt = db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200');
+const listStmt = db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 500');
 const byRefStmt = db.prepare('SELECT * FROM orders WHERE reference = ?');
+const deleteStmt = db.prepare('DELETE FROM orders WHERE reference = ?');
 
-export function create({ customer_name, email, address, items, total_cents }) {
+export function create({ customer_name, email, phone, address, items, total_cents, shipping_cents, payment_method }) {
   const reference = 'ABJ-' + refId();
+  const isPaid = payment_method === 'kreditkarte' || payment_method === 'paypal';
   insertStmt.run({
     reference,
     customer_name,
     email,
-    address: address ?? '',
-    items: JSON.stringify(items ?? []),
-    total_cents: total_cents ?? 0,
-    status: 'neu',
-    payment_status: 'offen',
+    phone:            phone ?? '',
+    address:          typeof address === 'string' ? address : JSON.stringify(address ?? {}),
+    items:            JSON.stringify(items ?? []),
+    total_cents:      total_cents ?? 0,
+    shipping_cents:   shipping_cents ?? 0,
+    status:           'neu',
+    payment_status:   isPaid ? 'bezahlt' : 'offen',
+    payment_method:   payment_method ?? '',
   });
   return reference;
 }
 
 export function list() {
-  return listStmt.all().map((r) => ({ ...r, items: JSON.parse(r.items || '[]') }));
+  return listStmt.all().map(parseOrder);
 }
 
 export function getByReference(reference) {
   const r = byRefStmt.get(reference);
-  return r ? { ...r, items: JSON.parse(r.items || '[]') } : null;
+  return r ? parseOrder(r) : null;
+}
+
+export function deleteOrder(reference) {
+  return deleteStmt.run(reference).changes > 0;
 }
 
 const updateStatusStmt = db.prepare(
@@ -40,6 +49,15 @@ const updateStatusStmt = db.prepare(
 
 export function updateStatus(reference, status, paymentStatus) {
   return updateStatusStmt.run(status, paymentStatus, reference).changes > 0;
+}
+
+function parseOrder(r) {
+  let address = r.address || '';
+  try {
+    const parsed = JSON.parse(r.address);
+    if (parsed && typeof parsed === 'object') address = parsed;
+  } catch { /* bleibt string */ }
+  return { ...r, items: JSON.parse(r.items || '[]'), address };
 }
 
 // Aggregierte Umsatzkennzahlen + Tagesreihe (letzte N Tage) für das Dashboard.

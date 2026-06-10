@@ -17,7 +17,6 @@ import { requireAdmin, exposeAdmin } from './middleware/adminAuth.js';
 import * as settings from './models/settings.js';
 import { formatPrice, placeholder } from './lib/format.js';
 
-import gateRouter from './routes/gate.js';
 import shopRouter from './routes/shop.js';
 import cartRouter from './routes/cart.js';
 import adminAuthRouter from './routes/adminAuth.js';
@@ -38,7 +37,9 @@ app.set('view engine', 'ejs');
 app.set('views', VIEWS_DIR);
 
 // Logging
-app.use(morgan(config.isProd ? 'combined' : 'dev'));
+if (process.stdout.isTTY) {
+  app.use(morgan(config.isProd ? 'combined' : 'dev'));
+}
 
 // gzip-Kompression (Geschwindigkeit)
 app.use(compression());
@@ -79,7 +80,7 @@ app.use((req, res, next) => {
 // CSRF (setzt zusätzlich res.locals.csrfToken)
 app.use(csrfMiddleware);
 
-// --- Seitenweite Zugangs-Sperre ---
+// --- Seitenweite Zugangs-Sperre deaktiviert ---
 app.use(siteGate);
 
 // Uploads erst nach dem Gate ausliefern (privat bis Release)
@@ -87,8 +88,6 @@ app.use(basePath + '/uploads', express.static(config.paths.UPLOADS_DIR, { index:
 app.use(basePath + '/img', express.static(config.paths.IMG_DIR, { index: false }));
 
 // --- Routen (alle unter basePath) ---
-app.use(basePath + '/gate', gateRouter);
-
 // Leitet die alte URL /dashboard auf /admin weiter
 app.get(basePath + '/dashboard', (req, res) => res.redirect(basePath + '/admin'));
 

@@ -133,4 +133,14 @@ try {
   console.warn('Schema-Update products skipped:', e?.message || e);
 }
 
+try {
+  const info = db.prepare("PRAGMA table_info(orders)").all();
+  const cols = info.map((c) => c.name);
+  if (!cols.includes('phone'))          db.exec("ALTER TABLE orders ADD COLUMN phone TEXT NOT NULL DEFAULT '';");
+  if (!cols.includes('payment_method')) db.exec("ALTER TABLE orders ADD COLUMN payment_method TEXT NOT NULL DEFAULT '';");
+  if (!cols.includes('shipping_cents')) db.exec("ALTER TABLE orders ADD COLUMN shipping_cents INTEGER NOT NULL DEFAULT 0;");
+} catch (e) {
+  console.warn('Schema-Update orders skipped:', e?.message || e);
+}
+
 export default db;

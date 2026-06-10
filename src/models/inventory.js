@@ -107,6 +107,12 @@ export function hasInventory(productId) {
   return rowCount(productId) > 0;
 }
 
+/** Hat das Produkt Varianten, die der Kunde wählen muss? (size/color nicht leer) */
+export function hasVariants(productId) {
+  const rows = byProductStmt.all(productId);
+  return rows.some((r) => r.size || r.color);
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -277,6 +283,46 @@ export function validateCart(cartLines) {
     }
   }
   return issues;
+}
+
+/**
+ * Löscht alle Inventory-Zeilen eines Produkts und legt neue an.
+ * Erhält bestehende `reserved`-Werte (Warenkörbe) für gleichnamige Varianten.
+ */
+export function syncVariants(productId, rows) {
+  const tx = db.transaction((rows) => {
+    // Reservierungen sichern
+    const existing = byProductStmt.all(productId);
+    const reservedMap = new Map(existing.map((r) => [`${r.size || ''}|${r.color || ''}`, r.reserved || 0]));
+
+    // Alle alten Zeilen löschen
+    deleteByProductStmt.run(productId);
+
+    // Neu anlegen
+    for (const r of rows) {
+      upsertStmt.run({
+        product_id: productId,
+        sku: r.sku || '',
+        size: r.size || '',
+        color: r.color || '',
+        option_values: JSON.stringify(Array.isArray(r.option_values) ? r.option_values : []),
+        stock: Math.max(0, Number(r.stock) || 0),
+        reserved: reservedMap.get(`${r.size || ''}|${r.color || ''}`) || 0,
+        min_stock: r.min_stock ?? 3,
+        next_delivery: '',
+        notes: '',
+        title: r.title || '',
+        images: JSON.stringify([]),
+        variant_price_cents: r.variant_price_cents ?? null,
+        is_default: r.is_default ? 1 : 0,
+      });
+    }
+
+    // Produktbestand aktualisieren
+    const total = rows.reduce((s, r) => s + Math.max(0, Number(r.stock) || 0), 0);
+    setProductStockStmt.run(total, productId);
+  });
+  tx(rows);
 }
 
 /**

@@ -4,7 +4,7 @@ $ref   = trim($_GET['ref'] ?? '');
 $order = $ref ? order_by_ref($ref) : null;
 if (!$order) redirect('/admin/bestellungen.php');
 
-order_mark_seen($ref);
+try { order_mark_seen($ref); } catch (Throwable $e) { /* column may not exist yet */ }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     order_update_status($ref, trim($_POST['status'] ?? 'neu'), trim($_POST['payment_status'] ?? 'offen'));

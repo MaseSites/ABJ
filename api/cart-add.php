@@ -49,9 +49,7 @@ if ($isAjax) {
         $unit = ($vr && $vr['variant_price_cents'] !== null)
             ? (int)$vr['variant_price_cents']
             : (int)($cp['sale_price_cents'] ?? $cp['price_cents']);
-        $avl     = inv_stock_for_variant($line['productId'], $line['size'] ?? '', '');
-        $boItem  = ($avl <= 0) && inv_is_back_order($line['productId'], $line['size'] ?? '', '');
-        $safeQty = $boItem ? $line['qty'] : min($line['qty'], max(0, $avl));
+        $safeQty = (int)$line['qty'];
         if ($safeQty === 0) continue;
         $img = null;
         if ($vr) { $imgs = safe_parse($vr['images'] ?? '[]', []); $img = $imgs[0]['src'] ?? null; }

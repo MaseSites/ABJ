@@ -34,12 +34,16 @@ function inv_has_variants(int $productId): bool {
 }
 
 function inv_is_back_order(int $productId, string $size = '', string $color = ''): bool {
-    $row = inv_by_variant($productId, $size, $color);
-    if ($row) return (bool)($row['back_order'] ?? 0);
-    $stmt = db()->prepare('SELECT back_order FROM products WHERE id = ?');
-    $stmt->execute([$productId]);
-    $p = $stmt->fetch();
-    return $p ? (bool)$p['back_order'] : false;
+    try {
+        $row = inv_by_variant($productId, $size, $color);
+        if ($row) return (bool)($row['back_order'] ?? 0);
+        $stmt = db()->prepare('SELECT back_order FROM products WHERE id = ?');
+        $stmt->execute([$productId]);
+        $p = $stmt->fetch();
+        return $p ? (bool)($p['back_order'] ?? 0) : false;
+    } catch (Throwable $e) {
+        return false;
+    }
 }
 
 function inv_stock_for_variant(int $productId, string $size = '', string $color = ''): int {

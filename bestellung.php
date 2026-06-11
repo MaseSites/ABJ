@@ -9,12 +9,26 @@ $currentPath    = '/bestellung';
 
 $order = $reference ? order_by_ref($reference) : null;
 
-// If Stripe confirmed payment on return, update status immediately as fallback
-// (webhook is the primary handler, this is just a safety net)
-if ($order && $redirectStatus === 'succeeded' && $order['payment_status'] !== 'bezahlt') {
-    order_update_status($reference, 'in_bearbeitung', 'bezahlt');
-    $order['payment_status'] = 'bezahlt';
-    $order['status']         = 'in_bearbeitung';
+// Mark order as paid when Stripe confirms — three paths:
+// 1. redirect_status=succeeded in URL  (3DS redirect flow)
+// 2. JS added redirect_status=succeeded after inline confirmation
+// 3. Fallback: query Stripe API directly if order still shows 'offen'
+if ($order && $order['payment_status'] !== 'bezahlt') {
+    $shouldMarkPaid = ($redirectStatus === 'succeeded');
+
+    if (!$shouldMarkPaid && !empty($order['stripe_payment_intent_id']) && stripe_is_configured()) {
+        $pi = stripe_retrieve_payment_intent($order['stripe_payment_intent_id']);
+        if ($pi && ($pi['status'] ?? '') === 'succeeded') {
+            $shouldMarkPaid = true;
+        }
+    }
+
+    if ($shouldMarkPaid) {
+        inv_deduct_stock($order['items']);
+        order_update_status($reference, 'in_bearbeitung', 'bezahlt');
+        $order['payment_status'] = 'bezahlt';
+        $order['status']         = 'in_bearbeitung';
+    }
 }
 
 $pageTitle = 'Bestellung eingegangen';
@@ -35,12 +49,12 @@ include __DIR__ . '/partials/header.php';
 
   <?php elseif ($redirectStatus === 'processing'): ?>
 
-    <div class="confirmation-icon confirmation-icon--pending">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <div class="confirmation-icon">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
-    <h1>Zahlung wird verarbeitet</h1>
-    <p class="muted">Deine Bestellnummer: <strong><?= h($reference) ?></strong></p>
-    <p class="muted">Deine Zahlung wird gerade verarbeitet. Du erhältst eine Bestätigung per E-Mail, sobald alles abgeschlossen ist.</p>
+    <h1>Bestellung eingegangen!</h1>
+    <?php if ($reference): ?><p class="order-ref"><?= h($reference) ?></p><?php endif; ?>
+    <p class="muted">Deine Zahlung wird bestätigt. Du erhältst eine E-Mail sobald alles abgeschlossen ist.</p>
     <?php if ($contactEmail): ?>
     <p class="muted">Fragen? <a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a></p>
     <?php endif; ?>

@@ -160,8 +160,8 @@ include __DIR__ . '/partials/header.php';
               <div class="pay-option-inner">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                 <div>
-                  <strong>Karte &middot; Apple Pay &middot; Google Pay</strong>
-                  <small>Sicher &amp; verschlüsselt via Stripe</small>
+                  <strong>Kreditkarte / Debitkarte</strong>
+                  <small>Visa, Mastercard, Amex &middot; via Stripe</small>
                 </div>
                 <div class="pay-check"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="2 8 6 12 14 4"/></svg></div>
               </div>
@@ -332,8 +332,8 @@ include __DIR__ . '/partials/header.php';
 
   function mountStripeElements() {
     if (!stripe || elements) return;
-    elements = stripe.elements({ mode: 'payment', amount: TOTAL, currency: CURRENCY, appearance: APPEARANCE });
-    var payEl = elements.create('payment', { layout: 'tabs' });
+    elements = stripe.elements({ mode: 'payment', amount: TOTAL, currency: CURRENCY, appearance: APPEARANCE, paymentMethodTypes: ['card'] });
+    var payEl = elements.create('payment');
     payEl.mount('#stripe-payment-element');
     payEl.on('ready', function () {
       var loader = document.getElementById('stripe-loading');
@@ -433,7 +433,7 @@ include __DIR__ . '/partials/header.php';
           return;
         }
         if (result && result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-          window.location.href = '/bestellung?ref=' + encodeURIComponent(data.order_ref);
+          window.location.href = '/bestellung?ref=' + encodeURIComponent(data.order_ref) + '&redirect_status=succeeded';
           return;
         }
       }

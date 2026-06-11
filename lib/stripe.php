@@ -32,9 +32,9 @@ function stripe_create_payment_intent(int $amountCents, string $currency, array 
     }
 
     $params = [
-        'amount'   => $amountCents,
-        'currency' => strtolower($currency),
-        'automatic_payment_methods[enabled]' => 'true',
+        'amount'                    => $amountCents,
+        'currency'                  => strtolower($currency),
+        'payment_method_types[0]'   => 'card',
     ];
     if (!empty($meta['order_ref']))   $params['metadata[order_ref]']     = $meta['order_ref'];
     if (!empty($meta['email']))       $params['metadata[customer_email]'] = $meta['email'];
@@ -61,6 +61,23 @@ function stripe_create_payment_intent(int $amountCents, string $currency, array 
         throw new RuntimeException($data['error']['message'] ?? 'Stripe-Fehler');
     }
 
+    return $data;
+}
+
+function stripe_retrieve_payment_intent(string $intentId): ?array {
+    $secretKey = setting_get('stripe_secret_key') ?: '';
+    if (!$secretKey || !$intentId) return null;
+
+    $ctx = stream_context_create(['http' => [
+        'method'        => 'GET',
+        'header'        => "Authorization: Bearer $secretKey\r\n",
+        'ignore_errors' => true,
+        'timeout'       => 10,
+    ]]);
+    $body = @file_get_contents('https://api.stripe.com/v1/payment_intents/' . urlencode($intentId), false, $ctx);
+    if (!$body) return null;
+    $data = json_decode($body, true);
+    if (!is_array($data) || isset($data['error'])) return null;
     return $data;
 }
 

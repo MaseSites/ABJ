@@ -386,15 +386,15 @@ include __DIR__ . '/partials/header.php';
       var data;
       try {
         var res = await fetch('/api/checkout', { method: 'POST', body: fd });
-        data = await res.json().catch(function () { return {}; });
+        data = await res.json().catch(function () { return { ok: false, error: 'Server-Fehler (ungültige Antwort)' }; });
       } catch (err) {
-        showError('Netzwerkfehler. Bitte versuche es erneut.');
+        showError('Netzwerkfehler. Bitte überprüfe deine Verbindung und versuche es erneut.');
         setLoading(false);
         return;
       }
 
-      if (!data.ok) {
-        showError(data.error || 'Fehler bei der Bestellung. Bitte versuche es erneut.');
+      if (!data || !data.ok) {
+        showError((data && data.error) ? data.error : 'Fehler bei der Bestellung. Bitte versuche es erneut.');
         setLoading(false);
         return;
       }
@@ -404,41 +404,45 @@ include __DIR__ . '/partials/header.php';
         return;
       }
 
-      if (data.client_secret && stripe && elements) {
-        var result = await stripe.confirmPayment({
-          elements:     elements,
-          clientSecret: data.client_secret,
-          confirmParams: {
-            return_url: window.location.origin + '/bestellung?ref=' + encodeURIComponent(data.order_ref),
-            payment_method_data: {
-              billing_details: {
-                name:  (fd.get('firstname') || '') + ' ' + (fd.get('lastname') || ''),
-                email:  fd.get('email')   || undefined,
-                phone:  fd.get('phone')   || undefined,
-                address: {
-                  line1:       (fd.get('street') || '') + ' ' + (fd.get('housenr') || ''),
-                  postal_code:  fd.get('zip')     || undefined,
-                  city:         fd.get('city')    || undefined,
-                  country:      fd.get('country') || 'DE',
-                },
-              },
-            },
-          },
-          redirect: 'if_required',
-        });
+      if (!stripe || !elements) {
+        showError('Zahlungsformular nicht geladen. Bitte lade die Seite neu.');
+        setLoading(false);
+        return;
+      }
 
-        if (result && result.error) {
-          showError(result.error.message);
+      if (data.client_secret) {
+        var result;
+        try {
+          result = await stripe.confirmPayment({
+            elements:     elements,
+            clientSecret: data.client_secret,
+            confirmParams: {
+              return_url: window.location.origin + '/bestellung?ref=' + encodeURIComponent(data.order_ref),
+            },
+            redirect: 'if_required',
+          });
+        } catch (stripeErr) {
+          showError((stripeErr && stripeErr.message) ? stripeErr.message : 'Zahlungsfehler. Bitte versuche es erneut.');
           setLoading(false);
           return;
         }
+
+        if (result && result.error) {
+          showError(result.error.message || 'Zahlung fehlgeschlagen. Bitte versuche es erneut.');
+          setLoading(false);
+          return;
+        }
+
         if (result && result.paymentIntent && result.paymentIntent.status === 'succeeded') {
           window.location.href = '/bestellung?ref=' + encodeURIComponent(data.order_ref) + '&redirect_status=succeeded';
           return;
         }
+
+        // Stripe redirected (3DS etc.) — browser navigates away, nothing to do here
+        return;
       }
 
-      showError('Zahlungsformular konnte nicht geladen werden. Bitte lade die Seite neu.');
+      showError('Fehler: Kein Zahlungstoken erhalten. Bitte versuche es erneut.');
       setLoading(false);
     });
   }

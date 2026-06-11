@@ -1,6 +1,16 @@
 <?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 
+// Catch any fatal/unhandled error and return JSON so the frontend shows a message
+set_exception_handler(function (Throwable $e) {
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+    }
+    echo json_encode(['ok' => false, 'error' => 'Server-Fehler: ' . $e->getMessage()]);
+    exit;
+});
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['ok' => false, 'error' => 'Method not allowed'], 405);
 }

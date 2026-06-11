@@ -126,10 +126,16 @@
 
 .admin-main {
   padding: 2.2rem 2.4rem 4rem;
-  max-width: 1080px;
+  max-width: 1500px;
 }
-.admin-main.narrow { max-width: 720px; }
+.admin-main.narrow { max-width: 860px; }
 .admin-main.wide   { max-width: 100%; }
+
+/* New/unread orders */
+.order-row-new td { border-top: 2px solid #e05c48; border-bottom: 2px solid #e05c48; }
+.order-row-new td:first-child { border-left: 2px solid #e05c48; }
+.order-row-new td:last-child  { border-right: 2px solid #e05c48; }
+.tag-new { background: #e05c48; color: #fff; font-weight: 800; letter-spacing: .04em; }
 
 .admin-main h1 {
   font-size: 1.6rem;

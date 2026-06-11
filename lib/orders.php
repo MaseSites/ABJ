@@ -39,6 +39,10 @@ function order_set_payment_intent(string $ref, string $intentId): void {
        ->execute([$intentId, $ref]);
 }
 
+function order_mark_seen(string $ref): void {
+    db()->prepare('UPDATE orders SET is_seen=1 WHERE reference=?')->execute([$ref]);
+}
+
 function order_delete(string $ref): bool {
     $stmt = db()->prepare('DELETE FROM orders WHERE reference=?');
     $stmt->execute([$ref]);

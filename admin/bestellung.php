@@ -4,6 +4,8 @@ $ref   = trim($_GET['ref'] ?? '');
 $order = $ref ? order_by_ref($ref) : null;
 if (!$order) redirect('/admin/bestellungen.php');
 
+order_mark_seen($ref);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     order_update_status($ref, trim($_POST['status'] ?? 'neu'), trim($_POST['payment_status'] ?? 'offen'));
     redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&saved=1');

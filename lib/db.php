@@ -127,6 +127,9 @@ function db_init(PDO $pdo): void {
     if (!in_array('stripe_payment_intent_id', $ord_cols)) {
         $pdo->exec("ALTER TABLE orders ADD COLUMN stripe_payment_intent_id TEXT DEFAULT ''");
     }
+    if (!in_array('is_seen', $ord_cols)) {
+        $pdo->exec("ALTER TABLE orders ADD COLUMN is_seen INTEGER DEFAULT 0");
+    }
 
     // Migrate: force currency to CHF if still set to old EUR default
     $pdo->exec("UPDATE settings SET value = 'CHF' WHERE key = 'currency' AND value = 'EUR'");

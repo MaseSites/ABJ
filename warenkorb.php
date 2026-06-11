@@ -97,11 +97,19 @@ include __DIR__ . '/partials/header.php';
           <form class="cart-qty" method="post" action="/warenkorb">
             <input type="hidden" name="action" value="update">
             <input type="hidden" name="index" value="<?= $i ?>">
-            <input type="number" name="qty" value="<?= $it['qty'] ?>" min="0" max="<?= $it['maxQty'] ?>" aria-label="Menge">
+            <input type="number" name="qty" value="<?= $it['qty'] ?>" min="1" max="<?= $it['maxQty'] ?>" aria-label="Menge">
             <button class="btn btn-ghost btn-sm" type="submit">OK</button>
           </form>
           <div class="cart-line-total"><?= format_price($it['lineCents'], $currency) ?></div>
           <?php endif; ?>
+          <form method="post" action="/warenkorb" class="cart-remove-form">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="index" value="<?= $i ?>">
+            <input type="hidden" name="qty" value="0">
+            <button class="cart-remove-btn" type="submit" title="Artikel entfernen" aria-label="Entfernen">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/></svg>
+            </button>
+          </form>
         </div>
       <?php endforeach; ?>
     </div>

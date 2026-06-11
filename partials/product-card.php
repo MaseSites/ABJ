@@ -1,10 +1,10 @@
-<?php
+﻿<?php
 // $p must be set before including this partial
 $_imgSrc = (!empty($p['images'][0]['src'])) ? $p['images'][0]['src'] : null;
 $_hasSizes = !empty($p['sizes']);
 $_priceCents = (int)$p['price_cents'];
 $_saleCents  = isset($p['sale_price_cents']) && $p['sale_price_cents'] ? (int)$p['sale_price_cents'] : null;
-$_currency   = setting_get('currency') ?: 'EUR';
+$_currency   = setting_get('currency') ?: 'CHF';
 ?>
 <article class="product-card" data-product-card>
   <div class="product-card-media">

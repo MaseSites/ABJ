@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
@@ -60,7 +60,7 @@ $hasVariants      = $isNew ? true
 
 $formAction = $isNew ? '/admin/api/products' : '/admin/api/products?id=' . $id;
 $title      = $isNew ? 'Neues Produkt' : h($p['name'] ?? '');
-$currency   = setting_get('currency') ?: 'EUR';
+$currency   = setting_get('currency') ?: 'CHF';
 ?>
 
 <p class="admin-kicker">Produkte</p>
@@ -99,13 +99,13 @@ $currency   = setting_get('currency') ?: 'EUR';
         </label>
 
         <label class="field">
-          <span>Preis (€)</span>
+          <span>Preis (CHF)</span>
           <input type="text" name="price" inputmode="decimal"
                  value="<?= cents_to_input($p['price_cents'] ?? null) ?>" placeholder="49.90">
         </label>
 
         <label class="field">
-          <span>Sale-Preis (€) <small class="muted">optional</small></span>
+          <span>Sale-Preis (CHF) <small class="muted">optional</small></span>
           <input type="text" name="sale_price" inputmode="decimal"
                  value="<?= cents_to_input($p['sale_price_cents'] ?? null) ?>" placeholder="29.90">
         </label>

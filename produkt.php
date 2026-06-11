@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/lib/bootstrap.php';
 
 $slug = trim($_GET['slug'] ?? '');
@@ -46,7 +46,7 @@ $related    = products_related($product['category'], $product['id'], 4);
 $mainImg    = $product['images'][0]['src'] ?? placeholder_svg($product['name']);
 $totalAvail = array_sum($inventoryMap);
 $availableStock = empty($invRows) ? (int)$product['stock'] : $totalAvail;
-$currency   = setting_get('currency') ?: 'EUR';
+$currency   = setting_get('currency') ?: 'CHF';
 
 $errorMsg = null;
 if (($_GET['error'] ?? '') === 'soldout') $errorMsg = 'Dieses Produkt ist leider ausverkauft.';

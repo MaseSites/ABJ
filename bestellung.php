@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/lib/bootstrap.php';
 
 $reference      = trim($_GET['ref'] ?? '');
@@ -80,7 +80,7 @@ include __DIR__ . '/partials/header.php';
 
       <?php
         $addr = is_array($order['address']) ? $order['address'] : [];
-        $currency = setting_get('currency') ?: 'EUR';
+        $currency = setting_get('currency') ?: 'CHF';
       ?>
       <div class="order-confirm-box">
 

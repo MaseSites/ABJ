@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 header('Content-Type: application/json');
 
-$currency = setting_get('currency') ?: 'EUR';
+$currency = setting_get('currency') ?: 'CHF';
 $cart     = cart_get();
 $items    = [];
 $total    = 0;

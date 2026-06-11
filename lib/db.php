@@ -128,6 +128,9 @@ function db_init(PDO $pdo): void {
         $pdo->exec("ALTER TABLE orders ADD COLUMN stripe_payment_intent_id TEXT DEFAULT ''");
     }
 
+    // Migrate: force currency to CHF if still set to old EUR default
+    $pdo->exec("UPDATE settings SET value = 'CHF' WHERE key = 'currency' AND value = 'EUR'");
+
     $cnt = (int)$pdo->query("SELECT COUNT(*) AS n FROM users")->fetch()['n'];
     if ($cnt === 0) {
         $hash = password_hash('abj', PASSWORD_DEFAULT);

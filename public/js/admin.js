@@ -276,7 +276,7 @@
             <div class="field-grid">
               <label class="field"><span>SKU</span><input name="variant_sku" value="${esc(saved.sku || '')}" maxlength="100" placeholder="optional"></label>
               <label class="field"><span>Bestand</span><input type="number" name="variant_stock" min="0" value="${Number(saved.stock || 0)}"></label>
-              <label class="field"><span>Preis (€) <small class="muted">optional</small></span><input type="text" name="variant_price" value="${saved.variant_price_cents != null ? (Number(saved.variant_price_cents) / 100).toFixed(2) : ''}" placeholder="wie Produktpreis"></label>
+              <label class="field"><span>Preis (CHF) <small class="muted">optional</small></span><input type="text" name="variant_price" value="${saved.variant_price_cents != null ? (Number(saved.variant_price_cents) / 100).toFixed(2) : ''}" placeholder="wie Produktpreis"></label>
               <label class="field span-2"><span>Variantenbild <small class="muted">optional</small></span><input type="text" name="variant_image_url" value="${esc(imageUrl)}" placeholder="https://... oder Datei hochladen"></label>
             </div>
             <p class="muted small">${esc(combo.values.map((entry) => `${entry.label}: ${entry.value}`).join(' · '))}</p>

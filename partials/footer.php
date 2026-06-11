@@ -28,7 +28,7 @@
     <div class="drawer-foot">
       <div class="drawer-total">
         <span>Gesamt</span>
-        <strong data-drawer-total>0,00 €</strong>
+        <strong data-drawer-total>CHF 0.00</strong>
       </div>
       <a class="btn btn-primary btn-block" href="/kasse">Zur Kasse</a>
       <a class="btn btn-ghost btn-block" href="/warenkorb">Warenkorb ansehen</a>

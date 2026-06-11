@@ -30,7 +30,7 @@ include __DIR__ . '/partials/header.php';
         grid.innerHTML += '<article class="product-card"><div class="product-card-media"><a href="/produkt/'+p.slug+'" class="media-link">'+img+'</a></div><div class="product-card-body"><span class="product-cat">'+p.category+'</span><h3 class="product-name"><a href="/produkt/'+p.slug+'">'+p.name+'</a></h3><div class="product-price">'+price+'</div></div></article>';
       });
     });
-  function fmt(c){ return (c/100).toFixed(2).replace('.',',')+' €'; }
+  function fmt(c){ return 'CHF '+((c/100).toFixed(2)); }
 })();
 </script>
 <?php include __DIR__ . '/partials/footer.php'; ?>

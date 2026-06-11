@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 $adminTitle = 'Dashboard';
 include __DIR__ . '/partials/admin-layout-top.php';
@@ -7,7 +7,7 @@ $ostats      = orders_stats(7);
 $allProducts = products_list_all();
 $allOrders   = orders_list();
 $recentOrders = array_slice($allOrders, 0, 8);
-$currency    = setting_get('currency') ?: 'EUR';
+$currency    = setting_get('currency') ?: 'CHF';
 
 $stats = [
     'revenue'     => format_price($ostats['totalRevenue'], $currency),

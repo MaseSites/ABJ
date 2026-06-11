@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 
 $productId = (int)($_POST['productId'] ?? 0);
@@ -38,7 +38,7 @@ if ($existing) {
 cart_set($cart);
 
 if ($isAjax) {
-    $currency = setting_get('currency') ?: 'EUR';
+    $currency = setting_get('currency') ?: 'CHF';
     $items    = [];
     $total    = 0;
     foreach (cart_get() as $line) {

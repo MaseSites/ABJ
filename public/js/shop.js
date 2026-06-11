@@ -78,7 +78,7 @@
       const defaultVariant = variants.find((x) => x.is_default) || variants[0];
 
       function fmtPrice(cents) {
-        try { return cents == null ? null : new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100); } catch { return String(cents / 100); }
+        try { return cents == null ? null : 'CHF ' + (cents / 100).toFixed(2); } catch { return String(cents / 100); }
       }
 
       function renderPriceBlock(nowCents, oldCents) {

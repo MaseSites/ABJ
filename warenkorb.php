@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/lib/bootstrap.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('/warenkorb');
 }
 
-$currency = setting_get('currency') ?: 'EUR';
+$currency = setting_get('currency') ?: 'CHF';
 $rawCart  = cart_get();
 $items    = [];
 $total    = 0;

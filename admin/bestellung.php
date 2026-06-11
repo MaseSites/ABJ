@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 $ref   = trim($_GET['ref'] ?? '');
 $order = $ref ? order_by_ref($ref) : null;
@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $adminTitle = 'Bestellung ' . $ref;
 include __DIR__ . '/partials/admin-layout-top.php';
-$currency = setting_get('currency') ?: 'EUR';
+$currency = setting_get('currency') ?: 'CHF';
 $addr     = is_array($order['address']) ? $order['address'] : ['raw' => $order['address']];
 ?>
 <div class="admin-head-row" style="margin-bottom:1.4rem">

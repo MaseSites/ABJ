@@ -1,10 +1,10 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 $adminTitle = 'Bestellungen';
 include __DIR__ . '/partials/admin-layout-top.php';
 
 $orders   = orders_list();
-$currency = setting_get('currency') ?: 'EUR';
+$currency = setting_get('currency') ?: 'CHF';
 ?>
 <div class="admin-head-row" style="margin-bottom:1.4rem"><h1>Bestellungen</h1></div>
 

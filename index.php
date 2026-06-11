@@ -75,7 +75,7 @@ include __DIR__ . '/partials/header.php';
   <section class="container section">
     <span class="section-title-label">Sortiment</span>
     <h2 class="section-title">Bestseller</h2>
-    <div class="product-grid">
+    <div class="product-grid-row">
       <?php foreach ($featured as $p): ?>
         <?php include __DIR__ . '/partials/product-card.php'; ?>
       <?php endforeach; ?>

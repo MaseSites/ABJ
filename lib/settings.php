@@ -2,7 +2,7 @@
 $SETTINGS_DEFAULTS = [
     'shop_name'       => 'ABJ Store',
     'tagline'         => 'Authentifizierte Designer- & Streetwear-Pieces',
-    'currency'        => 'EUR',
+    'currency'        => 'CHF',
     'hero_title'      => 'Premium Streetwear & Designer',
     'hero_subtitle'   => 'Kuratierte, authentifizierte Pieces der gefragtesten Marken – sicher geliefert in ganz Europa.',
     'sale_ends_at'    => '',

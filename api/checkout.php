@@ -15,9 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['ok' => false, 'error' => 'Method not allowed'], 405);
 }
 
-$currency            = setting_get('currency') ?: 'EUR';
-$SHIPPING_FREE_ABOVE = 4900;
-$SHIPPING_RATE       = 490;
+$currency = setting_get('currency') ?: 'CHF';
 
 // --- Validate required fields ---
 $firstname = trim($_POST['firstname'] ?? '');
@@ -28,7 +26,7 @@ $street    = trim($_POST['street']    ?? '');
 $housenr   = trim($_POST['housenr']   ?? '');
 $zip       = trim($_POST['zip']       ?? '');
 $city      = trim($_POST['city']      ?? '');
-$country   = trim($_POST['country']   ?? 'DE');
+$country   = trim($_POST['country']   ?? 'CH');
 $payMethod = trim($_POST['payment_method'] ?? 'stripe');
 
 $errors = [];
@@ -77,7 +75,7 @@ if (empty($lineItems)) {
     json_response(['ok' => false, 'error' => 'Keine verfügbaren Artikel im Warenkorb.'], 422);
 }
 
-$shippingCents = $subtotal >= $SHIPPING_FREE_ABOVE ? 0 : $SHIPPING_RATE;
+$shippingCents = ($country === 'CH') ? 590 : 1990;
 $totalCents    = $subtotal + $shippingCents;
 
 $address = [

@@ -4,9 +4,7 @@ require_once __DIR__ . '/lib/bootstrap.php';
 $cart = cart_get();
 if (empty($cart)) redirect('/warenkorb');
 
-$currency            = setting_get('currency') ?: 'EUR';
-$SHIPPING_FREE_ABOVE = 4900;
-$SHIPPING_RATE       = 490;
+$currency = setting_get('currency') ?: 'CHF';
 
 $items    = [];
 $subtotal = 0;
@@ -35,17 +33,19 @@ foreach ($cart as $line) {
 
 if (empty($items)) redirect('/warenkorb');
 
-$shipping = $subtotal >= $SHIPPING_FREE_ABOVE ? 0 : $SHIPPING_RATE;
+// Shipping: 5.90 CH / 19.90 international (default CH for page render)
+$defaultCountry = 'CH';
+$shipping = ($defaultCountry === 'CH') ? 590 : 1990;
 $total    = $subtotal + $shipping;
 
 $stripeConfigured = stripe_is_configured();
 $stripePk         = stripe_publishable_key();
 
 $COUNTRIES = [
-    ['DE','Deutschland'],['AT','Österreich'],['CH','Schweiz'],['LI','Liechtenstein'],
+    ['CH','Schweiz'],['LI','Liechtenstein'],['AT','Österreich'],['DE','Deutschland'],
     ['LU','Luxemburg'],['BE','Belgien'],['NL','Niederlande'],['FR','Frankreich'],
     ['IT','Italien'],['ES','Spanien'],['PL','Polen'],['CZ','Tschechien'],
-    ['DK','Dänemark'],['SE','Schweden'],['NO','Norwegen'],['GB','Großbritannien'],['US','USA'],
+    ['DK','Dänemark'],['SE','Schweden'],['NO','Norwegen'],['GB','Grossbritannien'],['US','USA'],
 ];
 
 $currentPath = '/kasse';
@@ -140,7 +140,7 @@ include __DIR__ . '/partials/header.php';
           <span>Land *</span>
           <select name="country" autocomplete="country">
             <?php foreach ($COUNTRIES as [$code, $name]): ?>
-              <option value="<?= h($code) ?>"<?= $code === 'DE' ? ' selected' : '' ?>><?= h($name) ?></option>
+              <option value="<?= h($code) ?>"<?= $code === 'CH' ? ' selected' : '' ?>><?= h($name) ?></option>
             <?php endforeach; ?>
           </select>
         </label>
@@ -281,11 +281,6 @@ include __DIR__ . '/partials/header.php';
           <span><?= format_price($shipping, $currency) ?></span>
         <?php endif; ?>
       </div>
-      <?php if ($shipping > 0): ?>
-      <div class="summary-row" style="font-size:.72rem;color:var(--ink-dim);border-bottom:none;padding-top:0">
-        <span>Noch <?= format_price($SHIPPING_FREE_ABOVE - $subtotal, $currency) ?> bis kostenlosem Versand</span>
-      </div>
-      <?php endif; ?>
       <div class="summary-total">
         <strong>Gesamt</strong>
         <strong style="color:var(--gold)"><?= format_price($total, $currency) ?></strong>

@@ -1,8 +1,11 @@
 <?php
-function format_price(int $cents, string $currency = 'EUR'): string {
-    $symbol = $currency === 'CHF' ? 'CHF ' : '€';
+function format_price(int $cents, string $currency = 'CHF'): string {
+    if ($currency === 'CHF') {
+        $val = number_format($cents / 100, 2, '.', "'");
+        return 'CHF&nbsp;' . $val;
+    }
     $val = number_format($cents / 100, 2, ',', '.');
-    return $currency === 'CHF' ? "$symbol$val" : "$val $symbol";
+    return $val . '&nbsp;&euro;';
 }
 
 function safe_parse(string $json, $fallback = []) {

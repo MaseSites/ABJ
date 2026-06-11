@@ -147,14 +147,8 @@ include __DIR__ . '/partials/header.php';
   <section class="section">
     <h2 class="section-title">Ähnliche Produkte</h2>
     <div class="product-grid">
-      <?php foreach ($related as $rp): ?>
-        <article class="product-card">
-          <a href="/produkt/<?= h($rp['slug']) ?>">
-            <img src="<?= h($rp['images'][0]['src'] ?? placeholder_svg($rp['name'])) ?>" alt="<?= h($rp['name']) ?>" loading="lazy">
-            <div><?= h($rp['name']) ?></div>
-            <div><?= format_price((int)($rp['sale_price_cents'] ?? $rp['price_cents']), $currency) ?></div>
-          </a>
-        </article>
+      <?php foreach ($related as $p): ?>
+        <?php include __DIR__ . '/partials/product-card.php'; ?>
       <?php endforeach; ?>
     </div>
   </section>

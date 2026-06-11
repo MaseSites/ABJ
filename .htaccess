@@ -7,9 +7,10 @@ RewriteRule ^lib/         - [F,L]
 RewriteRule ^partials/    - [F,L]
 RewriteRule ^src/         - [F,L]
 
-# Existierende Dateien und Verzeichnisse direkt ausliefern (PHP-Dateien werden ausgeführt)
+# Existierende Dateien direkt ausliefern; Verzeichnisse NUR wenn nicht /admin
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
+RewriteCond %{REQUEST_URI} !^/admin
 RewriteRule ^ - [L]
 
 # Statische Assets aus public/ ausliefern

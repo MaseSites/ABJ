@@ -108,7 +108,7 @@ function db_init(PDO $pdo): void {
     ];
     foreach ($inv_add as $col => $def) {
         if (!in_array($col, $inv_cols)) {
-            $pdo->exec("ALTER TABLE inventory ADD COLUMN $col $def");
+            try { $pdo->exec("ALTER TABLE inventory ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
     }
     $prod_cols = array_column($pdo->query("PRAGMA table_info(products)")->fetchAll(PDO::FETCH_ASSOC), 'name');
@@ -119,22 +119,25 @@ function db_init(PDO $pdo): void {
     ];
     foreach ($prod_add as $col => $def) {
         if (!in_array($col, $prod_cols)) {
-            $pdo->exec("ALTER TABLE products ADD COLUMN $col $def");
+            try { $pdo->exec("ALTER TABLE products ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
     }
-    // Ensure unique index exists for data integrity
-    $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_inv_pid_size_color ON inventory(product_id, size, color)");
+    // Remove duplicate inventory rows (keep highest id per product+size+color) then create unique index
+    try {
+        $pdo->exec("DELETE FROM inventory WHERE id NOT IN (SELECT MAX(id) FROM inventory GROUP BY product_id, size, color)");
+        $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_inv_pid_size_color ON inventory(product_id, size, color)");
+    } catch (\Throwable $e) {}
 
     $ord_cols = array_column($pdo->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     if (!in_array('stripe_payment_intent_id', $ord_cols)) {
-        $pdo->exec("ALTER TABLE orders ADD COLUMN stripe_payment_intent_id TEXT DEFAULT ''");
+        try { $pdo->exec("ALTER TABLE orders ADD COLUMN stripe_payment_intent_id TEXT DEFAULT ''"); } catch (\Throwable $e) {}
     }
     if (!in_array('is_seen', $ord_cols)) {
-        $pdo->exec("ALTER TABLE orders ADD COLUMN is_seen INTEGER DEFAULT 0");
+        try { $pdo->exec("ALTER TABLE orders ADD COLUMN is_seen INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
     }
 
     // Migrate: force currency to CHF if still set to old EUR default
-    $pdo->exec("UPDATE settings SET value = 'CHF' WHERE key = 'currency' AND value = 'EUR'");
+    try { $pdo->exec("UPDATE settings SET value = 'CHF' WHERE key = 'currency' AND value = 'EUR'"); } catch (\Throwable $e) {}
 
     $cnt = (int)$pdo->query("SELECT COUNT(*) AS n FROM users")->fetch()['n'];
     if ($cnt === 0) {

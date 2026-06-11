@@ -13,7 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $line  = $cart[$index];
                 $avail = inv_stock_for_variant($line['productId'], $line['size'] ?? '', '');
-                $cart[$index]['qty'] = min($avail, $qty);
+                $isBO  = ($avail <= 0) && inv_is_back_order($line['productId'], $line['size'] ?? '', '');
+                $cart[$index]['qty'] = $isBO ? $qty : min($avail, $qty);
             }
         }
         cart_set($cart);

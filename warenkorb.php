@@ -37,8 +37,9 @@ foreach ($rawCart as $line) {
         ? (int)$variantRow['variant_price_cents']
         : (int)($p['sale_price_cents'] ?? $p['price_cents']);
     $avail   = inv_stock_for_variant($line['productId'], $line['size'] ?? '', '');
-    $safeQty = min($line['qty'], max(0, $avail));
-    if ($safeQty === 0) $warnings[] = '"' . $p['name'] . '"' . ($line['size'] ? ' (' . $line['size'] . ')' : '') . ' ist ausverkauft.';
+    $isBO    = ($avail <= 0) && inv_is_back_order($line['productId'], $line['size'] ?? '', '');
+    $safeQty = $isBO ? $line['qty'] : min($line['qty'], max(0, $avail));
+    if ($safeQty === 0 && !$isBO) $warnings[] = '"' . $p['name'] . '"' . ($line['size'] ? ' (' . $line['size'] . ')' : '') . ' ist ausverkauft.';
     $imgSrc = null;
     if ($variantRow) { $imgs = safe_parse($variantRow['images'] ?? '[]', []); $imgSrc = $imgs[0]['src'] ?? null; }
     $imgSrc = $imgSrc ?: ($p['images'][0]['src'] ?? null);
@@ -49,7 +50,8 @@ foreach ($rawCart as $line) {
         'qty' => $safeQty, 'originalQty' => $line['qty'],
         'unitCents' => $unit, 'lineCents' => $unit * $safeQty,
         'image'     => $imgSrc ?: placeholder_svg($p['name']),
-        'maxQty' => $avail, 'isSoldOut' => $safeQty === 0, 'wasReduced' => $safeQty < $line['qty'],
+        'maxQty' => $avail, 'isSoldOut' => $safeQty === 0 && !$isBO, 'isBackOrder' => $isBO,
+        'wasReduced' => !$isBO && $safeQty < $line['qty'],
     ];
 }
 
@@ -89,6 +91,8 @@ include __DIR__ . '/partials/header.php';
             <span class="muted"><?= format_price($it['unitCents'], $currency) ?> / Stück</span>
             <?php if ($it['isSoldOut']): ?>
               <span class="cart-soldout-label">Ausverkauft – wird beim Checkout entfernt</span>
+            <?php elseif ($it['isBackOrder']): ?>
+              <span class="cart-backorder-label">Nicht an Lager – ca. 2 Wochen Lieferzeit</span>
             <?php elseif ($it['wasReduced']): ?>
               <span class="cart-reduced-warning">Menge auf <?= $it['qty'] ?> reduziert (max. verfügbar)</span>
             <?php endif; ?>

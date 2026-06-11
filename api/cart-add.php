@@ -17,8 +17,9 @@ if (inv_has_variants($productId) && !$size) {
     if ($isAjax) json_response(['ok' => false, 'error' => 'variant'], 400);
     redirect('/produkt/' . urlencode($slug) . '?error=variant');
 }
-$avail = inv_stock_for_variant($productId, $size, '');
-if ($avail <= 0) {
+$avail  = inv_stock_for_variant($productId, $size, '');
+$isBO   = ($avail <= 0) && inv_is_back_order($productId, $size, '');
+if ($avail <= 0 && !$isBO) {
     if ($isAjax) json_response(['ok' => false, 'error' => 'soldout'], 400);
     redirect('/produkt/' . urlencode($slug) . '?error=soldout');
 }
@@ -31,9 +32,9 @@ foreach ($cart as &$line) {
     }
 }
 if ($existing) {
-    $existing['qty'] = min($avail, $existing['qty'] + $qty);
+    $existing['qty'] = $isBO ? ($existing['qty'] + $qty) : min($avail, $existing['qty'] + $qty);
 } else {
-    $cart[] = ['productId' => $productId, 'size' => $size, 'qty' => min($avail, $qty)];
+    $cart[] = ['productId' => $productId, 'size' => $size, 'qty' => $isBO ? $qty : min($avail, $qty)];
 }
 cart_set($cart);
 
@@ -49,7 +50,8 @@ if ($isAjax) {
             ? (int)$vr['variant_price_cents']
             : (int)($cp['sale_price_cents'] ?? $cp['price_cents']);
         $avl     = inv_stock_for_variant($line['productId'], $line['size'] ?? '', '');
-        $safeQty = min($line['qty'], max(0, $avl));
+        $boItem  = ($avl <= 0) && inv_is_back_order($line['productId'], $line['size'] ?? '', '');
+        $safeQty = $boItem ? $line['qty'] : min($line['qty'], max(0, $avl));
         if ($safeQty === 0) continue;
         $img = null;
         if ($vr) { $imgs = safe_parse($vr['images'] ?? '[]', []); $img = $imgs[0]['src'] ?? null; }

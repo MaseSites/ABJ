@@ -104,6 +104,7 @@ function db_init(PDO $pdo): void {
         'images'              => "TEXT DEFAULT '[]'",
         'variant_price_cents' => 'INTEGER',
         'is_default'          => 'INTEGER DEFAULT 0',
+        'back_order'          => 'INTEGER DEFAULT 0',
     ];
     foreach ($inv_add as $col => $def) {
         if (!in_array($col, $inv_cols)) {
@@ -114,6 +115,7 @@ function db_init(PDO $pdo): void {
     $prod_add = [
         'option_groups' => "TEXT DEFAULT '[]'",
         'sizes'         => "TEXT DEFAULT '[]'",
+        'back_order'    => 'INTEGER DEFAULT 0',
     ];
     foreach ($prod_add as $col => $def) {
         if (!in_array($col, $prod_cols)) {

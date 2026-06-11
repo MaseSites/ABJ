@@ -16,7 +16,8 @@ foreach ($cart as $line) {
         ? (int)$variantRow['variant_price_cents']
         : (int)($p['sale_price_cents'] ?? $p['price_cents']);
     $avail   = inv_stock_for_variant($line['productId'], $line['size'] ?? '', '');
-    $safeQty = min($line['qty'], max(0, $avail));
+    $isBO    = ($avail <= 0) && inv_is_back_order($line['productId'], $line['size'] ?? '', '');
+    $safeQty = $isBO ? $line['qty'] : min($line['qty'], max(0, $avail));
     if ($safeQty === 0) continue;
     $subtotal += $unit * $safeQty;
     $imgSrc = null;

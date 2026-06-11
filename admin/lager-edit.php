@@ -5,12 +5,13 @@ $row = $id ? (function($id){ $s = db()->prepare('SELECT i.*,p.name AS product_na
 if (!$row) redirect('/admin/lager.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $stmt = db()->prepare("UPDATE inventory SET stock=?,min_stock=?,sku=?,notes=?,title=?,next_delivery=?,variant_price_cents=?,updated_at=datetime('now') WHERE id=?");
+    $stmt = db()->prepare("UPDATE inventory SET stock=?,min_stock=?,sku=?,notes=?,title=?,next_delivery=?,variant_price_cents=?,back_order=?,updated_at=datetime('now') WHERE id=?");
     $stmt->execute([
         max(0,(int)$_POST['stock']), max(0,(int)$_POST['min_stock']),
         trim($_POST['sku']??''), trim($_POST['notes']??''), trim($_POST['title']??''),
         trim($_POST['next_delivery']??''),
         $_POST['variant_price'] !== '' ? (int)round((float)str_replace(',','.',$_POST['variant_price']??'0')*100) : null,
+        isset($_POST['back_order']) ? 1 : 0,
         $id,
     ]);
     redirect('/admin/lager-edit.php?id='.$id.'&saved=1');
@@ -35,6 +36,10 @@ include __DIR__ . '/partials/admin-layout-top.php';
   <label class="field"><span>Varianten-Preis (leer = Produktpreis)</span><input type="number" step="0.01" name="variant_price" value="<?= $row['variant_price_cents'] !== null ? number_format($row['variant_price_cents']/100, 2, '.', '') : '' ?>" min="0"></label>
   <label class="field"><span>Nächste Lieferung</span><input type="text" name="next_delivery" value="<?= h($row['next_delivery']??'') ?>"></label>
   <label class="field"><span>Notizen</span><textarea name="notes" rows="3"><?= h($row['notes']??'') ?></textarea></label>
+  <label class="field" style="flex-direction:row;align-items:center;gap:.6rem;cursor:pointer">
+    <input type="checkbox" name="back_order" value="1"<?= !empty($row['back_order']) ? ' checked' : '' ?> style="width:16px;height:16px;accent-color:var(--gold)">
+    <span style="margin:0">Nicht an Lager (bestellbar, ca. 2 Wochen Lieferzeit)</span>
+  </label>
   <button class="btn btn-primary" type="submit">Speichern</button>
 </form>
 

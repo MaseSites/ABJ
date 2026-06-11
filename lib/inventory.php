@@ -33,6 +33,15 @@ function inv_has_variants(int $productId): bool {
     return false;
 }
 
+function inv_is_back_order(int $productId, string $size = '', string $color = ''): bool {
+    $row = inv_by_variant($productId, $size, $color);
+    if ($row) return (bool)($row['back_order'] ?? 0);
+    $stmt = db()->prepare('SELECT back_order FROM products WHERE id = ?');
+    $stmt->execute([$productId]);
+    $p = $stmt->fetch();
+    return $p ? (bool)$p['back_order'] : false;
+}
+
 function inv_stock_for_variant(int $productId, string $size = '', string $color = ''): int {
     $row = inv_by_variant($productId, $size, $color);
     if ($row) return max(0, $row['stock'] - $row['reserved']);
@@ -62,26 +71,26 @@ function inv_upsert(array $data): void {
     if ($check->fetch()) {
         $pdo->prepare("UPDATE inventory SET
             sku=?, stock=?, min_stock=?, next_delivery=?, notes=?, title=?,
-            option_values=?, images=?, variant_price_cents=?, is_default=?,
+            option_values=?, images=?, variant_price_cents=?, is_default=?, back_order=?,
             updated_at=datetime('now')
             WHERE product_id=? AND size=? AND color=?")
         ->execute([
             $data['sku'] ?? '', max(0, (int)($data['stock'] ?? 0)),
             max(0, (int)($data['min_stock'] ?? 3)), $data['next_delivery'] ?? '',
             $data['notes'] ?? '', $data['title'] ?? '',
-            $ov, $imgs, $vpc, $data['is_default'] ? 1 : 0,
+            $ov, $imgs, $vpc, $data['is_default'] ? 1 : 0, $data['back_order'] ? 1 : 0,
             $pid, $size, $col,
         ]);
     } else {
         $pdo->prepare("INSERT INTO inventory
-            (product_id,sku,size,color,option_values,stock,reserved,min_stock,next_delivery,notes,title,images,variant_price_cents,is_default)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+            (product_id,sku,size,color,option_values,stock,reserved,min_stock,next_delivery,notes,title,images,variant_price_cents,is_default,back_order)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
         ->execute([
             $pid, $data['sku'] ?? '', $size, $col, $ov,
             max(0, (int)($data['stock'] ?? 0)), max(0, (int)($data['reserved'] ?? 0)),
             max(0, (int)($data['min_stock'] ?? 3)), $data['next_delivery'] ?? '',
             $data['notes'] ?? '', $data['title'] ?? '', $imgs, $vpc,
-            $data['is_default'] ? 1 : 0,
+            $data['is_default'] ? 1 : 0, $data['back_order'] ? 1 : 0,
         ]);
     }
 }

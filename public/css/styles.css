@@ -583,6 +583,21 @@ h1, h2, h3, h4 {
   backdrop-filter: blur(4px);
 }
 .badge-soldout.inline { position: static; display: inline-block; }
+.badge-backorder {
+  position: absolute;
+  top: .7rem;
+  right: .7rem;
+  background: rgba(180,130,0,.18);
+  color: #c9a840;
+  font-size: .62rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .3em .7em;
+  border-radius: 0;
+  border: 1px solid rgba(180,130,0,.35);
+  backdrop-filter: blur(4px);
+}
+.badge-backorder.inline { position: static; display: inline-block; }
 
 /* Wishlist + Quick-add */
 .wish-btn {
@@ -787,6 +802,13 @@ h1, h2, h3, h4 {
   margin-bottom: .8rem;
   letter-spacing: .06em;
 }
+.stock-backorder {
+  display: inline-block;
+  color: #c9a840;
+  font-size: .82rem;
+  margin-bottom: .8rem;
+  letter-spacing: .06em;
+}
 
 /* ================================================================
    REVIEWS — editorial, kein Card-Chrome
@@ -870,6 +892,7 @@ h1, h2, h3, h4 {
 .cart-row.is-soldout .cart-media img { filter: grayscale(1); }
 .cart-reduced-warning { font-size: .78rem; color: var(--gold); margin-top: .15rem; }
 .cart-soldout-label   { font-size: .78rem; color: var(--danger); margin-top: .15rem; }
+.cart-backorder-label { font-size: .78rem; color: #c9a840; margin-top: .15rem; }
 
 /* ================================================================
    CHECKOUT

@@ -44,8 +44,9 @@ if (empty($product['option_groups']) && !empty($variants)) {
 
 $related    = products_related($product['category'], $product['id'], 4);
 $mainImg    = $product['images'][0]['src'] ?? placeholder_svg($product['name']);
-$totalAvail = array_sum($inventoryMap);
+$totalAvail     = array_sum($inventoryMap);
 $availableStock = empty($invRows) ? (int)$product['stock'] : $totalAvail;
+$isBackOrder    = ($availableStock <= 0) && inv_is_back_order($product['id'], '', '');
 $currency   = setting_get('currency') ?: 'CHF';
 
 $errorMsg = null;
@@ -96,6 +97,8 @@ include __DIR__ . '/partials/header.php';
 
       <?php if ($totalAvail > 0 && $totalAvail <= 5): ?>
         <span class="stock-urgency">Nur noch <?= $totalAvail ?> verfügbar</span>
+      <?php elseif ($isBackOrder): ?>
+        <span class="stock-backorder">Nicht an Lager – Lieferzeit ca. 2 Wochen</span>
       <?php endif; ?>
 
       <?php if ($errorMsg): ?>
@@ -116,6 +119,8 @@ include __DIR__ . '/partials/header.php';
 
         <?php if ($availableStock > 0): ?>
           <button class="btn btn-primary btn-block" type="submit" style="max-width:100%">In den Warenkorb</button>
+        <?php elseif ($isBackOrder): ?>
+          <button class="btn btn-primary btn-block" type="submit" style="max-width:100%">Bestellen (ca. 2 Wochen)</button>
         <?php else: ?>
           <button class="btn btn-primary btn-block" disabled style="max-width:100%">Ausverkauft</button>
         <?php endif; ?>

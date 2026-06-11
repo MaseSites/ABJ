@@ -39,7 +39,9 @@ $_currency   = setting_get('currency') ?: 'CHF';
       <?php else: ?>
         <span class="price-now"><?= format_price($_priceCents, $_currency) ?></span>
       <?php endif; ?>
-      <?php if ((int)$p['stock'] <= 0): ?>
+      <?php if ((int)$p['stock'] <= 0 && !empty($p['back_order'])): ?>
+        <span class="badge-backorder inline">Nicht an Lager</span>
+      <?php elseif ((int)$p['stock'] <= 0): ?>
         <span class="badge-soldout inline">Ausverkauft</span>
       <?php endif; ?>
     </div>

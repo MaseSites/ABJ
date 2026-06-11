@@ -27,11 +27,6 @@ $all = array_values($all);
 
 $totalPages = max(1, (int)ceil(count($all) / $perPage));
 $items = array_slice($all, ($page - 1) * $perPage, $perPage);
-// Pad last row with products from the start of this page so every row has 5
-if (count($items) > 0 && count($items) % 5 !== 0) {
-    $need  = 5 - (count($items) % 5);
-    $items = array_merge($items, array_slice($items, 0, $need));
-}
 $categories = products_categories();
 
 $pageTitle = $q ? 'Suchergebnisse' : 'Shop';

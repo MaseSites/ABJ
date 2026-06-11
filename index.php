@@ -11,11 +11,7 @@ $announcement = setting_get('announcement') ?: '';
 $membersCount = setting_get('members_count') ?: '20000';
 $ratingsCount = setting_get('ratings_count') ?: '1000';
 
-$featured = array_slice(products_shuffle(products_bestsellers(12)), 0, 5);
-if (count($featured) > 0 && count($featured) % 5 !== 0) {
-    $need     = 5 - (count($featured) % 5);
-    $featured = array_merge($featured, array_slice($featured, 0, $need));
-}
+$featured = array_slice(products_shuffle(products_bestsellers(10)), 0, 10);
 
 $BRANDS = ['Nike', 'Adidas', 'Stone Island', 'Moncler', 'C.P. Company', 'Ralph Lauren', 'Carhartt', 'Stussy', 'Trapstar', 'The North Face', 'Lacoste', 'Diesel'];
 $REVIEWS = [

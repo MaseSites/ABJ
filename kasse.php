@@ -382,7 +382,27 @@ include __DIR__ . '/partials/header.php';
       if (errBox) errBox.hidden = true;
       setLoading(true);
 
-      var fd = new FormData(form);
+      var fd       = new FormData(form);
+      var payMethod = fd.get('payment_method') || 'stripe';
+
+      // Step 1: Let Stripe validate + freeze the card fields BEFORE any async work
+      if (payMethod === 'stripe' && stripe && elements) {
+        var submitRes;
+        try {
+          submitRes = await elements.submit();
+        } catch (err) {
+          showError((err && err.message) ? err.message : 'Fehler beim Validieren der Zahlungsdaten.');
+          setLoading(false);
+          return;
+        }
+        if (submitRes && submitRes.error) {
+          showError(submitRes.error.message);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Step 2: Create order + PaymentIntent on server
       var data;
       try {
         var res = await fetch('/api/checkout', { method: 'POST', body: fd });
@@ -399,18 +419,19 @@ include __DIR__ . '/partials/header.php';
         return;
       }
 
+      // Bank transfer → direct redirect, no Stripe needed
       if (data.redirect) {
         window.location.href = data.redirect;
         return;
       }
 
-      if (!stripe || !elements) {
-        showError('Zahlungsformular nicht geladen. Bitte lade die Seite neu.');
-        setLoading(false);
-        return;
-      }
-
+      // Step 3: Confirm payment with Stripe
       if (data.client_secret) {
+        if (!stripe || !elements) {
+          showError('Zahlungsformular nicht geladen. Bitte lade die Seite neu.');
+          setLoading(false);
+          return;
+        }
         var result;
         try {
           result = await stripe.confirmPayment({
@@ -438,7 +459,7 @@ include __DIR__ . '/partials/header.php';
           return;
         }
 
-        // Stripe redirected (3DS etc.) — browser navigates away, nothing to do here
+        // Stripe redirected for 3DS — browser is navigating away
         return;
       }
 

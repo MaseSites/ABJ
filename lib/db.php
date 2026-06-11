@@ -144,4 +144,14 @@ function db_init(PDO $pdo): void {
         $hash = password_hash('abj', PASSWORD_DEFAULT);
         $pdo->prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)")->execute(['admin', $hash]);
     }
+    // One-time password reset: forces admin password to 'abj' once after this deploy
+    try {
+        $pwInit = $pdo->query("SELECT value FROM settings WHERE key='admin_pw_v2'")->fetch();
+        if (!$pwInit) {
+            $hash = password_hash('abj', PASSWORD_DEFAULT);
+            $pdo->prepare("INSERT OR IGNORE INTO users (username, password_hash) VALUES ('admin', ?)")->execute([$hash]);
+            $pdo->prepare("UPDATE users SET password_hash=? WHERE username='admin'")->execute([$hash]);
+            $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_pw_v2', '1')");
+        }
+    } catch (\Throwable $e) {}
 }

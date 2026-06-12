@@ -2,7 +2,7 @@
 require_once __DIR__ . '/lib/bootstrap.php';
 
 $cart = cart_get();
-if (empty($cart)) redirect('/warenkorb?leer=1');
+if (empty($cart)) redirect('/warenkorb.php?leer=1');
 
 $currency = setting_get('currency') ?: 'CHF';
 
@@ -32,15 +32,21 @@ foreach ($cart as $line) {
     ];
 }
 
-if (empty($items)) redirect('/warenkorb?ausverkauft=1');
+if (empty($items)) redirect('/warenkorb.php?ausverkauft=1');
 
-// Shipping: 5.90 CH / 19.90 international (default CH for page render)
 $defaultCountry = 'CH';
-$shipping = ($defaultCountry === 'CH') ? 590 : 1990;
+$shipping = shipping_cost_cents($defaultCountry, $subtotal);
 $total    = $subtotal + $shipping;
 
 $stripeConfigured = stripe_is_configured();
 $stripePk         = stripe_publishable_key();
+
+$bank = [
+    'recipient' => setting_get('bank_recipient') ?: (setting_get('shop_name') ?: 'ABJ Store'),
+    'iban'      => setting_get('bank_iban') ?: '',
+    'bic'       => setting_get('bank_bic') ?: '',
+    'name'      => setting_get('bank_name') ?: '',
+];
 
 $COUNTRIES = [
     ['CH','Schweiz'],['LI','Liechtenstein'],['AT','Österreich'],['DE','Deutschland'],
@@ -50,6 +56,7 @@ $COUNTRIES = [
 ];
 
 $currentPath = '/kasse';
+$cartCount   = cart_count();
 $pageTitle   = 'Kasse';
 include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/header.php';
@@ -57,7 +64,7 @@ include __DIR__ . '/partials/header.php';
 
 <main id="main" class="container section">
 
-  <a href="/warenkorb" class="checkout-back">
+  <a href="<?= url('/warenkorb.php') ?>" class="checkout-back">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="10 2 4 8 10 14"/></svg>
     Zurück zum Warenkorb
   </a>
@@ -87,12 +94,12 @@ include __DIR__ . '/partials/header.php';
           <label class="field">
             <span>E-Mail *</span>
             <input type="email" name="email" required maxlength="200"
-              autocomplete="email" placeholder="name@beispiel.de">
+              autocomplete="email" placeholder="name@beispiel.ch">
           </label>
           <label class="field">
             <span>Telefon <small class="muted">(optional)</small></span>
             <input type="tel" name="phone" maxlength="30"
-              autocomplete="tel" placeholder="+49 170 1234567">
+              autocomplete="tel" placeholder="+41 79 123 45 67">
           </label>
         </div>
       </div>
@@ -111,14 +118,14 @@ include __DIR__ . '/partials/header.php';
           <label class="field">
             <span>Nachname *</span>
             <input type="text" name="lastname" required maxlength="80"
-              autocomplete="family-name" placeholder="Mustermann">
+              autocomplete="family-name" placeholder="Muster">
           </label>
         </div>
         <div class="form-row-2" style="grid-template-columns:2fr 1fr">
           <label class="field">
-            <span>Straße *</span>
+            <span>Strasse *</span>
             <input type="text" name="street" required maxlength="120"
-              autocomplete="address-line1" placeholder="Musterstraße">
+              autocomplete="address-line1" placeholder="Musterstrasse">
           </label>
           <label class="field">
             <span>Nr. *</span>
@@ -129,17 +136,17 @@ include __DIR__ . '/partials/header.php';
           <label class="field">
             <span>PLZ *</span>
             <input type="text" name="zip" required maxlength="10"
-              autocomplete="postal-code" placeholder="12345">
+              autocomplete="postal-code" placeholder="8000">
           </label>
           <label class="field">
             <span>Stadt *</span>
             <input type="text" name="city" required maxlength="80"
-              autocomplete="address-level2" placeholder="Berlin">
+              autocomplete="address-level2" placeholder="Zürich">
           </label>
         </div>
         <label class="field">
           <span>Land *</span>
-          <select name="country" autocomplete="country">
+          <select name="country" autocomplete="country" data-country-select>
             <?php foreach ($COUNTRIES as [$code, $name]): ?>
               <option value="<?= h($code) ?>"<?= $code === 'CH' ? ' selected' : '' ?>><?= h($name) ?></option>
             <?php endforeach; ?>
@@ -195,39 +202,42 @@ include __DIR__ . '/partials/header.php';
 
           <div id="pay-section-vorkasse" class="pay-section" hidden>
             <div class="pay-fields-box">
-              <p class="muted" style="font-size:.85rem;margin:0 0 .8rem">Nach deiner Bestellung erhältst du unsere Bankverbindung per E-Mail.</p>
+              <p class="muted" style="font-size:.85rem;margin:0">Die Bankverbindung erhältst du nach der Bestellung auf der Bestätigungsseite und per E-Mail. Verwendungszweck: deine Bestellnummer.</p>
+              <?php if ($bank['iban']): ?>
               <div class="bank-info">
-                <div><span>Empfänger</span><strong>ABJ Store GmbH</strong></div>
-                <div><span>IBAN</span><strong>DE89 3704 0044 0532 0130 00</strong></div>
-                <div><span>BIC</span><strong>COBADEFFXXX</strong></div>
-                <div><span>Bank</span><strong>Commerzbank</strong></div>
+                <div><span>Empfänger</span><strong><?= h($bank['recipient']) ?></strong></div>
+                <div><span>IBAN</span><strong><?= h($bank['iban']) ?></strong></div>
+                <?php if ($bank['bic']): ?><div><span>BIC</span><strong><?= h($bank['bic']) ?></strong></div><?php endif; ?>
+                <?php if ($bank['name']): ?><div><span>Bank</span><strong><?= h($bank['name']) ?></strong></div><?php endif; ?>
               </div>
+              <?php endif; ?>
             </div>
           </div>
 
         <?php else: ?>
 
           <input type="hidden" name="payment_method" value="vorkasse">
-          <div class="stripe-not-configured">
-            <strong>Online-Zahlung</strong> wird in Kürze eingerichtet. Derzeit nur per Banküberweisung.
-          </div>
-          <div class="pay-fields-box" style="margin-top:.8rem">
-            <p class="muted" style="font-size:.85rem;margin:0 0 .8rem">Nach deiner Bestellung erhältst du unsere Bankverbindung per E-Mail.</p>
+          <div class="pay-fields-box">
+            <p class="muted" style="font-size:.85rem;margin:0">Zahlung per <strong>Banküberweisung (Vorkasse)</strong>. Die Bankverbindung erhältst du nach der Bestellung — Verwendungszweck ist deine Bestellnummer.</p>
+            <?php if ($bank['iban']): ?>
             <div class="bank-info">
-              <div><span>Empfänger</span><strong>ABJ Store GmbH</strong></div>
-              <div><span>IBAN</span><strong>DE89 3704 0044 0532 0130 00</strong></div>
-              <div><span>BIC</span><strong>COBADEFFXXX</strong></div>
-              <div><span>Bank</span><strong>Commerzbank</strong></div>
+              <div><span>Empfänger</span><strong><?= h($bank['recipient']) ?></strong></div>
+              <div><span>IBAN</span><strong><?= h($bank['iban']) ?></strong></div>
+              <?php if ($bank['bic']): ?><div><span>BIC</span><strong><?= h($bank['bic']) ?></strong></div><?php endif; ?>
+              <?php if ($bank['name']): ?><div><span>Bank</span><strong><?= h($bank['name']) ?></strong></div><?php endif; ?>
             </div>
+            <?php endif; ?>
           </div>
 
         <?php endif; ?>
 
       </div>
 
+      <input type="hidden" name="discount_code" value="" data-discount-hidden>
+
       <button class="btn btn-primary btn-block checkout-submit" type="submit">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="12" height="9" rx="1.5"/><path d="M5 6V4a3 3 0 016 0v2"/></svg>
-        <span class="checkout-submit-text">Kostenpflichtig bestellen &middot; <?= format_price($total, $currency) ?></span>
+        <span class="checkout-submit-text">Kostenpflichtig bestellen &middot; <span data-total-label><?= format_price($total, $currency) ?></span></span>
       </button>
 
       <ul class="checkout-trust">
@@ -240,10 +250,6 @@ include __DIR__ . '/partials/header.php';
           Käuferschutz &amp; sichere Zahlung
         </li>
         <li>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <?= $shipping === 0 ? 'Kostenloser Versand' : 'Versand: ' . format_price($shipping, $currency) ?>
-        </li>
-        <li>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
           14 Tage Rückgaberecht
         </li>
@@ -253,7 +259,7 @@ include __DIR__ . '/partials/header.php';
 
     <!-- Right: order summary -->
     <div class="order-summary">
-      <h2 style="font-size:.72rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:1.2rem">Bestellübersicht</h2>
+      <h2 style="font-size:.74rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:1.2rem">Bestellübersicht</h2>
 
       <div style="display:flex;flex-direction:column;margin-bottom:1.2rem">
         <?php foreach ($items as $it): ?>
@@ -273,18 +279,30 @@ include __DIR__ . '/partials/header.php';
         <?php endforeach; ?>
       </div>
 
-      <div class="summary-row"><span>Zwischensumme</span><span><?= format_price($subtotal, $currency) ?></span></div>
+      <!-- Rabattcode -->
+      <div style="margin-bottom:1.1rem">
+        <div class="discount-row" data-discount-row>
+          <input type="text" placeholder="Rabattcode" maxlength="40" data-discount-input aria-label="Rabattcode">
+          <button type="button" class="btn btn-line btn-sm" data-discount-apply>Einlösen</button>
+        </div>
+        <div data-discount-applied hidden style="margin-top:.5rem">
+          <span class="discount-applied">
+            <span data-discount-code-label></span>
+            <button type="button" data-discount-remove aria-label="Rabattcode entfernen">&times;</button>
+          </span>
+        </div>
+        <p class="discount-msg" data-discount-msg hidden></p>
+      </div>
+
+      <div class="summary-row"><span>Zwischensumme</span><span data-subtotal-label><?= format_price($subtotal, $currency) ?></span></div>
+      <div class="summary-row summary-discount" data-discount-summary hidden><span>Rabatt</span><span data-discount-label></span></div>
       <div class="summary-row">
         <span>Versand</span>
-        <?php if ($shipping === 0): ?>
-          <span style="color:#a8e6b8">Kostenlos</span>
-        <?php else: ?>
-          <span><?= format_price($shipping, $currency) ?></span>
-        <?php endif; ?>
+        <span data-shipping-label><?= $shipping === 0 ? 'Kostenlos' : format_price($shipping, $currency) ?></span>
       </div>
       <div class="summary-total">
         <strong>Gesamt</strong>
-        <strong style="color:var(--gold)"><?= format_price($total, $currency) ?></strong>
+        <strong style="color:var(--accent-3)" data-summary-total><?= format_price($total, $currency) ?></strong>
       </div>
       <p class="muted" style="font-size:.72rem;margin-top:.6rem">inkl. MwSt.</p>
     </div>
@@ -297,6 +315,7 @@ include __DIR__ . '/partials/header.php';
 <?php endif; ?>
 <script>
 (function () {
+  var BASE     = document.documentElement.getAttribute('data-base-path') || '';
   var PK       = <?= json_encode($stripePk) ?>;
   var TOTAL    = <?= (int)$total ?>;
   var CURRENCY = <?= json_encode(strtolower($currency)) ?>;
@@ -307,21 +326,21 @@ include __DIR__ . '/partials/header.php';
   var APPEARANCE = {
     theme: 'night',
     variables: {
-      colorPrimary:       '#c4a35a',
-      colorBackground:    '#0e0e13',
-      colorText:          '#e8e8ed',
-      colorTextSecondary: '#7b7b8e',
-      colorDanger:        '#e05c48',
+      colorPrimary:       '#b89c67',
+      colorBackground:    '#0e0e12',
+      colorText:          '#f4f3f0',
+      colorTextSecondary: '#a3a29b',
+      colorDanger:        '#e2604c',
       fontFamily:         '"Inter", system-ui, sans-serif',
-      borderRadius:       '0px',
+      borderRadius:       '10px',
       spacingUnit:        '3px',
     },
     rules: {
-      '.Input': { border: '1px solid #2c2c38', padding: '12px 14px', background: '#0e0e13' },
-      '.Input:focus': { border: '1px solid rgba(255,255,255,.3)', boxShadow: '0 0 0 2px rgba(196,163,90,.12)' },
-      '.Label': { color: '#7b7b8e', textTransform: 'uppercase', letterSpacing: '.1em', fontSize: '11px', fontWeight: '600' },
-      '.Tab': { border: '1px solid #2c2c38', background: '#0e0e13' },
-      '.Tab--selected': { border: '1px solid rgba(196,163,90,.6)', background: '#16161d' },
+      '.Input': { border: '1px solid rgba(255,255,255,.14)', padding: '12px 14px', background: '#0e0e12' },
+      '.Input:focus': { border: '1px solid rgba(184,156,103,.55)', boxShadow: '0 0 0 3px rgba(184,156,103,.12)' },
+      '.Label': { color: '#a3a29b', textTransform: 'uppercase', letterSpacing: '.08em', fontSize: '11px', fontWeight: '600' },
+      '.Tab': { border: '1px solid rgba(255,255,255,.14)', background: '#0e0e12' },
+      '.Tab--selected': { border: '1px solid rgba(184,156,103,.6)', background: '#16161d' },
       '.Tab:hover': { background: '#16161d' },
     },
   };
@@ -335,6 +354,13 @@ include __DIR__ . '/partials/header.php';
       var loader = document.getElementById('stripe-loading');
       if (loader) loader.style.display = 'none';
     });
+  }
+
+  function updateStripeAmount(newTotal) {
+    TOTAL = newTotal;
+    if (elements) {
+      try { elements.update({ amount: Math.max(50, newTotal) }); } catch (e) {}
+    }
   }
 
   if (stripe) mountStripeElements();
@@ -353,6 +379,68 @@ include __DIR__ . '/partials/header.php';
     });
   });
 
+  /* ---------------- Rabattcode ---------------- */
+  var dInput   = document.querySelector('[data-discount-input]');
+  var dApply   = document.querySelector('[data-discount-apply]');
+  var dMsg     = document.querySelector('[data-discount-msg]');
+  var dHidden  = document.querySelector('[data-discount-hidden]');
+  var dApplied = document.querySelector('[data-discount-applied]');
+  var dCodeLbl = document.querySelector('[data-discount-code-label]');
+  var dRow     = document.querySelector('[data-discount-row]');
+  var dSummary = document.querySelector('[data-discount-summary]');
+  var dLabel   = document.querySelector('[data-discount-label]');
+  var shipLbl  = document.querySelector('[data-shipping-label]');
+  var totalLbl = document.querySelector('[data-summary-total]');
+  var totalBtn = document.querySelector('[data-total-label]');
+  var country  = document.querySelector('[data-country-select]');
+
+  function showDiscountMsg(text, ok) {
+    if (!dMsg) return;
+    dMsg.hidden = false;
+    dMsg.textContent = text;
+    dMsg.className = 'discount-msg ' + (ok ? 'ok' : 'err');
+  }
+
+  function applyDiscount() {
+    var code = (dInput && dInput.value || '').trim();
+    if (!code) return;
+    var fd = new URLSearchParams();
+    fd.set('code', code);
+    fd.set('country', country ? country.value : 'CH');
+    dApply.disabled = true;
+    fetch(BASE + '/api/discount-check.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+      body: fd.toString(),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      dApply.disabled = false;
+      if (!d.ok) { showDiscountMsg(d.error || 'Code ungültig.', false); return; }
+      if (dHidden) dHidden.value = d.code;
+      if (dCodeLbl) dCodeLbl.textContent = d.code + ' · ' + d.discountText;
+      if (dApplied) dApplied.hidden = false;
+      if (dRow) dRow.hidden = true;
+      if (dSummary) { dSummary.hidden = false; if (dLabel) dLabel.textContent = d.discountText; }
+      if (shipLbl) shipLbl.textContent = d.shippingText;
+      if (totalLbl) totalLbl.textContent = d.totalText;
+      if (totalBtn) totalBtn.textContent = d.totalText;
+      showDiscountMsg('Code eingelöst.', true);
+      updateStripeAmount(d.total_cents);
+    }).catch(function () {
+      dApply.disabled = false;
+      showDiscountMsg('Netzwerkfehler. Bitte erneut versuchen.', false);
+    });
+  }
+
+  if (dApply) dApply.addEventListener('click', applyDiscount);
+  if (dInput) dInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); applyDiscount(); }
+  });
+  var dRemove = document.querySelector('[data-discount-remove]');
+  if (dRemove) dRemove.addEventListener('click', function () {
+    window.location.reload();
+  });
+
+  /* ---------------- Submit ---------------- */
   var form      = document.getElementById('checkout-form');
   var submitBtn = form ? form.querySelector('.checkout-submit') : null;
   var errBox    = document.getElementById('checkout-error');
@@ -378,7 +466,7 @@ include __DIR__ . '/partials/header.php';
       if (errBox) errBox.hidden = true;
       setLoading(true);
 
-      var fd       = new FormData(form);
+      var fd        = new FormData(form);
       var payMethod = fd.get('payment_method') || 'stripe';
 
       // Step 1: Let Stripe validate + freeze the card fields BEFORE any async work
@@ -401,7 +489,7 @@ include __DIR__ . '/partials/header.php';
       // Step 2: Create order + PaymentIntent on server
       var data;
       try {
-        var res = await fetch('/api/checkout', { method: 'POST', body: fd });
+        var res = await fetch(BASE + '/api/checkout.php', { method: 'POST', body: fd });
         data = await res.json().catch(function () { return { ok: false, error: 'Server-Fehler (ungültige Antwort)' }; });
       } catch (err) {
         showError('Netzwerkfehler. Bitte überprüfe deine Verbindung und versuche es erneut.');
@@ -434,7 +522,7 @@ include __DIR__ . '/partials/header.php';
             elements:     elements,
             clientSecret: data.client_secret,
             confirmParams: {
-              return_url: window.location.origin + '/bestellung?ref=' + encodeURIComponent(data.order_ref),
+              return_url: window.location.origin + (data.return_url || (BASE + '/bestellung.php?ref=' + encodeURIComponent(data.order_ref))),
             },
             redirect: 'if_required',
           });
@@ -451,7 +539,7 @@ include __DIR__ . '/partials/header.php';
         }
 
         if (result && result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-          window.location.href = '/bestellung?ref=' + encodeURIComponent(data.order_ref) + '&redirect_status=succeeded';
+          window.location.href = BASE + '/bestellung.php?ref=' + encodeURIComponent(data.order_ref) + '&redirect_status=succeeded';
           return;
         }
 

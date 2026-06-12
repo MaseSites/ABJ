@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/lib/bootstrap.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'clear') {
         cart_set([]);
     }
-    redirect('/warenkorb');
+    redirect('/warenkorb.php');
 }
 
 $currency = setting_get('currency') ?: 'CHF';
@@ -82,6 +82,21 @@ include __DIR__ . '/partials/header.php';
   </div>
   <?php endif; ?>
 
+  <?php
+    $freeFrom = shipping_free_from_cents();
+    if ($freeFrom > 0 && $total > 0 && $total < $freeFrom):
+  ?>
+  <div class="free-shipping-hint">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="6" width="15" height="12" rx="2"/><path d="M16 10h4l3 3v5h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="19" cy="18" r="2"/></svg>
+    <span>Noch <strong><?= format_price($freeFrom - $total, $currency) ?></strong> bis zum kostenlosen Versand.</span>
+  </div>
+  <?php elseif ($freeFrom > 0 && $total >= $freeFrom): ?>
+  <div class="free-shipping-hint">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
+    <span><strong>Kostenloser Versand</strong> — dein Bestellwert qualifiziert sich.</span>
+  </div>
+  <?php endif; ?>
+
   <?php $activeItems = array_filter($items, function($it) { return $it['qty'] > 0; }); ?>
   <?php if (empty($activeItems)): ?>
     <div class="cart-empty-state">
@@ -89,7 +104,7 @@ include __DIR__ . '/partials/header.php';
         <path d="M6 7h12l-1 13H7zM9 7a3 3 0 0 1 6 0"/>
       </svg>
       <p>Dein Warenkorb ist leer.</p>
-      <a class="btn btn-primary" href="/shop">Zum Shop</a>
+      <a class="btn btn-primary" href="<?= url('/shop.php') ?>">Zum Shop</a>
     </div>
   <?php else: ?>
     <div class="cart-table">
@@ -97,7 +112,7 @@ include __DIR__ . '/partials/header.php';
         <div class="cart-row<?= $it['isSoldOut'] ? ' is-soldout' : '' ?>">
           <div class="cart-media"><img src="<?= h($it['image']) ?>" alt="<?= h($it['name']) ?>"></div>
           <div class="cart-info">
-            <a href="/produkt/<?= h($it['slug']) ?>"><strong><?= h($it['name']) ?></strong></a>
+            <a href="<?= url('/produkt.php?slug=' . urlencode($it['slug'])) ?>"><strong><?= h($it['name']) ?></strong></a>
             <?php if ($it['size']): ?><span class="muted">Grösse: <?= h($it['size']) ?></span><?php endif; ?>
             <span class="muted"><?= format_price($it['unitCents'], $currency) ?> / Stück</span>
             <?php if ($it['isSoldOut']): ?>
@@ -109,7 +124,7 @@ include __DIR__ . '/partials/header.php';
             <?php endif; ?>
           </div>
           <?php if (!$it['isSoldOut']): ?>
-          <form class="cart-qty" method="post" action="/warenkorb">
+          <form class="cart-qty" method="post" action="<?= url('/warenkorb.php') ?>">
             <input type="hidden" name="action" value="update">
             <input type="hidden" name="index" value="<?= $i ?>">
             <input type="number" name="qty" value="<?= $it['qty'] ?>" min="1" max="<?= $it['maxQty'] ?>" aria-label="Menge">
@@ -117,7 +132,7 @@ include __DIR__ . '/partials/header.php';
           </form>
           <div class="cart-line-total"><?= format_price($it['lineCents'], $currency) ?></div>
           <?php endif; ?>
-          <form method="post" action="/warenkorb" class="cart-remove-form">
+          <form method="post" action="<?= url('/warenkorb.php') ?>" class="cart-remove-form">
             <input type="hidden" name="action" value="update">
             <input type="hidden" name="index" value="<?= $i ?>">
             <input type="hidden" name="qty" value="0">
@@ -130,7 +145,7 @@ include __DIR__ . '/partials/header.php';
     </div>
 
     <div class="cart-summary">
-      <form method="post" action="/warenkorb">
+      <form method="post" action="<?= url('/warenkorb.php') ?>">
         <input type="hidden" name="action" value="clear">
         <button class="btn btn-ghost" type="submit">Leeren</button>
       </form>
@@ -138,7 +153,7 @@ include __DIR__ . '/partials/header.php';
         <span>Gesamt</span>
         <strong><?= format_price($total, $currency) ?></strong>
       </div>
-      <a class="btn btn-primary" href="/kasse">Zur Kasse</a>
+      <a class="btn btn-primary" href="<?= url('/kasse.php') ?>">Zur Kasse</a>
     </div>
   <?php endif; ?>
 </main>

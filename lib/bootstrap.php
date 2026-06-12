@@ -33,4 +33,7 @@ require_once __DIR__ . '/orders.php';
 require_once __DIR__ . '/stripe.php';
 require_once __DIR__ . '/newsletter.php';
 require_once __DIR__ . '/messages.php';
+require_once __DIR__ . '/discounts.php';
+require_once __DIR__ . '/reviews.php';
+require_once __DIR__ . '/shipping.php';
 db(); // initialise connection & tables

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 $adminTitle = 'Produkte';
 include __DIR__ . '/partials/admin-layout-top.php';
@@ -8,7 +8,7 @@ $currency = setting_get('currency') ?: 'CHF';
 ?>
 <div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Produkte</h1>
-  <a href="/admin/produkt-edit.php" class="btn btn-primary">+ Neues Produkt</a>
+  <a href="<?= url('/admin/produkt-edit.php') ?>" class="btn btn-primary">+ Neues Produkt</a>
 </div>
 
 <?php if (!empty($products)): ?>
@@ -42,7 +42,7 @@ $currency = setting_get('currency') ?: 'CHF';
       <td><?= (int)$p['stock'] ?></td>
       <td><span class="tag <?= $p['is_active'] ? 'tag-ok' : 'tag-off' ?>"><?= $p['is_active'] ? 'aktiv' : 'inaktiv' ?></span></td>
       <td class="cell-actions">
-        <a href="/admin/produkt-edit.php?id=<?= $p['id'] ?>" class="btn btn-ghost btn-sm">Bearbeiten</a>
+        <a href="<?= url('/admin/produkt-edit.php?id=' . $p['id']) ?>" class="btn btn-ghost btn-sm">Bearbeiten</a>
         <button class="btn btn-danger btn-sm"
                 data-delete-product="<?= $p['id'] ?>"
                 data-name="<?= h($p['name']) ?>">Löschen</button>

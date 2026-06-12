@@ -2,8 +2,8 @@
 function order_create(array $data): string {
     $reference = 'ABJ-' . nano_id(8);
     $isPaid = in_array($data['payment_method'] ?? '', ['kreditkarte', 'paypal']);
-    $stmt = db()->prepare("INSERT INTO orders (reference,customer_name,email,phone,address,items,total_cents,shipping_cents,status,payment_status,payment_method)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+    $stmt = db()->prepare("INSERT INTO orders (reference,customer_name,email,phone,address,items,total_cents,shipping_cents,status,payment_status,payment_method,discount_code,discount_cents)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
     $stmt->execute([
         $reference, $data['customer_name'] ?? '', $data['email'] ?? '',
         $data['phone'] ?? '',
@@ -12,6 +12,7 @@ function order_create(array $data): string {
         $data['total_cents'] ?? 0, $data['shipping_cents'] ?? 0,
         'neu', $isPaid ? 'bezahlt' : 'offen',
         $data['payment_method'] ?? '',
+        $data['discount_code'] ?? '', (int)($data['discount_cents'] ?? 0),
     ]);
     return $reference;
 }
@@ -57,6 +58,39 @@ function order_parse(array $r): array {
     return $r;
 }
 
+/**
+ * Kunden aus Bestellungen aggregieren (E-Mail = Schlüssel).
+ */
+function customers_list(): array {
+    $rows = db()->query("SELECT email, customer_name, phone,
+            COUNT(*) AS order_count,
+            SUM(CASE WHEN payment_status='bezahlt' THEN total_cents ELSE 0 END) AS revenue_cents,
+            SUM(total_cents) AS total_cents,
+            MAX(created_at) AS last_order_at,
+            MIN(created_at) AS first_order_at
+        FROM orders WHERE email <> ''
+        GROUP BY lower(email)
+        ORDER BY revenue_cents DESC, order_count DESC")->fetchAll();
+    return $rows;
+}
+
+function orders_top_products(int $limit = 5, int $days = 90): array {
+    $orders = db()->prepare("SELECT items FROM orders WHERE created_at >= datetime('now', ?) AND payment_status != 'storniert'");
+    $orders->execute(["-$days days"]);
+    $counts = [];
+    foreach ($orders->fetchAll() as $o) {
+        foreach (json_decode($o['items'] ?? '[]', true) ?: [] as $it) {
+            $name = $it['name'] ?? '';
+            if (!$name) continue;
+            if (!isset($counts[$name])) $counts[$name] = ['name' => $name, 'qty' => 0, 'revenue' => 0];
+            $counts[$name]['qty']     += (int)($it['qty'] ?? 1);
+            $counts[$name]['revenue'] += (int)($it['lineCents'] ?? 0);
+        }
+    }
+    usort($counts, fn($a, $b) => $b['qty'] <=> $a['qty']);
+    return array_slice(array_values($counts), 0, $limit);
+}
+
 function orders_stats(int $days = 7): array {
     $pdo = db();
     $totalRevenue = (int)$pdo->query("SELECT COALESCE(SUM(total_cents),0) AS c FROM orders WHERE payment_status='bezahlt'")->fetch()['c'];
@@ -68,6 +102,7 @@ function orders_stats(int $days = 7): array {
         $day = $stmt->fetch();
         $series[] = ['dayOffset' => $i, 'orders' => (int)$day['orders'], 'revenue' => (int)$day['revenue']];
     }
-    $maxOrders = max(1, ...array_column($series, 'orders'));
-    return ['totalRevenue' => $totalRevenue, 'openCount' => $openCount, 'series' => $series, 'maxOrders' => $maxOrders];
+    $maxOrders  = max(1, ...array_column($series, 'orders'));
+    $maxRevenue = max(1, ...array_column($series, 'revenue'));
+    return ['totalRevenue' => $totalRevenue, 'openCount' => $openCount, 'series' => $series, 'maxOrders' => $maxOrders, 'maxRevenue' => $maxRevenue];
 }

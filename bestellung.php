@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/lib/bootstrap.php';
 
 $reference      = trim($_GET['ref'] ?? '');
@@ -45,7 +45,7 @@ include __DIR__ . '/partials/header.php';
     </div>
     <h1>Zahlung fehlgeschlagen</h1>
     <p class="muted">Deine Zahlung konnte leider nicht verarbeitet werden. Bitte versuche es erneut.</p>
-    <a class="btn btn-primary" href="/kasse">Erneut versuchen</a>
+    <a class="btn btn-primary" href="<?= url('/kasse.php') ?>">Erneut versuchen</a>
 
   <?php elseif ($redirectStatus === 'processing'): ?>
 
@@ -58,7 +58,7 @@ include __DIR__ . '/partials/header.php';
     <?php if ($contactEmail): ?>
     <p class="muted">Fragen? <a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a></p>
     <?php endif; ?>
-    <a class="btn btn-primary" href="/shop">Weiter einkaufen</a>
+    <a class="btn btn-primary" href="<?= url('/shop.php') ?>">Weiter einkaufen</a>
 
   <?php else: ?>
 
@@ -98,6 +98,9 @@ include __DIR__ . '/partials/header.php';
 
         <div class="order-confirm-section">
           <div class="order-confirm-label">Summe</div>
+          <?php if (!empty($order['discount_cents'])): ?>
+          <div class="order-confirm-row"><span>Rabatt<?= !empty($order['discount_code']) ? ' (' . h($order['discount_code']) . ')' : '' ?></span><span style="color:#a8e6b8">&minus;<?= format_price((int)$order['discount_cents'], $currency) ?></span></div>
+          <?php endif; ?>
           <?php if ($order['shipping_cents'] > 0): ?>
           <div class="order-confirm-row"><span>Versand</span><span><?= format_price((int)$order['shipping_cents'], $currency) ?></span></div>
           <?php else: ?>
@@ -122,14 +125,25 @@ include __DIR__ . '/partials/header.php';
         <?php endif; ?>
 
         <?php if ($order['payment_method'] === 'vorkasse'): ?>
+        <?php
+          $bankRecipient = setting_get('bank_recipient') ?: (setting_get('shop_name') ?: 'ABJ Store');
+          $bankIban = setting_get('bank_iban') ?: '';
+          $bankBic  = setting_get('bank_bic') ?: '';
+          $bankName = setting_get('bank_name') ?: '';
+        ?>
         <div class="order-confirm-section">
           <div class="order-confirm-label">Zahlung per Banküberweisung</div>
+          <?php if ($bankIban): ?>
           <div class="bank-info">
-            <div><span>Empfänger</span><strong>ABJ Store GmbH</strong></div>
-            <div><span>IBAN</span><strong>DE89 3704 0044 0532 0130 00</strong></div>
-            <div><span>BIC</span><strong>COBADEFFXXX</strong></div>
+            <div><span>Empfänger</span><strong><?= h($bankRecipient) ?></strong></div>
+            <div><span>IBAN</span><strong><?= h($bankIban) ?></strong></div>
+            <?php if ($bankBic): ?><div><span>BIC</span><strong><?= h($bankBic) ?></strong></div><?php endif; ?>
+            <?php if ($bankName): ?><div><span>Bank</span><strong><?= h($bankName) ?></strong></div><?php endif; ?>
             <div><span>Verwendungszweck</span><strong><?= h($reference) ?></strong></div>
           </div>
+          <?php else: ?>
+          <p class="muted" style="font-size:.85rem;margin:0">Du erhältst die Bankverbindung per E-Mail. Verwendungszweck: <strong><?= h($reference) ?></strong></p>
+          <?php endif; ?>
         </div>
         <?php endif; ?>
 
@@ -143,7 +157,7 @@ include __DIR__ . '/partials/header.php';
     <p class="muted" style="margin-top:1rem">Fragen? <a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a></p>
     <?php endif; ?>
 
-    <a class="btn btn-primary" href="/shop" style="margin-top:1.5rem">Weiter einkaufen</a>
+    <a class="btn btn-primary" href="<?= url('/shop.php') ?>" style="margin-top:1.5rem">Weiter einkaufen</a>
 
   <?php endif; ?>
 

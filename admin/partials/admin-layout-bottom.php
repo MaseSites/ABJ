@@ -1,7 +1,7 @@
     </main><!-- .admin-main -->
   </div><!-- .admin-content -->
 </div><!-- .admin-shell -->
-<script src="/js/admin.js"></script>
-<script src="/js/inventory.js"></script>
+<script src="<?= url('/js/admin.js') ?>?v=3"></script>
+<script src="<?= url('/js/inventory.js') ?>?v=3"></script>
 </body>
 </html>

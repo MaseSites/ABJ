@@ -87,5 +87,5 @@ function is_admin(): bool {
 }
 
 function require_admin(): void {
-    if (!is_admin()) redirect('/admin/login');
+    if (!is_admin()) redirect('/admin/login.php');
 }

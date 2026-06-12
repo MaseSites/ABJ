@@ -102,7 +102,7 @@
       fd.set('variants', JSON.stringify(rows));
 
       try {
-        const res = await fetch(BASE_PATH + '/admin/lager/speichern', {
+        const res = await fetch(BASE_PATH + '/admin/api/inventory-save.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

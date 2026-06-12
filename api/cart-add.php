@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 
 $productId = (int)($_POST['productId'] ?? 0);
@@ -58,18 +58,18 @@ if ($isAjax) {
         $items[] = [
             'productId' => $cp['id'],
             'name'      => $cp['name'],
-            'url'       => '/produkt/' . $cp['slug'],
+            'url'       => url('/produkt.php?slug=' . urlencode($cp['slug'])),
             'size'      => $vr ? ($vr['title'] ?: $line['size']) : ($line['size'] ?? ''),
             'qty'       => $safeQty,
             'image'     => $img,
-            'lineText'  => format_price($unit * $safeQty, $currency),
+            'lineText'  => html_entity_decode(format_price($unit * $safeQty, $currency)),
         ];
     }
     json_response([
         'ok'        => true,
         'added'     => $p['name'],
         'count'     => array_sum(array_column($items, 'qty')),
-        'totalText' => format_price($total, $currency),
+        'totalText' => html_entity_decode(format_price($total, $currency)),
         'items'     => $items,
     ]);
 }

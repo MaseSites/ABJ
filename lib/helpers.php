@@ -59,7 +59,31 @@ function placeholder_svg(string $name): string {
     return 'data:image/svg+xml,' . $svg;
 }
 
+/**
+ * Basis-Pfad der Installation (leer bei Root-Deployment, z.B. "/sub/shop"
+ * wenn die Seite in einem Unterordner liegt). Macht alle Links/Redirects
+ * unabhängig vom Server-Setup.
+ */
+function base_path(): string {
+    static $base = null;
+    if ($base !== null) return $base;
+    $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $dir = rtrim(dirname($script), '/');
+    // Skripte liegen im Root, in /admin, /admin/api oder /api
+    $dir = preg_replace('#/(admin/api|admin|api)$#', '', $dir);
+    $base = ($dir === '' || $dir === '/') ? '' : $dir;
+    return $base;
+}
+
+function url(string $path): string {
+    return base_path() . $path;
+}
+
 function redirect(string $url): void {
+    // Absolute Site-Pfade automatisch um den Basis-Pfad ergänzen
+    if ($url !== '' && $url[0] === '/' && strpos($url, '//') !== 0) {
+        $url = base_path() . $url;
+    }
     header('Location: ' . $url);
     exit;
 }

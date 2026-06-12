@@ -18,6 +18,18 @@ $SETTINGS_DEFAULTS = [
     'stripe_publishable_key'  => '',
     'stripe_secret_key'       => '',
     'stripe_webhook_secret'   => '',
+    // Versand
+    'shipping_ch_cents'        => '590',
+    'shipping_intl_cents'      => '1990',
+    'free_shipping_from_cents' => '0',
+    // Bankverbindung (Vorkasse)
+    'bank_recipient' => 'ABJ Store',
+    'bank_iban'      => '',
+    'bank_bic'       => '',
+    'bank_name'      => '',
+    // Social Media (Footer)
+    'instagram_url'  => '',
+    'tiktok_url'     => '',
 ];
 
 function setting_get(string $key): ?string {

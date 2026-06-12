@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/lib/bootstrap.php';
 
 $slug = trim($_GET['slug'] ?? '');
@@ -49,6 +49,12 @@ $availableStock = empty($invRows) ? (int)$product['stock'] : $totalAvail;
 $isBackOrder    = ($availableStock <= 0) && inv_is_back_order($product['id'], '', '');
 $currency   = setting_get('currency') ?: 'CHF';
 
+$reviews    = reviews_for_product((int)$product['id']);
+$ratingInfo = reviews_avg((int)$product['id']);
+
+$freeFrom = shipping_free_from_cents();
+$shipCh   = (int)(setting_get('shipping_ch_cents') ?: 590);
+
 $errorMsg = null;
 if (($_GET['error'] ?? '') === 'soldout') $errorMsg = 'Dieses Produkt ist leider ausverkauft.';
 if (($_GET['error'] ?? '') === 'variant')  $errorMsg = 'Bitte wähle eine Variante.';
@@ -62,13 +68,16 @@ include __DIR__ . '/partials/header.php';
 
 <main id="main" class="container section">
   <nav class="breadcrumb">
-    <a href="/">Start</a> / <a href="/shop">Shop</a> / <?= h($product['name']) ?>
+    <a href="<?= url('/') ?>">Start</a> / <a href="<?= url('/shop.php') ?>">Shop</a> /
+    <a href="<?= url('/shop.php?category=' . urlencode($product['category'])) ?>"><?= h($product['category']) ?></a> /
+    <?= h($product['name']) ?>
   </nav>
 
   <div class="product-detail">
     <div class="product-gallery" data-gallery>
       <div class="gallery-main">
         <img src="<?= h($mainImg) ?>" alt="<?= h($product['name']) ?>" data-gallery-main data-zoomable>
+        <span class="zoom-hint">Zum Vergrössern klicken</span>
       </div>
       <?php if (count($product['images']) > 1): ?>
       <div class="gallery-thumbs">
@@ -84,6 +93,13 @@ include __DIR__ . '/partials/header.php';
     <div class="product-info">
       <span class="product-cat-label"><?= h($product['category']) ?></span>
       <h1 class="product-detail-name"><?= h($product['name']) ?></h1>
+
+      <?php if ($ratingInfo['count'] > 0): ?>
+      <div class="product-rating-row">
+        <span class="stars" aria-hidden="true"><?= str_repeat('★', (int)round($ratingInfo['avg'])) . str_repeat('☆', 5 - (int)round($ratingInfo['avg'])) ?></span>
+        <a href="#bewertungen"><?= h((string)$ratingInfo['avg']) ?> · <?= $ratingInfo['count'] ?> <?= $ratingInfo['count'] === 1 ? 'Bewertung' : 'Bewertungen' ?></a>
+      </div>
+      <?php endif; ?>
 
       <div class="product-price big">
         <?php if ($product['sale_price_cents']): ?>
@@ -105,7 +121,7 @@ include __DIR__ . '/partials/header.php';
         <div class="alert alert-error" style="margin-bottom:1rem"><?= h($errorMsg) ?></div>
       <?php endif; ?>
 
-      <form action="/api/cart-add.php" method="post" data-ajax-add data-product-id="<?= (int)$product['id'] ?>">
+      <form action="<?= url('/api/cart-add.php') ?>" method="post" data-ajax-add data-product-id="<?= (int)$product['id'] ?>">
         <input type="hidden" name="productId" value="<?= (int)$product['id'] ?>">
         <input type="hidden" name="slug" value="<?= h($product['slug']) ?>">
 
@@ -127,7 +143,7 @@ include __DIR__ . '/partials/header.php';
       </form>
 
       <div class="product-trust-row">
-        <span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 1l1.8 3.6L14 5.5l-3 2.9.7 4.1L8 10.4 4.3 12.5l.7-4.1L2 5.5l4.2-.9z"/></svg> Kostenloser Versand</span>
+        <span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 1l1.8 3.6L14 5.5l-3 2.9.7 4.1L8 10.4 4.3 12.5l.7-4.1L2 5.5l4.2-.9z"/></svg> Authentizität geprüft</span>
         <span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="6" width="12" height="9" rx="1.5"/><path d="M5 6V4a3 3 0 016 0v2"/></svg> Sicherer Checkout</span>
         <span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8a6 6 0 1012 0A6 6 0 002 8z"/><path d="M8 5v3l2 2"/></svg> 14 Tage Rückgabe</span>
       </div>
@@ -135,6 +151,25 @@ include __DIR__ . '/partials/header.php';
       <?php if ($product['description']): ?>
         <div class="product-description"><?= $product['description'] ?></div>
       <?php endif; ?>
+
+      <div class="prod-accordion">
+        <details>
+          <summary>Versand &amp; Lieferung</summary>
+          <div class="acc-body">
+            Versand innerhalb der Schweiz: <?= format_price($shipCh, $currency) ?> (2–4 Werktage).<br>
+            International: 5–10 Werktage.
+            <?php if ($freeFrom > 0): ?><br>Ab <?= format_price($freeFrom, $currency) ?> Bestellwert liefern wir kostenlos.<?php endif; ?>
+          </div>
+        </details>
+        <details>
+          <summary>Rückgabe &amp; Umtausch</summary>
+          <div class="acc-body">14 Tage Rückgaberecht ab Erhalt. Artikel müssen ungetragen und im Originalzustand sein. Details siehe <a href="<?= url('/widerruf.php') ?>" style="color:var(--accent-3)">Widerruf</a>.</div>
+        </details>
+        <details>
+          <summary>Echtheit &amp; Zustand</summary>
+          <div class="acc-body">Jedes Piece wird vor dem Verkauf geprüft und authentifiziert. Der Zustand ist in der Produktbeschreibung vermerkt.</div>
+        </details>
+      </div>
     </div>
   </div>
 
@@ -143,8 +178,51 @@ include __DIR__ . '/partials/header.php';
   <script id="product-price-data" type="application/json"><?= json_encode(['price_cents' => $product['price_cents'], 'sale_price_cents' => $product['sale_price_cents']]) ?></script>
   <span data-track-view="<?= (int)$product['id'] ?>" hidden></span>
 
+  <!-- Bewertungen -->
+  <section class="product-reviews" id="bewertungen">
+    <span class="section-title-label">Bewertungen</span>
+    <h2 class="section-title">
+      <?= $ratingInfo['count'] > 0
+          ? h((string)$ratingInfo['avg']) . ' von 5 · ' . $ratingInfo['count'] . ' ' . ($ratingInfo['count'] === 1 ? 'Bewertung' : 'Bewertungen')
+          : 'Noch keine Bewertungen' ?>
+    </h2>
+
+    <?php if (!empty($reviews)): ?>
+    <div class="review-list">
+      <?php foreach ($reviews as $rev): ?>
+      <article class="review-item">
+        <div class="review-item-head">
+          <strong><?= h($rev['author']) ?></strong>
+          <span class="stars" aria-label="<?= (int)$rev['rating'] ?> von 5"><?= str_repeat('★', (int)$rev['rating']) . str_repeat('☆', 5 - (int)$rev['rating']) ?></span>
+          <time datetime="<?= h(substr($rev['created_at'], 0, 10)) ?>"><?= h(substr($rev['created_at'], 0, 10)) ?></time>
+        </div>
+        <p><?= nl2br(h($rev['text'])) ?></p>
+      </article>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
+    <form class="review-form" data-review-form data-product-id="<?= (int)$product['id'] ?>">
+      <h3>Bewertung schreiben</h3>
+      <div>
+        <span class="field-label" style="margin-top:0">Deine Bewertung</span>
+        <div class="star-input" role="radiogroup" aria-label="Sterne">
+          <?php for ($s = 5; $s >= 1; $s--): ?>
+          <input type="radio" id="star<?= $s ?>" name="rating" value="<?= $s ?>" <?= $s === 5 ? 'checked' : '' ?>>
+          <label for="star<?= $s ?>" title="<?= $s ?> Sterne">★</label>
+          <?php endfor; ?>
+        </div>
+      </div>
+      <label class="field"><span>Name</span><input type="text" name="author" required minlength="2" maxlength="80" placeholder="Dein Name"></label>
+      <label class="field"><span>Bewertung</span><textarea name="text" rows="4" required minlength="5" maxlength="1500" placeholder="Wie zufrieden bist du mit dem Produkt?"></textarea></label>
+      <p class="review-form-msg muted" data-review-msg hidden></p>
+      <button class="btn btn-primary" type="submit" style="align-self:flex-start">Bewertung absenden</button>
+    </form>
+  </section>
+
   <?php if (!empty($related)): ?>
-  <section class="section">
+  <section class="section" style="padding-bottom:0">
+    <span class="section-title-label">Empfehlungen</span>
     <h2 class="section-title">Ähnliche Produkte</h2>
     <div class="product-grid">
       <?php foreach ($related as $p): ?>

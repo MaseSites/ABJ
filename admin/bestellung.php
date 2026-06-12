@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 $ref   = trim($_GET['ref'] ?? '');
 $order = $ref ? order_by_ref($ref) : null;
@@ -18,7 +18,7 @@ $addr     = is_array($order['address']) ? $order['address'] : ['raw' => $order['
 ?>
 <div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Bestellung <?= h($ref) ?></h1>
-  <a href="/admin/bestellungen.php" class="btn btn-ghost">← Zurück</a>
+  <a href="<?= url('/admin/bestellungen.php') ?>" class="btn btn-ghost">← Zurück</a>
 </div>
 <?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
 

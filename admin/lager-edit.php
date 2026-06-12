@@ -22,7 +22,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 ?>
 <div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Lager: <?= h($row['product_name']) ?> <?= $row['size'] ? '(' . h($row['size']) . ')' : '' ?></h1>
-  <a href="/admin/lager.php" class="btn btn-ghost">← Zurück</a>
+  <a href="<?= url('/admin/lager.php') ?>" class="btn btn-ghost">← Zurück</a>
 </div>
 <?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
 

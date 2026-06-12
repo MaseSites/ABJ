@@ -76,8 +76,22 @@ if (empty($lineItems)) {
     json_response(['ok' => false, 'error' => 'Keine verfügbaren Artikel im Warenkorb.'], 422);
 }
 
-$shippingCents = ($country === 'CH') ? 590 : 1990;
-$totalCents    = $subtotal + $shippingCents;
+// --- Rabattcode (serverseitig validiert) ---
+$discountCode  = trim($_POST['discount_code'] ?? '');
+$discountCents = 0;
+$freeShipping  = false;
+if ($discountCode !== '') {
+    $check = discount_validate($discountCode, $subtotal);
+    if (!$check['ok']) {
+        json_response(['ok' => false, 'error' => 'Rabattcode: ' . $check['error']], 422);
+    }
+    $discountCents = (int)$check['discount_cents'];
+    $freeShipping  = !empty($check['free_shipping']);
+    $discountCode  = strtoupper($discountCode);
+}
+
+$shippingCents = $freeShipping ? 0 : shipping_cost_cents($country, $subtotal);
+$totalCents    = max(0, $subtotal - $discountCents) + $shippingCents;
 
 $address = [
     'firstname' => $firstname, 'lastname' => $lastname,
@@ -86,18 +100,21 @@ $address = [
     'country'   => $country,
 ];
 
+$orderData = [
+    'customer_name'  => "$firstname $lastname",
+    'email'          => $email,
+    'phone'          => $phone,
+    'address'        => $address,
+    'items'          => $lineItems,
+    'total_cents'    => $totalCents,
+    'shipping_cents' => $shippingCents,
+    'discount_code'  => $discountCode,
+    'discount_cents' => $discountCents,
+];
+
 // --- Stripe online payment ---
 if ($payMethod === 'stripe' && stripe_is_configured()) {
-    $reference = order_create([
-        'customer_name'  => "$firstname $lastname",
-        'email'          => $email,
-        'phone'          => $phone,
-        'address'        => $address,
-        'items'          => $lineItems,
-        'total_cents'    => $totalCents,
-        'shipping_cents' => $shippingCents,
-        'payment_method' => 'stripe',
-    ]);
+    $reference = order_create($orderData + ['payment_method' => 'stripe']);
 
     try {
         $pi = stripe_create_payment_intent($totalCents, $currency, [
@@ -106,6 +123,7 @@ if ($payMethod === 'stripe' && stripe_is_configured()) {
             'description' => "ABJ Store – Bestellung $reference",
         ]);
         order_set_payment_intent($reference, $pi['id']);
+        if ($discountCode) discount_redeem($discountCode);
         cart_set([]);
         last_order_set($reference);
         json_response([
@@ -113,7 +131,7 @@ if ($payMethod === 'stripe' && stripe_is_configured()) {
             'client_secret'   => $pi['client_secret'],
             'order_ref'       => $reference,
             'publishable_key' => stripe_publishable_key(),
-            'return_url'      => '/bestellung?ref=' . urlencode($reference),
+            'return_url'      => url('/bestellung.php?ref=' . urlencode($reference)),
         ]);
     } catch (Throwable $e) {
         order_update_status($reference, 'storniert', 'fehlgeschlagen');
@@ -122,17 +140,9 @@ if ($payMethod === 'stripe' && stripe_is_configured()) {
 }
 
 // --- Bank transfer / fallback ---
-$reference = order_create([
-    'customer_name'  => "$firstname $lastname",
-    'email'          => $email,
-    'phone'          => $phone,
-    'address'        => $address,
-    'items'          => $lineItems,
-    'total_cents'    => $totalCents,
-    'shipping_cents' => $shippingCents,
-    'payment_method' => 'vorkasse',
-]);
+$reference = order_create($orderData + ['payment_method' => 'vorkasse']);
 inv_deduct_stock($lineItems);
+if ($discountCode) discount_redeem($discountCode);
 cart_set([]);
 last_order_set($reference);
-json_response(['ok' => true, 'redirect' => '/bestellung?ref=' . urlencode($reference)]);
+json_response(['ok' => true, 'redirect' => url('/bestellung.php?ref=' . urlencode($reference))]);

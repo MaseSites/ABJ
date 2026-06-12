@@ -29,32 +29,46 @@ $totalPages = max(1, (int)ceil(count($all) / $perPage));
 $items = array_slice($all, ($page - 1) * $perPage, $perPage);
 $categories = products_categories();
 
-$pageTitle = $q ? 'Suchergebnisse' : 'Shop';
+// Querystring-Helfer für Filter-Links
+function shop_qs(array $overrides = []): string {
+    $params = array_merge([
+        'q'        => $_GET['q'] ?? null,
+        'category' => $_GET['category'] ?? null,
+        'sort'     => $_GET['sort'] ?? null,
+        'sale'     => $_GET['sale'] ?? null,
+    ], $overrides);
+    $params = array_filter($params, fn($v) => $v !== null && $v !== '');
+    return $params ? '?' . http_build_query($params) : '';
+}
+
+$pageTitle = $q ? 'Suchergebnisse' : ($sale ? 'Sale' : 'Shop');
 include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/header.php';
 ?>
 
 <main id="main" class="container section">
-  <span class="section-title-label"><?= $q ? 'Suche' : 'Kollektion' ?></span>
-  <h1 class="section-title"><?= $q ? 'Suchergebnisse' : 'Shop' ?></h1>
+  <span class="section-title-label"><?= $q ? 'Suche' : ($sale ? 'Reduziert' : 'Kollektion') ?></span>
+  <h1 class="section-title"><?= $q ? 'Suchergebnisse' : ($sale ? 'Sale' : 'Shop') ?></h1>
 
   <?php if ($q): ?>
   <p class="muted result-info">
     <strong><?= count($all) ?></strong> Treffer für „<?= h($q) ?>" ·
-    <a href="/shop">Suche zurücksetzen</a>
+    <a href="<?= url('/shop.php') ?>">Suche zurücksetzen</a>
   </p>
   <?php endif; ?>
 
   <div class="shop-toolbar">
     <div class="chip-row">
-      <a class="chip<?= !$category ? ' active' : '' ?>" href="/shop">Alle</a>
+      <a class="chip<?= (!$category && !$sale) ? ' active' : '' ?>" href="<?= url('/shop.php' . shop_qs(['category' => null, 'sale' => null, 'page' => null])) ?>">Alle</a>
+      <a class="chip<?= $sale ? ' active' : '' ?>" href="<?= url('/shop.php' . shop_qs(['sale' => 1, 'category' => null])) ?>">Sale&nbsp;%</a>
       <?php foreach ($categories as $c): ?>
-        <a class="chip<?= $category === $c ? ' active' : '' ?>" href="/shop?category=<?= urlencode($c) ?>"><?= h($c) ?></a>
+        <a class="chip<?= $category === $c ? ' active' : '' ?>" href="<?= url('/shop.php' . shop_qs(['category' => $c, 'sale' => null])) ?>"><?= h($c) ?></a>
       <?php endforeach; ?>
     </div>
-    <form class="sort-form" method="get" action="/shop">
+    <form class="sort-form" method="get" action="<?= url('/shop.php') ?>">
       <?php if ($q): ?><input type="hidden" name="q" value="<?= h($q) ?>"><?php endif; ?>
       <?php if ($category): ?><input type="hidden" name="category" value="<?= h($category) ?>"><?php endif; ?>
+      <?php if ($sale): ?><input type="hidden" name="sale" value="1"><?php endif; ?>
       <label class="sort-label" for="sort">Sortieren</label>
       <select id="sort" name="sort" data-sort-select>
         <option value=""          <?= $sort === ''          ? 'selected' : '' ?>>Neueste</option>
@@ -66,6 +80,7 @@ include __DIR__ . '/partials/header.php';
   </div>
 
   <?php if (!empty($items)): ?>
+    <p class="muted" style="font-size:.82rem;margin:0 0 1rem"><?= count($all) ?> <?= count($all) === 1 ? 'Produkt' : 'Produkte' ?></p>
     <div class="product-grid">
       <?php foreach ($items as $p): ?>
         <?php include __DIR__ . '/partials/product-card.php'; ?>
@@ -73,20 +88,19 @@ include __DIR__ . '/partials/header.php';
     </div>
     <?php if ($totalPages > 1): ?>
     <nav class="pagination" aria-label="Seiten">
-      <?php for ($i = 1; $i <= $totalPages; $i++):
-        $qs = [];
-        if ($q) $qs[] = 'q=' . urlencode($q);
-        if ($category) $qs[] = 'category=' . urlencode($category);
-        if ($sort) $qs[] = 'sort=' . urlencode($sort);
-        $qs[] = 'page=' . $i;
-        $href = '/shop?' . implode('&', $qs);
-      ?>
-        <a class="page<?= $i === $page ? ' active' : '' ?>" href="<?= h($href) ?>"><?= $i ?></a>
+      <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+        <a class="page<?= $i === $page ? ' active' : '' ?>" href="<?= url('/shop.php' . shop_qs(['page' => $i])) ?>"><?= $i ?></a>
       <?php endfor; ?>
     </nav>
     <?php endif; ?>
   <?php else: ?>
-    <p class="muted">Keine Produkte in dieser Kategorie.</p>
+    <div class="cart-empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+        <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+      </svg>
+      <p>Keine Produkte gefunden.</p>
+      <a class="btn btn-primary" href="<?= url('/shop.php') ?>">Alle Produkte ansehen</a>
+    </div>
   <?php endif; ?>
 </main>
 

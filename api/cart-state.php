@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 header('Content-Type: application/json');
 
@@ -24,16 +24,16 @@ foreach ($cart as $line) {
     $items[] = [
         'productId' => $p['id'],
         'name'      => $p['name'],
-        'url'       => '/produkt/' . $p['slug'],
+        'url'       => url('/produkt.php?slug=' . urlencode($p['slug'])),
         'size'      => $variantRow ? ($variantRow['title'] ?: $line['size']) : ($line['size'] ?? ''),
         'qty'       => $safeQty,
         'image'     => $imgSrc,
-        'lineText'  => format_price($unit * $safeQty, $currency),
+        'lineText'  => html_entity_decode(format_price($unit * $safeQty, $currency)),
     ];
 }
 
 echo json_encode([
     'items'     => $items,
     'count'     => array_sum(array_column($items, 'qty')),
-    'totalText' => format_price($total, $currency),
+    'totalText' => html_entity_decode(format_price($total, $currency)),
 ]);

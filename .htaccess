@@ -45,10 +45,16 @@ RewriteRule ^warenkorb/api/state$   /api/cart-state.php  [L,QSA]
 RewriteRule ^api/checkout$           /api/checkout.php          [L,QSA]
 RewriteRule ^api/stripe-webhook$     /api/stripe-webhook.php    [L,QSA]
 
+# Shop-API
+RewriteRule ^api/produkte$           /api/produkte.php          [L,QSA]
+RewriteRule ^api/review$             /api/review.php            [L,QSA]
+RewriteRule ^api/discount-check$     /api/discount-check.php    [L,QSA]
+
 # Admin-API
 RewriteRule ^admin/api/products/(\d+)$         /admin/api/products.php?id=$1  [L,QSA]
 RewriteRule ^admin/api/products$               /admin/api/products.php        [L,QSA]
 RewriteRule ^admin/api/upload$                 /admin/api/upload.php          [L,QSA]
+RewriteRule ^admin/api/inventory-save$         /admin/api/inventory-save.php  [L,QSA]
 
 # Admin ohne .php
 RewriteRule ^admin/?$                          /admin/index.php            [L,QSA]
@@ -60,6 +66,9 @@ RewriteRule ^admin/lager$                      /admin/lager.php            [L,QS
 RewriteRule ^admin/nachrichten$                /admin/nachrichten.php      [L,QSA]
 RewriteRule ^admin/newsletter$                 /admin/newsletter.php       [L,QSA]
 RewriteRule ^admin/einstellungen$              /admin/einstellungen.php    [L,QSA]
+RewriteRule ^admin/rabatte$                    /admin/rabatte.php          [L,QSA]
+RewriteRule ^admin/bewertungen$                /admin/bewertungen.php      [L,QSA]
+RewriteRule ^admin/kunden$                     /admin/kunden.php           [L,QSA]
 RewriteRule ^admin/produkt/([0-9]+)/?$         /admin/produkt-edit.php?id=$1  [L,QSA]
 RewriteRule ^admin/produkt/neu$                /admin/produkt-edit.php     [L,QSA]
 RewriteRule ^admin/bestellung/([^/]+)/?$       /admin/bestellung.php?ref=$1   [L,QSA]

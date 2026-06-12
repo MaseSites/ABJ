@@ -305,7 +305,7 @@
           try {
             const fd = new FormData();
             fd.append('image', file);
-            const res = await fetch(BASE_PATH + '/admin/api/upload', { method: 'POST', body: fd });
+            const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd });
             const data = await res.json().catch(() => ({}));
             if (data.ok && data.src) {
               urlInput.value = data.src;
@@ -384,7 +384,7 @@
         try {
           const fd = new FormData();
           fd.append('image', file);
-          const res = await fetch(BASE_PATH + '/admin/api/upload', { method: 'POST', body: fd });
+          const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd });
           const data = await res.json().catch(() => ({}));
           if (data.ok && data.src) uploaded.push({ type: 'upload', src: data.src });
         } catch { /* ignore single-file failures */ }
@@ -446,7 +446,7 @@
         });
         const data = await response.json().catch(() => ({}));
         if (response.ok && data.ok) {
-          window.location.href = BASE_PATH + '/admin/produkte';
+          window.location.href = BASE_PATH + '/admin/produkte.php';
           return;
         }
         showError(data.error || 'Speichern fehlgeschlagen.', data.issues);
@@ -468,7 +468,7 @@
         const name = button.getAttribute('data-name') || 'dieses Produkt';
         if (!window.confirm(`"${name}" wirklich löschen?`)) return;
         try {
-          const response = await fetch(BASE_PATH + '/admin/api/products/' + encodeURIComponent(id), {
+          const response = await fetch(BASE_PATH + '/admin/api/products.php?id=' + encodeURIComponent(id), {
             method: 'DELETE',
             headers: { 'X-CSRF-Token': csrf(null), Accept: 'application/json' },
           });
@@ -485,11 +485,12 @@
   }
 
   function initProductFilter() {
-    const filter = $('[data-product-filter]');
+    const filter = $('[data-product-filter]') || $('[data-table-filter]');
     if (!filter) return;
+    const table = $('[data-filter-table]') || $('.data-table');
     filter.addEventListener('input', () => {
       const query = filter.value.trim().toLowerCase();
-      $$('tbody tr', $('.data-table')).forEach((row) => {
+      $$('tbody tr', table).forEach((row) => {
         row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
       });
     });

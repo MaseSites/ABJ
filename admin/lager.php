@@ -20,7 +20,7 @@ $inventory = inv_all();
       <td><?= $row['reserved'] ?></td>
       <td><?= $row['available'] ?></td>
       <td><?= $row['min_stock'] ?></td>
-      <td><a href="/admin/lager-edit.php?id=<?= $row['id'] ?>" class="btn btn-ghost btn-sm">Bearbeiten</a></td>
+      <td><a href="<?= url('/admin/lager-edit.php?id=' . $row['id']) ?>" class="btn btn-ghost btn-sm">Bearbeiten</a></td>
     </tr>
     <?php endforeach; ?>
   </tbody>

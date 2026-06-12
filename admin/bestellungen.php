@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../lib/bootstrap.php';
+require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     $ref = trim($_POST['ref'] ?? '');
@@ -7,15 +8,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     redirect('/admin/bestellungen.php');
 }
 
-$adminTitle = 'Bestellungen';
-include __DIR__ . '/partials/admin-layout-top.php';
-
 $orders   = orders_list();
 $currency = setting_get('currency') ?: 'CHF';
-?>
-<div class="admin-head-row" style="margin-bottom:1.4rem"><h1>Bestellungen</h1></div>
 
-<table class="data-table">
+// Filter
+$filter = $_GET['filter'] ?? '';
+if ($filter === 'offen')     $orders = array_values(array_filter($orders, fn($o) => $o['payment_status'] !== 'bezahlt' && $o['status'] !== 'storniert'));
+if ($filter === 'bezahlt')   $orders = array_values(array_filter($orders, fn($o) => $o['payment_status'] === 'bezahlt'));
+if ($filter === 'neu')       $orders = array_values(array_filter($orders, fn($o) => empty($o['is_seen'])));
+
+// CSV-Export
+if (($_GET['export'] ?? '') === 'csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="bestellungen-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fwrite($out, "\xEF\xBB\xBF");
+    fputcsv($out, ['Referenz', 'Datum', 'Kunde', 'E-Mail', 'Telefon', 'Artikel', 'Zwischensumme', 'Rabatt', 'Versand', 'Gesamt', 'Zahlung', 'Status', 'Zahlungsart', 'Adresse'], ';');
+    foreach ($orders as $o) {
+        $addr = is_array($o['address']) ? $o['address'] : [];
+        $addrStr = trim(($addr['street'] ?? '') . ' ' . ($addr['housenr'] ?? '') . ', ' . ($addr['zip'] ?? '') . ' ' . ($addr['city'] ?? '') . ', ' . ($addr['country'] ?? ''), ' ,');
+        $itemsStr = implode(' | ', array_map(fn($it) => ($it['name'] ?? '') . (!empty($it['size']) ? ' (' . $it['size'] . ')' : '') . ' ×' . ($it['qty'] ?? 1), $o['items']));
+        $sub = (int)$o['total_cents'] - (int)$o['shipping_cents'] + (int)($o['discount_cents'] ?? 0);
+        fputcsv($out, [
+            $o['reference'], substr($o['created_at'], 0, 16), $o['customer_name'], $o['email'], $o['phone'],
+            $itemsStr,
+            number_format($sub / 100, 2, '.', ''),
+            number_format((int)($o['discount_cents'] ?? 0) / 100, 2, '.', ''),
+            number_format((int)$o['shipping_cents'] / 100, 2, '.', ''),
+            number_format((int)$o['total_cents'] / 100, 2, '.', ''),
+            $o['payment_status'], $o['status'], $o['payment_method'], $addrStr,
+        ], ';');
+    }
+    fclose($out);
+    exit;
+}
+
+$adminTitle = 'Bestellungen';
+include __DIR__ . '/partials/admin-layout-top.php';
+?>
+<p class="admin-kicker">Übersicht</p>
+<div class="admin-head-row" style="margin-bottom:1.4rem">
+  <h1>Bestellungen (<?= count($orders) ?>)</h1>
+  <a class="btn btn-ghost btn-sm" href="<?= url('/admin/bestellungen.php?export=csv' . ($filter ? '&filter=' . urlencode($filter) : '')) ?>">CSV exportieren</a>
+</div>
+
+<div class="chip-row" style="margin-bottom:1.4rem">
+  <a class="chip<?= $filter === '' ? ' active' : '' ?>" href="<?= url('/admin/bestellungen.php') ?>">Alle</a>
+  <a class="chip<?= $filter === 'neu' ? ' active' : '' ?>" href="<?= url('/admin/bestellungen.php?filter=neu') ?>">Neu</a>
+  <a class="chip<?= $filter === 'offen' ? ' active' : '' ?>" href="<?= url('/admin/bestellungen.php?filter=offen') ?>">Offen</a>
+  <a class="chip<?= $filter === 'bezahlt' ? ' active' : '' ?>" href="<?= url('/admin/bestellungen.php?filter=bezahlt') ?>">Bezahlt</a>
+</div>
+
+<?php if (empty($orders)): ?>
+  <p class="muted">Keine Bestellungen in dieser Ansicht.</p>
+<?php else: ?>
+<input type="search" class="admin-search" data-table-filter placeholder="Bestellungen filtern… (Referenz, Kunde)" aria-label="Bestellungen filtern">
+<table class="data-table" data-filter-table>
   <thead><tr><th>Referenz</th><th>Kunde</th><th>Datum</th><th>Betrag</th><th>Status</th><th>Zahlung</th><th></th></tr></thead>
   <tbody>
     <?php foreach ($orders as $o):
@@ -23,7 +71,7 @@ $currency = setting_get('currency') ?: 'CHF';
     ?>
     <tr class="<?= $isNew ? 'order-row-new' : '' ?>">
       <td>
-        <a href="/admin/bestellung.php?ref=<?= urlencode($o['reference']) ?>"><?= h($o['reference']) ?></a>
+        <a href="<?= url('/admin/bestellung.php?ref=' . urlencode($o['reference'])) ?>"><?= h($o['reference']) ?></a>
         <?php if ($isNew): ?><span class="tag tag-new" style="margin-left:.4rem">NEU</span><?php endif; ?>
       </td>
       <td><?= h($o['customer_name']) ?></td>
@@ -32,16 +80,17 @@ $currency = setting_get('currency') ?: 'CHF';
       <td><span class="tag"><?= h($o['status']) ?></span></td>
       <td><span class="tag <?= $o['payment_status'] === 'bezahlt' ? 'tag-ok' : 'tag-warn' ?>"><?= h($o['payment_status']) ?></span></td>
       <td style="white-space:nowrap;display:flex;gap:.4rem;align-items:center">
-        <a href="/admin/bestellung.php?ref=<?= urlencode($o['reference']) ?>" class="btn btn-ghost btn-sm">Details</a>
-        <form method="post" action="/admin/bestellungen.php" onsubmit="return confirm('Bestellung <?= h($o['reference']) ?> wirklich löschen?')">
+        <a href="<?= url('/admin/bestellung.php?ref=' . urlencode($o['reference'])) ?>" class="btn btn-ghost btn-sm">Details</a>
+        <form method="post" action="<?= url('/admin/bestellungen.php') ?>" onsubmit="return confirm('Bestellung <?= h($o['reference']) ?> wirklich löschen?')">
           <input type="hidden" name="action" value="delete">
           <input type="hidden" name="ref" value="<?= h($o['reference']) ?>">
-          <button class="btn btn-ghost btn-sm" type="submit" style="color:#e05c48;border-color:#e05c48">Löschen</button>
+          <button class="btn btn-danger btn-sm" type="submit">Löschen</button>
         </form>
       </td>
     </tr>
     <?php endforeach; ?>
   </tbody>
 </table>
+<?php endif; ?>
 
 <?php include __DIR__ . '/partials/admin-layout-bottom.php'; ?>

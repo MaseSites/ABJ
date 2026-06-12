@@ -103,6 +103,27 @@ function db_init(PDO $pdo): void {
             updated_at TEXT DEFAULT (datetime('now')),
             PRIMARY KEY (token, product_id, size)
         );
+        CREATE TABLE IF NOT EXISTS discount_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            type TEXT NOT NULL DEFAULT 'percent',  -- 'percent' | 'fixed' | 'free_shipping'
+            value INTEGER NOT NULL DEFAULT 0,      -- Prozent (1-100) oder Betrag in Rappen
+            min_order_cents INTEGER DEFAULT 0,
+            max_uses INTEGER DEFAULT 0,            -- 0 = unbegrenzt
+            used_count INTEGER DEFAULT 0,
+            valid_until TEXT DEFAULT '',           -- ISO-Datum, leer = unbegrenzt
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            author TEXT DEFAULT '',
+            rating INTEGER NOT NULL DEFAULT 5,
+            text TEXT DEFAULT '',
+            is_approved INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
     ");
     // Migrate: add columns that may be missing in older DB versions
     $inv_cols = array_column($pdo->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC), 'name');
@@ -137,11 +158,17 @@ function db_init(PDO $pdo): void {
     } catch (\Throwable $e) {}
 
     $ord_cols = array_column($pdo->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    if (!in_array('stripe_payment_intent_id', $ord_cols)) {
-        try { $pdo->exec("ALTER TABLE orders ADD COLUMN stripe_payment_intent_id TEXT DEFAULT ''"); } catch (\Throwable $e) {}
-    }
-    if (!in_array('is_seen', $ord_cols)) {
-        try { $pdo->exec("ALTER TABLE orders ADD COLUMN is_seen INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
+    $ord_add = [
+        'stripe_payment_intent_id' => "TEXT DEFAULT ''",
+        'is_seen'                  => 'INTEGER DEFAULT 0',
+        'discount_code'            => "TEXT DEFAULT ''",
+        'discount_cents'           => 'INTEGER DEFAULT 0',
+        'note'                     => "TEXT DEFAULT ''",
+    ];
+    foreach ($ord_add as $col => $def) {
+        if (!in_array($col, $ord_cols)) {
+            try { $pdo->exec("ALTER TABLE orders ADD COLUMN $col $def"); } catch (\Throwable $e) {}
+        }
     }
 
     // Migrate: force currency to CHF if still set to old EUR default

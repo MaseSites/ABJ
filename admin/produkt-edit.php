@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../lib/bootstrap.php';
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
@@ -58,7 +58,7 @@ $hasVariants      = $isNew ? true
     : (!empty($optionGroups) || count($invRows) > 1
        || (count($invRows) === 1 && ($invRows[0]['size'] || $invRows[0]['color'])));
 
-$formAction = $isNew ? '/admin/api/products' : '/admin/api/products?id=' . $id;
+$formAction = url($isNew ? '/admin/api/products.php' : '/admin/api/products.php?id=' . $id);
 $title      = $isNew ? 'Neues Produkt' : h($p['name'] ?? '');
 $currency   = setting_get('currency') ?: 'CHF';
 ?>
@@ -66,7 +66,7 @@ $currency   = setting_get('currency') ?: 'CHF';
 <p class="admin-kicker">Produkte</p>
 <div class="admin-head-row">
   <h1><?= $title ?></h1>
-  <a class="btn btn-ghost" href="/admin/produkte.php">← Zurück</a>
+  <a class="btn btn-ghost" href="<?= url('/admin/produkte.php') ?>">← Zurück</a>
 </div>
 
 <div id="form-alert" class="alert alert-error" hidden></div>
@@ -224,7 +224,7 @@ $currency   = setting_get('currency') ?: 'CHF';
       <button class="btn btn-primary" type="submit">
         <?= $isNew ? 'Produkt erstellen' : 'Änderungen speichern' ?>
       </button>
-      <a class="btn btn-ghost" href="/admin/produkte.php">Abbrechen</a>
+      <a class="btn btn-ghost" href="<?= url('/admin/produkte.php') ?>">Abbrechen</a>
     </div>
   </div>
 

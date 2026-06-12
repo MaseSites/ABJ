@@ -66,6 +66,7 @@ RewriteRule ^admin/api/products/(\d+)$         /admin/api/products.php?id=$1  [L
 RewriteRule ^admin/api/products$               /admin/api/products.php        [L,QSA]
 RewriteRule ^admin/api/upload$                 /admin/api/upload.php          [L,QSA]
 RewriteRule ^admin/api/inventory-save$         /admin/api/inventory-save.php  [L,QSA]
+RewriteRule ^admin/api/stock-adjust$           /admin/api/stock-adjust.php    [L,QSA]
 
 # Admin ohne .php
 RewriteRule ^admin/?$                          /admin/index.php            [L,QSA]

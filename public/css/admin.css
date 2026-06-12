@@ -795,3 +795,47 @@ body { font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
   50%      { box-shadow: 0 0 0 4px rgba(226,73,60,0); }
 }
 @media (prefers-reduced-motion: reduce) { .badge-neu { animation: none; } }
+
+/* ---------- Inline Lager-Stepper ---------- */
+.stock-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #080910;
+}
+.stock-stepper .qty-btn {
+  width: 30px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #a8afc4;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  font-family: inherit;
+}
+.stock-stepper .qty-btn:hover { background: rgba(184,156,103,.18); color: #fff; }
+.stock-stepper .qty-btn:active { background: rgba(184,156,103,.3); }
+.stock-stepper input {
+  width: 52px;
+  height: 32px;
+  border: none;
+  border-left: 1px solid rgba(255,255,255,.08);
+  border-right: 1px solid rgba(255,255,255,.08);
+  background: transparent;
+  color: #e0e2ea;
+  text-align: center;
+  font: inherit;
+  font-size: .88rem;
+  padding: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.stock-stepper input::-webkit-outer-spin-button,
+.stock-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.stock-stepper input:focus { outline: none; box-shadow: inset 0 0 0 2px rgba(184,156,103,.4); }
+.stock-stepper.saving { opacity: .55; pointer-events: none; }
+[data-stock-row].just-saved td { background: rgba(111,190,131,.08); transition: background .4s; }

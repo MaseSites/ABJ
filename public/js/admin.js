@@ -524,6 +524,52 @@
     });
   }
 
+  // Lager: Bestand direkt per +/- ändern (ohne Bearbeiten-Seite)
+  function initStockSteppers() {
+    $$('[data-stock-stepper]').forEach((stepper) => {
+      const row   = stepper.closest('[data-stock-row]');
+      const input = $('[data-stock-input]', stepper);
+      if (!row || !input) return;
+      const id    = row.getAttribute('data-id');
+      const minus = $('[data-stock-minus]', stepper);
+      const plus  = $('[data-stock-plus]', stepper);
+      let timer = null;
+
+      function save(absoluteValue) {
+        const fd = new URLSearchParams();
+        fd.set('id', id);
+        fd.set('stock', Math.max(0, Math.round(Number(absoluteValue) || 0)));
+        stepper.classList.add('saving');
+        fetch(BASE_PATH + '/admin/api/stock-adjust.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+          body: fd.toString(),
+        }).then((r) => r.json()).then((d) => {
+          stepper.classList.remove('saving');
+          if (!d || !d.ok) return;
+          input.value = d.stock;
+          const tag = $('[data-avail-tag]', row);
+          if (tag) {
+            tag.textContent = d.available;
+            tag.className = 'tag ' + (d.is_out ? 'tag-off' : (d.is_low ? 'tag-warn' : 'tag-ok'));
+          }
+          const valCell = $('[data-value-cell]', row);
+          if (valCell) valCell.textContent = d.valueText;
+          row.classList.toggle('row-danger', d.is_out);
+          row.classList.toggle('row-warn', !d.is_out && d.is_low);
+          const tv = $('[data-total-value]'); if (tv) tv.textContent = d.totalValueText;
+          const ts = $('[data-total-stock]'); if (ts) ts.textContent = d.totalStock;
+          row.classList.add('just-saved');
+          setTimeout(() => row.classList.remove('just-saved'), 600);
+        }).catch(() => { stepper.classList.remove('saving'); });
+      }
+
+      if (minus) minus.addEventListener('click', () => { input.value = Math.max(0, (Number(input.value) || 0) - 1); save(input.value); });
+      if (plus)  plus.addEventListener('click',  () => { input.value = (Number(input.value) || 0) + 1; save(input.value); });
+      input.addEventListener('change', () => { clearTimeout(timer); timer = setTimeout(() => save(input.value), 200); });
+    });
+  }
+
   // Klick auf das rote NEU-Badge: Bestellung als gelesen markieren, Badge entfernen
   function initMarkSeen() {
     $$('[data-mark-seen]').forEach((badge) => {
@@ -557,4 +603,5 @@
   initColorPreview();
   initConfirmForms();
   initMarkSeen();
+  initStockSteppers();
 })();

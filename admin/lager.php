@@ -21,11 +21,11 @@ $lowCount   = count(array_filter($inventory, fn($r) => $r['is_low'] && !$r['is_o
 
 <div class="stat-grid">
   <div class="stat-card stat-highlight">
-    <span class="stat-num"><?= format_price($totalValue, $currency) ?></span>
+    <span class="stat-num" data-total-value><?= format_price($totalValue, $currency) ?></span>
     <span class="stat-label">Gesamtlagerwert</span>
   </div>
   <div class="stat-card">
-    <span class="stat-num"><?= $totalStock ?></span>
+    <span class="stat-num" data-total-stock><?= $totalStock ?></span>
     <span class="stat-label">Artikel an Lager</span>
   </div>
   <div class="stat-card">
@@ -52,18 +52,24 @@ $lowCount   = count(array_filter($inventory, fn($r) => $r['is_low'] && !$r['is_o
              : (int)($row['sale_price_cents'] ?? $row['price_cents']);
       $value = max(0, (int)$row['available']) * $unit;
     ?>
-    <tr class="<?= $row['is_out'] ? 'row-danger' : ($row['is_low'] ? 'row-warn' : '') ?>">
+    <tr class="<?= $row['is_out'] ? 'row-danger' : ($row['is_low'] ? 'row-warn' : '') ?>" data-stock-row data-id="<?= (int)$row['id'] ?>">
       <td><strong><?= h($row['product_name']) ?></strong></td>
       <td><?= h($row['size'] ?: '—') ?></td>
       <td class="muted"><?= h($row['sku'] ?: '—') ?></td>
-      <td><?= $row['stock'] ?></td>
+      <td>
+        <div class="stock-stepper" data-stock-stepper>
+          <button type="button" class="qty-btn" data-stock-minus aria-label="Bestand verringern">&minus;</button>
+          <input type="number" data-stock-input value="<?= (int)$row['stock'] ?>" min="0" max="999999" aria-label="Bestand">
+          <button type="button" class="qty-btn" data-stock-plus aria-label="Bestand erhöhen">+</button>
+        </div>
+      </td>
       <td><?= $row['reserved'] ?></td>
       <td>
-        <span class="tag <?= $row['is_out'] ? 'tag-off' : ($row['is_low'] ? 'tag-warn' : 'tag-ok') ?>"><?= $row['available'] ?></span>
+        <span class="tag <?= $row['is_out'] ? 'tag-off' : ($row['is_low'] ? 'tag-warn' : 'tag-ok') ?>" data-avail-tag><?= $row['available'] ?></span>
       </td>
-      <td><?= format_price($value, $currency) ?></td>
+      <td data-value-cell><?= format_price($value, $currency) ?></td>
       <td><?= $row['min_stock'] ?></td>
-      <td><a href="<?= url('/admin/lager-edit.php?id=' . $row['id']) ?>" class="btn btn-ghost btn-sm">Bearbeiten</a></td>
+      <td><a href="<?= url('/admin/lager-edit.php?id=' . $row['id']) ?>" class="btn btn-ghost btn-sm">Mehr</a></td>
     </tr>
     <?php endforeach; ?>
   </tbody>

@@ -78,6 +78,8 @@ $routes = [
     '#^/admin/kunden/?$#'            => '/admin/kunden.php',
     '#^/admin/api/products$#'        => '/admin/api/products.php',
     '#^/admin/api/upload$#'          => '/admin/api/upload.php',
+    '#^/admin/api/stock-adjust$#'    => '/admin/api/stock-adjust.php',
+    '#^/admin/api/inventory-save$#'  => '/admin/api/inventory-save.php',
 ];
 foreach ($routes as $pattern => $target) {
     if (preg_match($pattern, $uri)) {

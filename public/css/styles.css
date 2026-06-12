@@ -1219,9 +1219,10 @@ body.no-scroll { overflow: hidden; }
 .hero-rating { display: inline-flex; align-items: center; gap: .6rem; margin-top: 1.4rem; color: var(--ink-soft); font-size: .9rem; }
 .hero-rating .stars { color: var(--gold); letter-spacing: 2px; }
 
-/* Scroll reveal */
-.reveal { opacity: 0; transform: translateY(22px); transition: opacity .65s ease, transform .65s cubic-bezier(.2,.8,.2,1); }
+/* Scroll reveal — product-cards deliberately excluded from JS so they always show */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .5s cubic-bezier(.2,.8,.2,1); }
 .reveal.in { opacity: 1; transform: none; }
+.product-card { opacity: 1 !important; transform: none !important; }
 
 /* Shop toolbar */
 .shop-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.6rem; }

@@ -177,13 +177,13 @@
 
   /* ---------------- Scroll-Reveal ---------------- */
   if (!reduce && 'IntersectionObserver' in window) {
-    $$('.product-card, .review-card, .section-title, .feature-card, .collection-card, .testimonial, .newsletter').forEach((el, i) => {
+    $$('.review-card, .section-title, .feature-card, .collection-card, .testimonial, .newsletter').forEach((el, i) => {
       if (!el.classList.contains('reveal')) el.classList.add('reveal');
       el.style.transitionDelay = (Math.min(i % 4, 3) * 60) + 'ms';
     });
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0, rootMargin: '0px' });
     $$('.reveal').forEach((el) => io.observe(el));
   } else {
     $$('.reveal').forEach((el) => el.classList.add('in'));

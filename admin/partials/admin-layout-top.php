@@ -17,6 +17,7 @@ try {
 <html lang="de" data-base-path="<?= h(base_path()) ?>">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title><?= h($adminPageTitle) ?></title>

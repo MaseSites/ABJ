@@ -37,6 +37,11 @@ $announcement = setting_get('announcement') ?: '';
           <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
         </svg>
       </button>
+      <a class="icon-btn" href="<?= url(is_customer() ? '/konto.php' : '/anmelden.php') ?>" aria-label="<?= is_customer() ? 'Mein Konto' : 'Anmelden' ?>" title="<?= is_customer() ? 'Mein Konto' : 'Anmelden' ?>">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/>
+        </svg>
+      </a>
       <a class="icon-btn" href="<?= url('/wunschliste.php') ?>" aria-label="Wunschliste">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/>
@@ -76,4 +81,11 @@ $announcement = setting_get('announcement') ?: '';
   <a href="<?= url('/shop.php?sale=1') ?>">Sale</a>
   <a href="<?= url('/kontakt.php') ?>">Kontakt</a>
   <a href="<?= url('/wunschliste.php') ?>">Wunschliste</a>
+  <?php if (is_customer()): ?>
+    <a href="<?= url('/konto.php') ?>">Mein Konto</a>
+    <a href="<?= url('/abmelden.php') ?>">Abmelden</a>
+  <?php else: ?>
+    <a href="<?= url('/anmelden.php') ?>">Anmelden</a>
+    <a href="<?= url('/registrieren.php') ?>">Konto erstellen</a>
+  <?php endif; ?>
 </div>

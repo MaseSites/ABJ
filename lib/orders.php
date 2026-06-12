@@ -22,6 +22,12 @@ function orders_list(): array {
     return array_map('order_parse', $stmt->fetchAll());
 }
 
+function orders_by_email(string $email): array {
+    $stmt = db()->prepare('SELECT * FROM orders WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 200');
+    $stmt->execute([trim($email)]);
+    return array_map('order_parse', $stmt->fetchAll());
+}
+
 function order_by_ref(string $ref): ?array {
     $stmt = db()->prepare('SELECT * FROM orders WHERE reference = ?');
     $stmt->execute([$ref]);

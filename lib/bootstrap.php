@@ -36,6 +36,7 @@ require_once __DIR__ . '/messages.php';
 require_once __DIR__ . '/discounts.php';
 require_once __DIR__ . '/reviews.php';
 require_once __DIR__ . '/shipping.php';
+require_once __DIR__ . '/accounts.php';
 
 // HTTPS / Mixed-Content-Schutz: weist den Browser an, jede unsichere
 // http://-Subressource (Bilder, Skripte, Styles, Fonts, fetch) automatisch

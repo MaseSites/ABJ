@@ -106,6 +106,6 @@ $tiktok       = setting_get('tiktok_url') ?: '';
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
 </button>
 
-<script src="<?= url('/js/shop.js') ?>?v=7"></script>
+<script src="<?= url('/js/shop.js') ?>?v=8"></script>
 </body>
 </html>

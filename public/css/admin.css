@@ -839,3 +839,45 @@ body { font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
 .stock-stepper input:focus { outline: none; box-shadow: inset 0 0 0 2px rgba(184,156,103,.4); }
 .stock-stepper.saving { opacity: .55; pointer-events: none; }
 [data-stock-row].just-saved td { background: rgba(111,190,131,.08); transition: background .4s; }
+
+/* ---------- Analytics: Hero-Kacheln + Donuts ---------- */
+.hero-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .9rem;
+  margin-bottom: .9rem;
+}
+.hero-stat {
+  background: linear-gradient(150deg, #14161f, #0f1118 60%);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 14px;
+  padding: 1.5rem 1.5rem 1.6rem;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+.hero-stat::after {
+  content: '';
+  position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg, #b89c67, #d4bc8e);
+}
+.hero-stat-label { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; color: #7a7f8e; font-weight: 600; }
+.hero-stat-num {
+  display: block;
+  font-size: clamp(1.7rem, 1.4vw + 1.3rem, 2.4rem);
+  font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1.1;
+  margin: .5rem 0 .35rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
+}
+.hero-stat-sub { display: block; font-size: .82rem; color: #6b7080; }
+.stat-grid-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1000px) {
+  .hero-stat-grid { grid-template-columns: 1fr; }
+  .stat-grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+.donut-row { display: flex; align-items: center; gap: 1.4rem; flex-wrap: wrap; }
+.donut { width: 140px; height: 140px; flex: none; }
+.legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .55rem; flex: 1; min-width: 140px; }
+.legend li { display: flex; align-items: center; gap: .55rem; font-size: .86rem; color: #a8afc4; }
+.legend strong { margin-left: auto; color: #e0e2ea; font-variant-numeric: tabular-nums; }
+.legend-dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }

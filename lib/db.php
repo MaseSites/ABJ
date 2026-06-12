@@ -124,6 +124,13 @@ function db_init(PDO $pdo): void {
             is_approved INTEGER DEFAULT 0,
             created_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            name TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
     ");
     // Migrate: add columns that may be missing in older DB versions
     $inv_cols = array_column($pdo->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC), 'name');

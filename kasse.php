@@ -55,6 +55,10 @@ $COUNTRIES = [
     ['DK','Dänemark'],['SE','Schweden'],['NO','Norwegen'],['GB','Grossbritannien'],['US','USA'],
 ];
 
+$custName = is_customer() ? trim(current_customer()['name'] ?? '') : '';
+$custFirst = $custName ? explode(' ', $custName)[0] : '';
+$custLast  = ($custName && str_contains($custName, ' ')) ? trim(substr($custName, strpos($custName, ' ') + 1)) : '';
+
 $currentPath = '/kasse';
 $cartCount   = cart_count();
 $pageTitle   = 'Kasse';
@@ -94,7 +98,8 @@ include __DIR__ . '/partials/header.php';
           <label class="field">
             <span>E-Mail *</span>
             <input type="email" name="email" required maxlength="200"
-              autocomplete="email" placeholder="name@beispiel.ch">
+              autocomplete="email" placeholder="name@beispiel.ch"
+              value="<?= h(is_customer() ? (current_customer()['email'] ?? '') : '') ?>">
           </label>
           <label class="field">
             <span>Telefon <small class="muted">(optional)</small></span>
@@ -113,12 +118,12 @@ include __DIR__ . '/partials/header.php';
           <label class="field">
             <span>Vorname *</span>
             <input type="text" name="firstname" required maxlength="80"
-              autocomplete="given-name" placeholder="Max">
+              autocomplete="given-name" placeholder="Max" value="<?= h($custFirst) ?>">
           </label>
           <label class="field">
             <span>Nachname *</span>
             <input type="text" name="lastname" required maxlength="80"
-              autocomplete="family-name" placeholder="Muster">
+              autocomplete="family-name" placeholder="Muster" value="<?= h($custLast) ?>">
           </label>
         </div>
         <div class="form-row-2" style="grid-template-columns:2fr 1fr">

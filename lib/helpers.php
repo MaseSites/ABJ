@@ -68,10 +68,13 @@ function base_path(): string {
     static $base = null;
     if ($base !== null) return $base;
     $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-    $dir = rtrim(dirname($script), '/');
+    // dirname() liefert auf Windows einen Backslash -> erneut normalisieren
+    $dir = str_replace('\\', '/', dirname($script));
+    $dir = rtrim($dir, '/');
     // Skripte liegen im Root, in /admin, /admin/api oder /api
     $dir = preg_replace('#/(admin/api|admin|api)$#', '', $dir);
-    $base = ($dir === '' || $dir === '/') ? '' : $dir;
+    if ($dir === '' || $dir === '/' || $dir === '.') $dir = '';
+    $base = $dir;
     return $base;
 }
 

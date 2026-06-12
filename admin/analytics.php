@@ -5,8 +5,8 @@ require_admin();
 $adminTitle = 'Analytics';
 include __DIR__ . '/partials/admin-layout-top.php';
 
-$currency  = setting_get('currency') ?: 'CHF';
-$days      = (int)($_GET['zeitraum'] ?? 30);
+$currency = setting_get('currency') ?: 'CHF';
+$days     = (int)($_GET['zeitraum'] ?? 30);
 if (!in_array($days, [7, 30, 90], true)) $days = 30;
 
 $stats       = orders_stats($days);
@@ -20,25 +20,56 @@ $totalValue  = inv_total_value();
 $revTotal   = (int)array_sum(array_map(fn($o) => $o['total_cents'], $paidOrders));
 $revPeriod  = (int)array_sum(array_column($series, 'revenue'));
 $ordPeriod  = (int)array_sum(array_column($series, 'orders'));
-$avgOrder   = count($paidOrders) ? (int)round($revTotal / count($paidOrders)) : 0;
+$avgPeriod  = $ordPeriod ? (int)round($revPeriod / $ordPeriod) : 0;
 $customers  = count(customers_list());
 $subs       = newsletter_count();
+$accounts   = (int)db()->query('SELECT COUNT(*) AS n FROM accounts')->fetch()['n'];
 
-// Umsatz nach Kategorie (Zeitraum)
-$catRevenue = [];
 $cut = (new DateTime("-$days days"))->format('Y-m-d');
-foreach ($allOrders as $o) {
-    if (substr($o['created_at'], 0, 10) < $cut || $o['status'] === 'storniert') continue;
+$inPeriod = array_values(array_filter($allOrders, fn($o) => substr($o['created_at'], 0, 10) >= $cut && $o['status'] !== 'storniert'));
+
+// --- Verteilungen / Aggregationen (im Zeitraum) ---
+$catRevenue = [];           // Umsatz nach Kategorie
+$payDist    = [];           // Zahlungsarten
+$statusDist = [];           // Bestellstatus
+$weekday    = array_fill(1, 7, 0); // Umsatz nach Wochentag (1=Mo..7=So)
+$itemsSum   = 0;
+
+foreach ($inPeriod as $o) {
+    $pm = $o['payment_method'] ?: 'unbekannt';
+    $payDist[$pm] = ($payDist[$pm] ?? 0) + 1;
+    $st = $o['status'] ?: 'neu';
+    $statusDist[$st] = ($statusDist[$st] ?? 0) + 1;
+    $wd = (int)date('N', strtotime($o['created_at']));
+    $weekday[$wd] += (int)$o['total_cents'];
     foreach ($o['items'] as $it) {
-        $p = !empty($it['productId']) ? product_by_id((int)$it['productId']) : null;
+        $itemsSum += (int)($it['qty'] ?? 1);
+        $pid = !empty($it['productId']) ? (int)$it['productId'] : 0;
+        $p = $pid ? product_by_id($pid) : null;
         $cat = $p['category'] ?? 'Sonstiges';
         $catRevenue[$cat] = ($catRevenue[$cat] ?? 0) + (int)($it['lineCents'] ?? 0);
     }
 }
 arsort($catRevenue);
+arsort($payDist);
+arsort($statusDist);
 $catTotal = array_sum($catRevenue) ?: 1;
+$avgItems = count($inPeriod) ? round($itemsSum / count($inPeriod), 1) : 0;
 
-// Chart-Geometrie
+// Neukunden vs. Stammkunden (gesamt, anhand E-Mail-Häufigkeit)
+$emailCounts = [];
+foreach ($allOrders as $o) {
+    $e = strtolower(trim($o['email']));
+    if ($e === '') continue;
+    $emailCounts[$e] = ($emailCounts[$e] ?? 0) + 1;
+}
+$returning = count(array_filter($emailCounts, fn($c) => $c > 1));
+$oneTime   = count($emailCounts) - $returning;
+
+$payLabels = ['stripe' => 'Karte (Stripe)', 'vorkasse' => 'Banküberweisung', 'unbekannt' => 'Unbekannt'];
+$statusLabels = ['neu' => 'Neu', 'in_bearbeitung' => 'In Bearbeitung', 'versendet' => 'Versendet', 'storniert' => 'Storniert'];
+
+// --- Chart-Helfer ---
 $W = 720; $H = 220; $pad = 30;
 $n = count($series) ?: 1;
 $gap = ($W - $pad * 2) / $n;
@@ -51,12 +82,10 @@ function chart_bars(array $series, int $maxVal, string $key, int $W, int $H, int
     $labelEvery = $days <= 7 ? 1 : ($days <= 30 ? 5 : 15);
     foreach ($series as $i => $d) {
         $val = (int)$d[$key];
-        $hgt = $maxVal > 0 ? round($val / $maxVal * ($H - $pad * 2)) : 0;
-        $hgt = max($hgt, 2);
+        $hgt = max($maxVal > 0 ? round($val / $maxVal * ($H - $pad * 2)) : 0, 2);
         $x = $pad + $i * $gap + ($gap - $bw) / 2;
         $y = $H - $pad - $hgt;
-        $day = new DateTime();
-        $day->modify('-' . ($d['dayOffset'] ?? ($n - 1 - $i)) . ' days');
+        $day = (new DateTime())->modify('-' . ($d['dayOffset'] ?? ($n - 1 - $i)) . ' days');
         $title = $day->format('d.m.') . ' · ' . ($isMoney ? 'CHF ' . number_format($val / 100, 2) : $val . ' Bestellungen');
         $out .= '<g><title>' . h($title) . '</title>';
         $out .= '<rect x="' . round($x, 1) . '" y="' . round($y, 1) . '" width="' . round($bw, 1) . '" height="' . $hgt . '" rx="3" class="bar"/>';
@@ -68,11 +97,37 @@ function chart_bars(array $series, int $maxVal, string $key, int $W, int $H, int
     }
     return $out;
 }
+
+// SVG-Donut: $segments = [['label'=>..,'value'=>..,'color'=>..], ...]
+function chart_donut(array $segments, string $centerTop = '', string $centerSub = ''): string {
+    $total = array_sum(array_column($segments, 'value')) ?: 1;
+    $r = 52; $cx = 70; $cy = 70; $circ = 2 * M_PI * $r;
+    $offset = 0;
+    $svg = '<svg viewBox="0 0 140 140" class="donut" role="img">';
+    $svg .= '<circle cx="' . $cx . '" cy="' . $cy . '" r="' . $r . '" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="16"/>';
+    foreach ($segments as $s) {
+        if ($s['value'] <= 0) continue;
+        $len = $s['value'] / $total * $circ;
+        $svg .= '<circle cx="' . $cx . '" cy="' . $cy . '" r="' . $r . '" fill="none" stroke="' . h($s['color']) . '" stroke-width="16"'
+              . ' stroke-dasharray="' . round($len, 2) . ' ' . round($circ - $len, 2) . '"'
+              . ' stroke-dashoffset="' . round(-$offset, 2) . '" transform="rotate(-90 ' . $cx . ' ' . $cy . ')">'
+              . '<title>' . h($s['label'] . ': ' . $s['value']) . '</title></circle>';
+        $offset += $len;
+    }
+    if ($centerTop !== '') {
+        $svg .= '<text x="70" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="#fff">' . h($centerTop) . '</text>';
+        $svg .= '<text x="70" y="84" text-anchor="middle" font-size="8.5" fill="#7a7f8e" letter-spacing=".06em">' . h(strtoupper($centerSub)) . '</text>';
+    }
+    return $svg . '</svg>';
+}
+$donutColors = ['#b89c67', '#6ee7b7', '#a5b4fc', '#d4af56', '#f8a090', '#7a7f8e'];
+
 $maxRev = max(1, ...array_column($series, 'revenue'));
 $maxOrd = max(1, ...array_column($series, 'orders'));
+$maxWd  = max(1, ...array_values($weekday));
 ?>
 
-<p class="admin-kicker">Analytics</p>
+<p class="admin-kicker">Auswertung</p>
 <div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Analytics</h1>
   <div class="chip-row">
@@ -82,26 +137,30 @@ $maxOrd = max(1, ...array_column($series, 'orders'));
   </div>
 </div>
 
-<div class="stat-grid">
-  <div class="stat-card stat-highlight">
-    <span class="stat-num"><?= format_price($revPeriod, $currency) ?></span>
-    <span class="stat-label">Umsatz · <?= $days ?> Tage</span>
+<!-- 3 Hero-Kacheln (wichtigste KPIs) -->
+<div class="hero-stat-grid">
+  <div class="hero-stat">
+    <span class="hero-stat-label">Umsatz · <?= $days ?> Tage</span>
+    <span class="hero-stat-num"><?= format_price($revPeriod, $currency) ?></span>
+    <span class="hero-stat-sub">Gesamt bezahlt: <?= format_price($revTotal, $currency) ?></span>
   </div>
-  <div class="stat-card">
-    <span class="stat-num"><?= $ordPeriod ?></span>
-    <span class="stat-label">Bestellungen · <?= $days ?> Tage</span>
+  <div class="hero-stat">
+    <span class="hero-stat-label">Bestellungen · <?= $days ?> Tage</span>
+    <span class="hero-stat-num"><?= $ordPeriod ?></span>
+    <span class="hero-stat-sub">Ø <?= $avgItems ?> Artikel pro Bestellung</span>
   </div>
-  <div class="stat-card">
-    <span class="stat-num"><?= format_price($revTotal, $currency) ?></span>
-    <span class="stat-label">Gesamtumsatz (bezahlt)</span>
+  <div class="hero-stat">
+    <span class="hero-stat-label">Ø Bestellwert · <?= $days ?> Tage</span>
+    <span class="hero-stat-num"><?= format_price($avgPeriod, $currency) ?></span>
+    <span class="hero-stat-sub"><?= count($emailCounts) ?> Kunden gesamt</span>
   </div>
+</div>
+
+<!-- Sekundäre KPIs (symmetrisch, 4er-Raster) -->
+<div class="stat-grid stat-grid-4">
   <div class="stat-card">
-    <span class="stat-num"><?= format_price($avgOrder, $currency) ?></span>
-    <span class="stat-label">Ø Bestellwert</span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-num"><?= $customers ?></span>
-    <span class="stat-label">Kunden</span>
+    <span class="stat-num"><?= $accounts ?></span>
+    <span class="stat-label">Registrierte Konten</span>
   </div>
   <div class="stat-card">
     <span class="stat-num"><?= format_price($totalValue, $currency) ?></span>
@@ -135,20 +194,97 @@ $maxOrd = max(1, ...array_column($series, 'orders'));
   </div>
 
   <div class="admin-section">
-    <h2>Umsatz nach Kategorie</h2>
+    <h2>Umsatz nach Wochentag</h2>
+    <?php $wdNames = [1=>'Mo',2=>'Di',3=>'Mi',4=>'Do',5=>'Fr',6=>'Sa',7=>'So']; ?>
+    <svg class="bar-chart bar-chart-wide" viewBox="0 0 360 200" role="img" aria-label="Umsatz nach Wochentag">
+      <line x1="20" y1="170" x2="340" y2="170" stroke="rgba(255,255,255,.08)"/>
+      <?php $gw = (340 - 20) / 7; $bwd = $gw * 0.55; foreach ($wdNames as $i => $nm):
+        $val = $weekday[$i]; $hgt = max(round($val / $maxWd * 140), 2);
+        $x = 20 + ($i - 1) * $gw + ($gw - $bwd) / 2; $y = 170 - $hgt; ?>
+        <g><title><?= h($nm . ': CHF ' . number_format($val / 100, 2)) ?></title>
+          <rect x="<?= round($x,1) ?>" y="<?= round($y,1) ?>" width="<?= round($bwd,1) ?>" height="<?= $hgt ?>" rx="3" class="bar"/>
+          <text x="<?= round($x + $bwd/2,1) ?>" y="188" text-anchor="middle" font-size="10" fill="#55545e"><?= $nm ?></text>
+        </g>
+      <?php endforeach; ?>
+    </svg>
+  </div>
+</div>
+
+<div class="admin-2col">
+  <!-- Zahlungsarten (Donut) -->
+  <div class="admin-section">
+    <h2>Zahlungsarten (<?= $days ?> Tage)</h2>
+    <?php if (empty($payDist)): ?>
+      <p class="muted">Keine Bestellungen im Zeitraum.</p>
+    <?php else:
+      $i = 0; $segs = []; $legend = [];
+      foreach ($payDist as $pm => $cnt) { $c = $donutColors[$i % count($donutColors)]; $segs[] = ['label'=>$payLabels[$pm] ?? $pm,'value'=>$cnt,'color'=>$c]; $legend[] = [$payLabels[$pm] ?? $pm, $cnt, $c]; $i++; }
+    ?>
+      <div class="donut-row">
+        <?= chart_donut($segs, (string)array_sum($payDist), 'Bestellungen') ?>
+        <ul class="legend">
+          <?php foreach ($legend as [$lab, $cnt, $c]): ?>
+            <li><span class="legend-dot" style="background:<?= h($c) ?>"></span><?= h($lab) ?> <strong><?= $cnt ?></strong></li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <!-- Bestellstatus (Donut) -->
+  <div class="admin-section">
+    <h2>Bestellstatus (<?= $days ?> Tage)</h2>
+    <?php if (empty($statusDist)): ?>
+      <p class="muted">Keine Bestellungen im Zeitraum.</p>
+    <?php else:
+      $i = 0; $segs = []; $legend = [];
+      foreach ($statusDist as $st => $cnt) { $c = $donutColors[$i % count($donutColors)]; $lab = $statusLabels[$st] ?? ucfirst($st); $segs[] = ['label'=>$lab,'value'=>$cnt,'color'=>$c]; $legend[] = [$lab, $cnt, $c]; $i++; }
+    ?>
+      <div class="donut-row">
+        <?= chart_donut($segs, (string)array_sum($statusDist), 'Bestellungen') ?>
+        <ul class="legend">
+          <?php foreach ($legend as [$lab, $cnt, $c]): ?>
+            <li><span class="legend-dot" style="background:<?= h($c) ?>"></span><?= h($lab) ?> <strong><?= $cnt ?></strong></li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+    <?php endif; ?>
+  </div>
+</div>
+
+<div class="admin-2col">
+  <!-- Umsatz nach Kategorie -->
+  <div class="admin-section">
+    <h2>Umsatz nach Kategorie (<?= $days ?> Tage)</h2>
     <?php if (empty($catRevenue)): ?>
       <p class="muted">Keine Verkäufe im Zeitraum.</p>
     <?php else: ?>
       <div class="hbar-list">
         <?php foreach (array_slice($catRevenue, 0, 6, true) as $cat => $rev): ?>
         <div class="hbar-row">
-          <div class="hbar-meta">
-            <span><?= h($cat) ?></span>
-            <strong><?= format_price($rev, $currency) ?></strong>
-          </div>
+          <div class="hbar-meta"><span><?= h($cat) ?></span><strong><?= format_price($rev, $currency) ?></strong></div>
           <div class="hbar-track"><div class="hbar-fill" style="width:<?= round($rev / $catTotal * 100, 1) ?>%"></div></div>
         </div>
         <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <!-- Neu- vs. Stammkunden -->
+  <div class="admin-section">
+    <h2>Kundenbindung (gesamt)</h2>
+    <?php if (empty($emailCounts)): ?>
+      <p class="muted">Noch keine Kunden.</p>
+    <?php else: ?>
+      <div class="donut-row">
+        <?= chart_donut([
+          ['label' => 'Stammkunden', 'value' => $returning, 'color' => '#b89c67'],
+          ['label' => 'Einmalig',    'value' => $oneTime,   'color' => '#6ee7b7'],
+        ], (string)count($emailCounts), 'Kunden') ?>
+        <ul class="legend">
+          <li><span class="legend-dot" style="background:#b89c67"></span>Stammkunden <strong><?= $returning ?></strong></li>
+          <li><span class="legend-dot" style="background:#6ee7b7"></span>Einmalig <strong><?= $oneTime ?></strong></li>
+        </ul>
       </div>
     <?php endif; ?>
   </div>
@@ -163,10 +299,7 @@ $maxOrd = max(1, ...array_column($series, 'orders'));
     <div class="hbar-list">
       <?php foreach ($topProducts as $tp): ?>
       <div class="hbar-row">
-        <div class="hbar-meta">
-          <span><?= h($tp['name']) ?></span>
-          <strong><?= (int)$tp['qty'] ?>× · <?= format_price((int)$tp['revenue'], $currency) ?></strong>
-        </div>
+        <div class="hbar-meta"><span><?= h($tp['name']) ?></span><strong><?= (int)$tp['qty'] ?>× · <?= format_price((int)$tp['revenue'], $currency) ?></strong></div>
         <div class="hbar-track"><div class="hbar-fill" style="width:<?= round($tp['qty'] / $maxQty * 100, 1) ?>%"></div></div>
       </div>
       <?php endforeach; ?>

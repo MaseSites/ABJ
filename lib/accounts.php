@@ -1,0 +1,77 @@
+<?php
+// Kundenkonten: Registrierung, Login, Session (getrennt vom Admin-Login)
+
+function account_by_email(string $email): ?array {
+    $stmt = db()->prepare('SELECT * FROM accounts WHERE lower(email) = lower(?)');
+    $stmt->execute([trim($email)]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+function account_by_id(int $id): ?array {
+    $stmt = db()->prepare('SELECT * FROM accounts WHERE id = ?');
+    $stmt->execute([$id]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+/**
+ * Legt ein Konto an. Rückgabe: ['ok'=>bool, 'error'=>?, 'id'=>?].
+ */
+function account_create(string $email, string $password, string $name): array {
+    $email = trim($email);
+    $name  = trim($name);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return ['ok' => false, 'error' => 'Bitte gib eine gültige E-Mail-Adresse ein.'];
+    }
+    if (mb_strlen($password) < 8) {
+        return ['ok' => false, 'error' => 'Das Passwort muss mindestens 8 Zeichen lang sein.'];
+    }
+    if (account_by_email($email)) {
+        return ['ok' => false, 'error' => 'Für diese E-Mail existiert bereits ein Konto. Bitte melde dich an.'];
+    }
+    $hash = password_hash($password, PASSWORD_DEFAULT);
+    db()->prepare('INSERT INTO accounts (email, password_hash, name) VALUES (?, ?, ?)')
+       ->execute([$email, $hash, mb_substr($name, 0, 120)]);
+    return ['ok' => true, 'id' => (int)db()->lastInsertId()];
+}
+
+function account_verify_login(string $email, string $password): ?array {
+    $acc = account_by_email($email);
+    if ($acc && password_verify($password, $acc['password_hash'])) return $acc;
+    return null;
+}
+
+function account_update_password(int $id, string $newPassword): bool {
+    if (mb_strlen($newPassword) < 8) return false;
+    db()->prepare('UPDATE accounts SET password_hash = ? WHERE id = ?')
+       ->execute([password_hash($newPassword, PASSWORD_DEFAULT), $id]);
+    return true;
+}
+
+// ---- Session ----
+function customer_login(int $id, string $email, string $name): void {
+    session_start_once();
+    try { session_regenerate_id(true); } catch (\Throwable $e) {}
+    $_SESSION['customer'] = ['id' => $id, 'email' => $email, 'name' => $name];
+    session_write_close();
+}
+
+function customer_logout(): void {
+    session_start_once();
+    unset($_SESSION['customer']);
+}
+
+function is_customer(): bool {
+    session_start_once();
+    return !empty($_SESSION['customer']['id']);
+}
+
+function current_customer(): ?array {
+    session_start_once();
+    return $_SESSION['customer'] ?? null;
+}
+
+function require_customer(): void {
+    if (!is_customer()) redirect('/anmelden.php?weiter=' . urlencode($_SERVER['REQUEST_URI'] ?? '/konto.php'));
+}

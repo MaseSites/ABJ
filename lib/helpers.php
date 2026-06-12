@@ -79,6 +79,20 @@ function url(string $path): string {
     return base_path() . $path;
 }
 
+/**
+ * Stuft eine vom Nutzer eingegebene URL von http:// auf https:// hoch,
+ * damit keine Mixed-Content-Warnung entsteht. Relative Pfade, data:- und
+ * protokoll-relative URLs bleiben unverändert.
+ */
+function secure_url(string $url): string {
+    $url = trim($url);
+    if ($url === '') return '';
+    if (stripos($url, 'http://') === 0) {
+        return 'https://' . substr($url, 7);
+    }
+    return $url;
+}
+
 function redirect(string $url): void {
     // Absolute Site-Pfade automatisch um den Basis-Pfad ergänzen
     if ($url !== '' && $url[0] === '/' && strpos($url, '//') !== 0) {

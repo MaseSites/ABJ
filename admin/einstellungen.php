@@ -24,6 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data['sale_ends_at'] .= ':00';
     }
 
+    // Externe URLs auf https:// hochstufen (Mixed-Content-Schutz)
+    foreach (['hero_image', 'instagram_url', 'tiktok_url'] as $urlKey) {
+        if (!empty($data[$urlKey])) $data[$urlKey] = secure_url($data[$urlKey]);
+    }
+
     if (!empty($_POST['new_password'])) {
         $hash = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
         db()->prepare("UPDATE users SET password_hash=? WHERE username='admin'")->execute([$hash]);

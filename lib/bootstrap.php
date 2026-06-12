@@ -36,4 +36,15 @@ require_once __DIR__ . '/messages.php';
 require_once __DIR__ . '/discounts.php';
 require_once __DIR__ . '/reviews.php';
 require_once __DIR__ . '/shipping.php';
+
+// HTTPS / Mixed-Content-Schutz: weist den Browser an, jede unsichere
+// http://-Subressource (Bilder, Skripte, Styles, Fonts, fetch) automatisch
+// auf https:// hochzustufen. Greift auch bei dynamisch per JS eingefügten
+// oder im Admin gespeicherten Bild-URLs -> keine "nicht sicher"-Warnung.
+if (!headers_sent()) {
+    header('Content-Security-Policy: upgrade-insecure-requests');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+}
+
 db(); // initialise connection & tables

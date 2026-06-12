@@ -26,8 +26,14 @@ if ($method === 'POST') {
     try {
         /* Bilder */
         $images = json_decode($_POST['existing_images'] ?? '[]', true) ?: [];
+        // Bestehende Bild-URLs ebenfalls auf https:// hochstufen (Mixed-Content-Schutz)
+        foreach ($images as &$img) {
+            if (!empty($img['src'])) $img['src'] = secure_url($img['src']);
+        }
+        unset($img);
         $urlLines = array_filter(array_map('trim', explode("\n", $_POST['image_urls'] ?? '')));
         foreach ($urlLines as $url) {
+            $url = secure_url($url);
             if (filter_var($url, FILTER_VALIDATE_URL)) {
                 $images[] = ['type' => 'url', 'src' => $url];
             }
@@ -76,7 +82,7 @@ if ($method === 'POST') {
                     if (($ov['key'] ?? '') === 'size')  $size  = $ov['value'] ?? '';
                     if (($ov['key'] ?? '') === 'color') $color = $ov['value'] ?? '';
                 }
-                $imgUrl = trim($v['image_url'] ?? '');
+                $imgUrl = secure_url(trim($v['image_url'] ?? ''));
                 inv_upsert([
                     'product_id'          => $productId,
                     'sku'                 => $v['sku'] ?? '',

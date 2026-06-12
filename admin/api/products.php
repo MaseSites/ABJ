@@ -96,7 +96,28 @@ if ($method === 'POST') {
                 ]);
             }
         } elseif (!$hasVariants) {
-            inv_delete_by_product($productId);
+            // Automatischer Lagereintrag: jedes Produkt erscheint in der
+            // Lagerverwaltung — bestehende Daten der Standardvariante bleiben erhalten.
+            $existing = inv_by_variant($productId, '', '');
+            db()->prepare("DELETE FROM inventory WHERE product_id = ? AND NOT (size = '' AND color = '')")
+               ->execute([$productId]);
+            inv_upsert([
+                'product_id'          => $productId,
+                'sku'                 => $existing['sku'] ?? '',
+                'size'                => '',
+                'color'               => '',
+                'option_values'       => [],
+                'stock'               => $stock,
+                'reserved'            => (int)($existing['reserved'] ?? 0),
+                'min_stock'           => (int)($existing['min_stock'] ?? 3),
+                'next_delivery'       => $existing['next_delivery'] ?? '',
+                'notes'               => $existing['notes'] ?? '',
+                'title'               => '',
+                'images'              => [],
+                'variant_price_cents' => null,
+                'is_default'          => true,
+                'back_order'          => !empty($existing['back_order']),
+            ]);
         }
 
         json_response(['ok' => true, 'id' => $productId]);

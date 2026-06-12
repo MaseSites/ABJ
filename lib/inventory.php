@@ -146,6 +146,16 @@ function inv_low_stock(): array {
     return $stmt->fetchAll();
 }
 
+/** Gesamter verfügbarer Lagerbestand über alle aktiven Produkte. */
+function inv_total_all(): int {
+    $pdo = db();
+    $invSum = (int)$pdo->query("SELECT COALESCE(SUM(MAX(i.stock - i.reserved, 0)), 0) AS n
+        FROM inventory i JOIN products p ON p.id = i.product_id WHERE p.is_active = 1")->fetch()['n'];
+    $fallback = (int)$pdo->query("SELECT COALESCE(SUM(MAX(p.stock, 0)), 0) AS n FROM products p
+        WHERE p.is_active = 1 AND NOT EXISTS (SELECT 1 FROM inventory i WHERE i.product_id = p.id)")->fetch()['n'];
+    return $invSum + $fallback;
+}
+
 function inv_deduct_stock(array $lines): void {
     $pdo = db();
     foreach ($lines as $line) {

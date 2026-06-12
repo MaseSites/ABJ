@@ -19,6 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data[$key] = (string)max(0, (int)round((float)$raw * 100));
     }
 
+    // Sale-Countdown (datetime-local liefert "YYYY-MM-DDTHH:MM")
+    if (!empty($data['sale_ends_at']) && preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $data['sale_ends_at'])) {
+        $data['sale_ends_at'] .= ':00';
+    }
+
     if (!empty($_POST['new_password'])) {
         $hash = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
         db()->prepare("UPDATE users SET password_hash=? WHERE username='admin'")->execute([$hash]);
@@ -56,7 +61,11 @@ $s = settings_all();
     <h2>Startseite / Hero</h2>
     <label class="field"><span>Hero-Untertitel</span><textarea name="hero_subtitle" rows="3"><?= h($s['hero_subtitle']) ?></textarea></label>
     <label class="field"><span>Hero-Bild (Pfad oder URL)</span><input type="text" name="hero_image" value="<?= h($s['hero_image']) ?>"></label>
-    <label class="field"><span>Sale endet am (ISO-Datum, z.B. 2026-12-31T23:59:59)</span><input type="text" name="sale_ends_at" value="<?= h($s['sale_ends_at']) ?>"></label>
+    <label class="field">
+      <span>Sale-Countdown endet am</span>
+      <input type="datetime-local" name="sale_ends_at" value="<?= h(substr($s['sale_ends_at'] ?? '', 0, 16)) ?>">
+      <small style="color:#8a8a95;font-size:.75rem">Steuert den Timer auf der Startseite. Leer lassen = Timer zeigt 00:00.</small>
+    </label>
     <div class="form-row-2">
       <label class="field"><span>Kundenzahl (Social Proof)</span><input type="text" name="members_count" value="<?= h($s['members_count']) ?>"></label>
       <label class="field"><span>Bewertungszahl (Social Proof)</span><input type="text" name="ratings_count" value="<?= h($s['ratings_count']) ?>"></label>

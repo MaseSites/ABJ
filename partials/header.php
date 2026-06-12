@@ -21,7 +21,7 @@ $announcement = setting_get('announcement') ?: '';
     </button>
 
     <a class="brand brand-logo" href="<?= url('/') ?>" aria-label="Startseite">
-      <img src="<?= url('/img/abj-logo.jpg') ?>" alt="ABJ" width="44" height="44">
+      <img src="<?= url('/img/abj-logo.jpg') ?>" alt="ABJ" width="52" height="52">
     </a>
 
     <nav class="main-nav" aria-label="Hauptnavigation">

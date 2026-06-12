@@ -63,7 +63,7 @@ include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/header.php';
 ?>
 
-<main id="main" class="container section">
+<main id="main" class="container section" data-cart-page>
   <h1 class="section-title">Warenkorb</h1>
 
   <?php if (!empty($_GET['ausverkauft'])): ?>
@@ -124,11 +124,14 @@ include __DIR__ . '/partials/header.php';
             <?php endif; ?>
           </div>
           <?php if (!$it['isSoldOut']): ?>
-          <form class="cart-qty" method="post" action="<?= url('/warenkorb.php') ?>">
+          <form class="cart-qty" method="post" action="<?= url('/warenkorb.php') ?>" data-cart-qty>
             <input type="hidden" name="action" value="update">
             <input type="hidden" name="index" value="<?= $i ?>">
-            <input type="number" name="qty" value="<?= $it['qty'] ?>" min="1" max="<?= $it['maxQty'] ?>" aria-label="Menge">
-            <button class="btn btn-ghost btn-sm" type="submit">OK</button>
+            <div class="qty-stepper">
+              <button type="button" class="qty-btn" data-qty-minus aria-label="Menge verringern">&minus;</button>
+              <input type="number" name="qty" value="<?= $it['qty'] ?>" min="1" max="<?= $it['isBackOrder'] ? 99 : $it['maxQty'] ?>" aria-label="Menge">
+              <button type="button" class="qty-btn" data-qty-plus aria-label="Menge erhöhen">+</button>
+            </div>
           </form>
           <div class="cart-line-total"><?= format_price($it['lineCents'], $currency) ?></div>
           <?php endif; ?>

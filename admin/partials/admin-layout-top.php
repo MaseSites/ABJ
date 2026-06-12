@@ -48,6 +48,13 @@ try {
         Dashboard
       </a>
 
+      <a href="<?= url('/admin/analytics.php') ?>" class="<?= str_has($_cur, 'analytics') ? 'active' : '' ?>">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1.5 14.5h13"/><path d="M3 11l3-3.5 2.5 2L13 5"/><circle cx="13" cy="5" r="1.2"/>
+        </svg>
+        Analytics
+      </a>
+
       <a href="<?= url('/admin/bestellungen.php') ?>" class="<?= str_has($_cur, 'bestellung') ? 'active' : '' ?>">
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <path d="M1.5 1.5h2l1.8 8h7.4l1.3-5.5H4.5"/>

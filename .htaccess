@@ -40,6 +40,7 @@ RewriteRule ^bestellung/([^/]+)/?$       /bestellung.php?ref=$1        [L,QSA]
 # Warenkorb-API
 RewriteRule ^warenkorb/api/add$     /api/cart-add.php    [L,QSA]
 RewriteRule ^warenkorb/api/state$   /api/cart-state.php  [L,QSA]
+RewriteRule ^warenkorb/api/update$  /api/cart-update.php [L,QSA]
 
 # Checkout API
 RewriteRule ^api/checkout$           /api/checkout.php          [L,QSA]
@@ -67,6 +68,7 @@ RewriteRule ^admin/nachrichten$                /admin/nachrichten.php      [L,QS
 RewriteRule ^admin/newsletter$                 /admin/newsletter.php       [L,QSA]
 RewriteRule ^admin/einstellungen$              /admin/einstellungen.php    [L,QSA]
 RewriteRule ^admin/rabatte$                    /admin/rabatte.php          [L,QSA]
+RewriteRule ^admin/analytics$                  /admin/analytics.php        [L,QSA]
 RewriteRule ^admin/bewertungen$                /admin/bewertungen.php      [L,QSA]
 RewriteRule ^admin/kunden$                     /admin/kunden.php           [L,QSA]
 RewriteRule ^admin/produkt/([0-9]+)/?$         /admin/produkt-edit.php?id=$1  [L,QSA]

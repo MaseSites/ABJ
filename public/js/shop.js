@@ -213,14 +213,34 @@
     }
     body.innerHTML = state.items.map((it) =>
       '<div class="drawer-item">' +
-        '<img src="' + it.image + '" alt="">' +
+        '<img src="' + (it.image || fallbackImg(it.name)) + '" alt="">' +
         '<div class="drawer-item-info">' +
           '<a href="' + it.url + '">' + esc(it.name) + '</a>' +
-          (it.size ? '<span class="muted">Größe: ' + esc(it.size) + '</span>' : '') +
+          (it.size ? '<span class="muted">Größe: ' + esc(it.sizeLabel || it.size) + '</span>' : '') +
           '<span class="muted">' + it.qty + '× · ' + it.lineText + '</span>' +
         '</div>' +
+        '<button class="drawer-remove" data-drawer-remove data-id="' + it.productId + '" data-size="' + esc(it.size || '') + '" aria-label="Entfernen" title="Entfernen">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M6 6l12 12M18 6 6 18"/></svg>' +
+        '</button>' +
       '</div>'
     ).join('');
+    $$('[data-drawer-remove]', body).forEach((btn) => {
+      btn.addEventListener('click', () => {
+        btn.disabled = true;
+        const fd = new URLSearchParams();
+        fd.set('productId', btn.getAttribute('data-id'));
+        fd.set('size', btn.getAttribute('data-size') || '');
+        fd.set('qty', 0);
+        fetch(BASE_PATH + '/api/cart-update.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+          body: fd.toString(),
+        }).then((r) => r.json()).then((d) => {
+          if (d.ok) { renderDrawer(d); toast('Artikel entfernt'); if ($('[data-cart-page]')) window.location.reload(); }
+          else toast(d.error || 'Fehler', 'err');
+        }).catch(() => { btn.disabled = false; toast('Netzwerkfehler', 'err'); });
+      });
+    });
   }
 
   function refreshDrawer() {
@@ -257,7 +277,7 @@
       btn.classList.add('loading');
       addToCart(btn.getAttribute('data-id'), '', 1).then(({ ok, d }) => {
         btn.classList.remove('loading');
-        if (ok && d.ok) { renderDrawer(d); toast('„' + d.added + '" hinzugefügt'); openDrawer(); }
+        if (ok && d.ok) { renderDrawer(d); toast('„' + d.added + '" hinzugefügt ✓'); }
         else toast(d.error || 'Konnte nicht hinzufügen', 'err');
       }).catch(() => { btn.classList.remove('loading'); toast('Netzwerkfehler', 'err'); });
     });
@@ -276,7 +296,7 @@
       if (submit) submit.classList.add('loading');
       addToCart(pid, size, qty).then(({ ok, d }) => {
         if (submit) submit.classList.remove('loading');
-        if (ok && d.ok) { renderDrawer(d); toast('„' + d.added + '" hinzugefügt'); openDrawer(); }
+        if (ok && d.ok) { renderDrawer(d); toast('„' + d.added + '" hinzugefügt ✓'); }
         else toast(d.error || 'Konnte nicht hinzufügen', 'err');
       }).catch(() => { if (submit) submit.classList.remove('loading'); toast('Netzwerkfehler', 'err'); });
     });
@@ -457,6 +477,25 @@
   onScroll();
   if (toTop) toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }));
 
+  /* ---------------- Warenkorbseite: Menge ohne OK-Button ---------------- */
+  $$('[data-cart-qty]').forEach((form) => {
+    const input = form.querySelector('input[name="qty"]');
+    if (!input) return;
+    let t = null;
+    const submit = () => {
+      const min = Number(input.min) || 1;
+      const max = Number(input.max) || 99;
+      let v = Math.round(Number(input.value) || min);
+      input.value = Math.min(max, Math.max(min, v));
+      form.submit();
+    };
+    const minus = form.querySelector('[data-qty-minus]');
+    const plus  = form.querySelector('[data-qty-plus]');
+    if (minus) minus.addEventListener('click', () => { input.stepDown(); submit(); });
+    if (plus)  plus.addEventListener('click',  () => { input.stepUp();  submit(); });
+    input.addEventListener('change', () => { clearTimeout(t); t = setTimeout(submit, 150); });
+  });
+
   /* ---------------- Bewertungsformular ---------------- */
   const reviewForm = $('[data-review-form]');
   if (reviewForm) {
@@ -519,7 +558,7 @@
         btn.classList.add('loading');
         addToCart(btn.getAttribute('data-id'), '', 1).then(({ ok, d }) => {
           btn.classList.remove('loading');
-          if (ok && d.ok) { renderDrawer(d); toast('„' + d.added + '" hinzugefügt'); openDrawer(); }
+          if (ok && d.ok) { renderDrawer(d); toast('„' + d.added + '" hinzugefügt ✓'); }
           else toast(d.error || 'Konnte nicht hinzufügen', 'err');
         }).catch(() => { btn.classList.remove('loading'); toast('Netzwerkfehler', 'err'); });
       });

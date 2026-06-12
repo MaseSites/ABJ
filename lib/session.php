@@ -3,6 +3,9 @@ function session_start_once(): void {
     if (session_status() === PHP_SESSION_NONE) {
         ini_set('session.cookie_httponly', '1');
         ini_set('session.cookie_samesite', 'Lax');
+        ini_set('session.cookie_path', '/');
+        ini_set('session.use_cookies', '1');
+        ini_set('session.use_only_cookies', '1');
         session_start();
     }
 }
@@ -33,10 +36,12 @@ function last_order_set(?string $ref): void {
 
 function admin_login(int $userId, string $username): void {
     session_start_once();
-    session_regenerate_id(true);
+    try { session_regenerate_id(true); } catch (\Throwable $e) {}
     $_SESSION['admin'] = true;
     $_SESSION['admin_id'] = $userId;
     $_SESSION['admin_username'] = $username;
+    $_SESSION['admin_ts'] = time();
+    session_write_close();
 }
 
 function admin_logout(): void {
@@ -51,5 +56,5 @@ function is_admin(): bool {
 }
 
 function require_admin(): void {
-    if (!is_admin()) redirect('/admin/login.php');
+    if (!is_admin()) redirect('/admin/login');
 }

@@ -1,8 +1,10 @@
 <?php
 require_once __DIR__ . '/lib/bootstrap.php';
 
+// Ensure session is started before reading cart
+session_start_once();
 $cart = cart_get();
-if (empty($cart)) redirect('/warenkorb');
+if (empty($cart)) redirect('/warenkorb?leer=1');
 
 $currency = setting_get('currency') ?: 'CHF';
 
@@ -32,7 +34,7 @@ foreach ($cart as $line) {
     ];
 }
 
-if (empty($items)) redirect('/warenkorb');
+if (empty($items)) redirect('/warenkorb?ausverkauft=1');
 
 // Shipping: 5.90 CH / 19.90 international (default CH for page render)
 $defaultCountry = 'CH';

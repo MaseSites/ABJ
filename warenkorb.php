@@ -66,6 +66,16 @@ include __DIR__ . '/partials/header.php';
 <main id="main" class="container section">
   <h1 class="section-title">Warenkorb</h1>
 
+  <?php if (!empty($_GET['ausverkauft'])): ?>
+  <div class="alert alert-error" style="margin-bottom:1.4rem">
+    <div>Die Artikel in deinem Warenkorb sind leider ausverkauft oder nicht mehr verfügbar. Bitte passe deinen Warenkorb an.</div>
+  </div>
+  <?php elseif (!empty($_GET['leer'])): ?>
+  <div class="alert alert-error" style="margin-bottom:1.4rem">
+    <div>Dein Warenkorb ist leer. Bitte füge zuerst Artikel hinzu.</div>
+  </div>
+  <?php endif; ?>
+
   <?php if ($warnings): ?>
   <div class="alert alert-error" style="margin-bottom:1.4rem">
     <?php foreach ($warnings as $w): ?><div><?= h($w) ?></div><?php endforeach; ?>

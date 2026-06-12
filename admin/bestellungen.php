@@ -8,6 +8,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     redirect('/admin/bestellungen.php');
 }
 
+// NEU-Markierung entfernen (als gelesen markieren) – AJAX oder Fallback
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_seen') {
+    $ref = trim($_POST['ref'] ?? '');
+    if ($ref) order_mark_seen($ref);
+    $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) || str_has($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
+    if ($isAjax) json_response(['ok' => true]);
+    redirect('/admin/bestellungen.php');
+}
+
 $orders   = orders_list();
 $currency = setting_get('currency') ?: 'CHF';
 
@@ -69,10 +78,14 @@ include __DIR__ . '/partials/admin-layout-top.php';
     <?php foreach ($orders as $o):
       $isNew = empty($o['is_seen']);
     ?>
-    <tr class="<?= $isNew ? 'order-row-new' : '' ?>">
+    <tr class="<?= $isNew ? 'order-row-new' : '' ?>" data-order-row>
       <td>
-        <a href="<?= url('/admin/bestellung.php?ref=' . urlencode($o['reference'])) ?>"><?= h($o['reference']) ?></a>
-        <?php if ($isNew): ?><span class="tag tag-new" style="margin-left:.4rem">NEU</span><?php endif; ?>
+        <div class="order-ref-cell">
+          <?php if ($isNew): ?>
+          <button type="button" class="badge-neu" data-mark-seen data-ref="<?= h($o['reference']) ?>" title="Als gelesen markieren – klicken zum Entfernen" aria-label="Neue Bestellung – als gelesen markieren">neu</button>
+          <?php endif; ?>
+          <a href="<?= url('/admin/bestellung.php?ref=' . urlencode($o['reference'])) ?>"><?= h($o['reference']) ?></a>
+        </div>
       </td>
       <td><?= h($o['customer_name']) ?></td>
       <td><?= h(substr($o['created_at'], 0, 16)) ?></td>

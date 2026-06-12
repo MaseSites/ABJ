@@ -524,9 +524,37 @@
     });
   }
 
+  // Klick auf das rote NEU-Badge: Bestellung als gelesen markieren, Badge entfernen
+  function initMarkSeen() {
+    $$('[data-mark-seen]').forEach((badge) => {
+      badge.addEventListener('click', () => {
+        const ref = badge.getAttribute('data-ref');
+        if (!ref || badge.classList.contains('removing')) return;
+        const row = badge.closest('[data-order-row]');
+        const fd = new URLSearchParams();
+        fd.set('action', 'mark_seen');
+        fd.set('ref', ref);
+        badge.classList.add('removing');
+        fetch(BASE_PATH + '/admin/bestellungen.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+          body: fd.toString(),
+        }).then((r) => r.json()).then((d) => {
+          if (d && d.ok) {
+            setTimeout(() => badge.remove(), 200);
+            if (row) row.classList.remove('order-row-new');
+          } else {
+            badge.classList.remove('removing');
+          }
+        }).catch(() => { badge.classList.remove('removing'); });
+      });
+    });
+  }
+
   initProductForm();
   initProductDelete();
   initProductFilter();
   initColorPreview();
   initConfirmForms();
+  initMarkSeen();
 })();

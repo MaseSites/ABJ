@@ -146,6 +146,41 @@ function inv_low_stock(): array {
     return $stmt->fetchAll();
 }
 
+/**
+ * Stellt sicher, dass JEDES Produkt mindestens einen Lagereintrag hat.
+ * Produkte ohne Eintrag bekommen automatisch eine Standard-Zeile mit dem
+ * am Produkt hinterlegten Bestand. Gibt die Anzahl neu erstellter Einträge zurück.
+ */
+function inv_ensure_entries(): int {
+    $pdo  = db();
+    $rows = $pdo->query("SELECT p.id, p.stock FROM products p
+        WHERE NOT EXISTS (SELECT 1 FROM inventory i WHERE i.product_id = p.id)")->fetchAll();
+    $created = 0;
+    $stmt = $pdo->prepare("INSERT INTO inventory (product_id, size, color, stock, reserved, min_stock, is_default)
+        VALUES (?, '', '', ?, 0, 3, 1)");
+    foreach ($rows as $p) {
+        try { $stmt->execute([(int)$p['id'], max(0, (int)$p['stock'])]); $created++; } catch (\Throwable $e) {}
+    }
+    return $created;
+}
+
+/** Gesamtwert des verfügbaren Lagerbestands (in Rappen/Cents). */
+function inv_total_value(): int {
+    $pdo = db();
+    $invVal = (int)$pdo->query("SELECT COALESCE(SUM(
+                MAX(i.stock - i.reserved, 0) *
+                COALESCE(i.variant_price_cents, p.sale_price_cents, p.price_cents)
+            ), 0) AS v
+            FROM inventory i JOIN products p ON p.id = i.product_id
+            WHERE p.is_active = 1")->fetch()['v'];
+    $fallback = (int)$pdo->query("SELECT COALESCE(SUM(
+                MAX(p.stock, 0) * COALESCE(p.sale_price_cents, p.price_cents)
+            ), 0) AS v
+            FROM products p
+            WHERE p.is_active = 1 AND NOT EXISTS (SELECT 1 FROM inventory i WHERE i.product_id = p.id)")->fetch()['v'];
+    return $invVal + $fallback;
+}
+
 /** Gesamter verfügbarer Lagerbestand über alle aktiven Produkte. */
 function inv_total_all(): int {
     $pdo = db();

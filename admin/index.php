@@ -8,6 +8,7 @@ $recentOrders = array_slice($allOrders, 0, 5);
 $currency     = setting_get('currency') ?: 'CHF';
 $lowStock     = array_slice(inv_low_stock(), 0, 5);
 $totalStock   = inv_total_all();
+$totalValue   = inv_total_value();
 $openCount    = count(array_filter($allOrders, fn($o) => $o['payment_status'] !== 'bezahlt' && $o['status'] !== 'storniert'));
 $newCount     = count(array_filter($allOrders, fn($o) => empty($o['is_seen'])));
 
@@ -46,7 +47,7 @@ function statusTagClass(string $status): string {
   </div>
   <div class="stat-card">
     <span class="stat-num"><?= $totalStock ?></span>
-    <span class="stat-label">Lagerbestand gesamt</span>
+    <span class="stat-label">Lagerbestand · Wert <?= format_price($totalValue, $currency) ?></span>
   </div>
 </div>
 

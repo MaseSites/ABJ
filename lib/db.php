@@ -174,6 +174,22 @@ function db_init(PDO $pdo): void {
     // Migrate: force currency to CHF if still set to old EUR default
     try { $pdo->exec("UPDATE settings SET value = 'CHF' WHERE key = 'currency' AND value = 'EUR'"); } catch (\Throwable $e) {}
 
+    // One-time backfill: jedes Produkt ohne Lagereintrag bekommt automatisch
+    // einen Standard-Eintrag mit seinem hinterlegten Bestand.
+    try {
+        $done = $pdo->query("SELECT value FROM settings WHERE key='inv_backfill_v1'")->fetch();
+        if (!$done) {
+            $rows = $pdo->query("SELECT p.id, p.stock FROM products p
+                WHERE NOT EXISTS (SELECT 1 FROM inventory i WHERE i.product_id = p.id)")->fetchAll();
+            $ins = $pdo->prepare("INSERT INTO inventory (product_id, size, color, stock, reserved, min_stock, is_default)
+                VALUES (?, '', '', ?, 0, 3, 1)");
+            foreach ($rows as $p) {
+                try { $ins->execute([(int)$p['id'], max(0, (int)$p['stock'])]); } catch (\Throwable $e) {}
+            }
+            $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('inv_backfill_v1', '1')");
+        }
+    } catch (\Throwable $e) {}
+
     $cnt = (int)$pdo->query("SELECT COUNT(*) AS n FROM users")->fetch()['n'];
     if ($cnt === 0) {
         $hash = password_hash('abj', PASSWORD_DEFAULT);

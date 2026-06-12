@@ -15,6 +15,7 @@ $allOrders   = orders_list();
 $paidOrders  = array_filter($allOrders, fn($o) => $o['payment_status'] === 'bezahlt');
 $topProducts = orders_top_products(8, $days);
 $totalStock  = inv_total_all();
+$totalValue  = inv_total_value();
 
 $revTotal   = (int)array_sum(array_map(fn($o) => $o['total_cents'], $paidOrders));
 $revPeriod  = (int)array_sum(array_column($series, 'revenue'));
@@ -101,6 +102,10 @@ $maxOrd = max(1, ...array_column($series, 'orders'));
   <div class="stat-card">
     <span class="stat-num"><?= $customers ?></span>
     <span class="stat-label">Kunden</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-num"><?= format_price($totalValue, $currency) ?></span>
+    <span class="stat-label">Gesamtlagerwert</span>
   </div>
   <div class="stat-card">
     <span class="stat-num"><?= $totalStock ?></span>

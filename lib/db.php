@@ -95,6 +95,14 @@ function db_init(PDO $pdo): void {
             password_hash TEXT NOT NULL,
             created_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS carts (
+            token TEXT NOT NULL,
+            product_id INTEGER NOT NULL,
+            size TEXT NOT NULL DEFAULT '',
+            qty INTEGER NOT NULL DEFAULT 1,
+            updated_at TEXT DEFAULT (datetime('now')),
+            PRIMARY KEY (token, product_id, size)
+        );
     ");
     // Migrate: add columns that may be missing in older DB versions
     $inv_cols = array_column($pdo->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC), 'name');

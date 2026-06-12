@@ -10,18 +10,49 @@ function session_start_once(): void {
     }
 }
 
+function cart_token(): string {
+    $name = 'abj_cart';
+    if (!empty($_COOKIE[$name]) && preg_match('/^[0-9a-f]{32}$/', $_COOKIE[$name])) {
+        return $_COOKIE[$name];
+    }
+    $token = bin2hex(random_bytes(16));
+    setcookie($name, $token, ['expires' => time() + 86400 * 90, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
+    $_COOKIE[$name] = $token;
+    return $token;
+}
+
 function cart_get(): array {
-    session_start_once();
-    return $_SESSION['cart'] ?? [];
+    $token = cart_token();
+    $stmt = db()->prepare('SELECT product_id AS productId, size, qty FROM carts WHERE token = ?');
+    $stmt->execute([$token]);
+    return array_map(fn($r) => ['productId' => (int)$r['productId'], 'size' => (string)($r['size'] ?? ''), 'qty' => (int)$r['qty']], $stmt->fetchAll());
 }
 
 function cart_set(array $cart): void {
-    session_start_once();
-    $_SESSION['cart'] = $cart;
+    $token = cart_token();
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('DELETE FROM carts WHERE token = ?')->execute([$token]);
+        $stmt = $pdo->prepare("INSERT INTO carts (token, product_id, size, qty, updated_at) VALUES (?, ?, ?, ?, datetime('now'))");
+        foreach ($cart as $line) {
+            if ((int)($line['qty'] ?? 0) <= 0) continue;
+            $stmt->execute([$token, (int)$line['productId'], $line['size'] ?? '', (int)$line['qty']]);
+        }
+        $pdo->commit();
+    } catch (\Throwable $e) {
+        $pdo->rollBack();
+    }
+    if (mt_rand(1, 200) === 1) {
+        try { db()->exec("DELETE FROM carts WHERE updated_at < datetime('now', '-90 days')"); } catch (\Throwable $e) {}
+    }
 }
 
 function cart_count(): int {
-    return array_sum(array_column(cart_get(), 'qty'));
+    $token = cart_token();
+    $stmt = db()->prepare('SELECT COALESCE(SUM(qty), 0) AS n FROM carts WHERE token = ?');
+    $stmt->execute([$token]);
+    return (int)($stmt->fetch()['n'] ?? 0);
 }
 
 function last_order_get(): ?string {

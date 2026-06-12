@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/lib/bootstrap.php';
 
-// Ensure session is started before reading cart
-session_start_once();
 $cart = cart_get();
 if (empty($cart)) redirect('/warenkorb?leer=1');
 

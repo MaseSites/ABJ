@@ -56,6 +56,7 @@ if ($method === 'POST') {
                 'stock'               => max(0, (int)($v['stock'] ?? 0)),
                 'variant_price_cents' => ($v['variant_price_cents'] !== null && $v['variant_price_cents'] !== '')
                                          ? max(0, (int)$v['variant_price_cents']) : null,
+                'image_url'           => secure_url(trim((string)($v['image_url'] ?? ''))),
                 'is_default'          => !empty($v['is_default']),
             ];
         }
@@ -69,6 +70,16 @@ if ($method === 'POST') {
         // damit Lager und Shop-Anzeige nie auseinanderlaufen (Soldout-Bug).
         $sizes        = $useVariants ? array_column($cleanVariants, 'size') : [];
         $optionGroups = $useVariants ? [['key' => 'size', 'label' => 'Variante', 'values' => $sizes]] : [];
+
+        // Kein Produkt-Hauptbild gesetzt? Dann das Bild der Standard-Variante
+        // (oder der ersten Variante mit Bild) als Hauptbild übernehmen, damit
+        // die Produktkarte im Shop nicht leer bleibt.
+        if (empty($images) && $useVariants) {
+            $picked = '';
+            foreach ($cleanVariants as $v) { if ($v['is_default'] && $v['image_url']) { $picked = $v['image_url']; break; } }
+            if ($picked === '') { foreach ($cleanVariants as $v) { if ($v['image_url']) { $picked = $v['image_url']; break; } } }
+            if ($picked !== '') $images[] = ['type' => 'url', 'src' => $picked];
+        }
 
         $data = [
             'name'             => $name,
@@ -110,7 +121,7 @@ if ($method === 'POST') {
                     'next_delivery'       => '',
                     'notes'               => '',
                     'title'               => $v['size'],
-                    'images'              => [],
+                    'images'              => $v['image_url'] ? [['type' => 'url', 'src' => $v['image_url']]] : [],
                     'variant_price_cents' => $v['variant_price_cents'],
                     'is_default'          => $v['is_default'] || (!$hasDefault && $i === 0),
                 ]);

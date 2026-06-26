@@ -15,6 +15,12 @@ foreach ($invRows as $row) {
 }
 
 $variants = array_map(function($r) {
+    $ov = safe_parse($r['option_values'] ?? '[]', []);
+    // Ältere Daten ohne option_values: aus dem Grössen-/Variantenfeld ableiten,
+    // damit die Buttons im Shop wieder zur tatsächlichen Lagerzeile passen.
+    if (empty($ov) && ($r['size'] ?? '') !== '') {
+        $ov = [['key' => 'size', 'label' => 'Variante', 'value' => $r['size']]];
+    }
     return [
         'id'                  => $r['id'],
         'key'                 => $r['size'] ?: (string)$r['id'],
@@ -23,24 +29,24 @@ $variants = array_map(function($r) {
         'stock'               => max(0, $r['stock'] - $r['reserved']),
         'variant_price_cents' => $r['variant_price_cents'] ?? null,
         'is_default'          => (bool)$r['is_default'],
-        'option_values'       => safe_parse($r['option_values'] ?? '[]', []),
+        'option_values'       => $ov,
     ];
 }, $invRows);
 
-// Reconstruct option_groups from inventory if not stored on the product
-if (empty($product['option_groups']) && !empty($variants)) {
-    $groupsMap = [];
-    foreach ($variants as $v) {
-        foreach ($v['option_values'] as $ov) {
-            $k = $ov['key'] ?? '';
-            $val = $ov['value'] ?? '';
-            if (!$k || !$val) continue;
-            if (!isset($groupsMap[$k])) $groupsMap[$k] = ['key' => $k, 'label' => $ov['label'] ?? $k, 'values' => []];
-            if (!in_array($val, $groupsMap[$k]['values'])) $groupsMap[$k]['values'][] = $val;
-        }
+// Optionsgruppen IMMER aus den tatsächlichen Lager-Varianten ableiten
+// (NICHT aus dem evtl. veralteten product.option_groups). So kann die Auswahl
+// im Shop nie mehr mit dem Bestand auseinanderlaufen ("soldout trotz Bestand").
+$groupsMap = [];
+foreach ($variants as $v) {
+    foreach ($v['option_values'] as $ov) {
+        $k = $ov['key'] ?? '';
+        $val = $ov['value'] ?? '';
+        if ($k === '' || $val === '') continue;
+        if (!isset($groupsMap[$k])) $groupsMap[$k] = ['key' => $k, 'label' => $ov['label'] ?? $k, 'values' => []];
+        if (!in_array($val, $groupsMap[$k]['values'], true)) $groupsMap[$k]['values'][] = $val;
     }
-    $product['option_groups'] = array_values($groupsMap);
 }
+$product['option_groups'] = array_values($groupsMap);
 
 $related    = products_related($product['category'], $product['id'], 4);
 $mainImg    = $product['images'][0]['src'] ?? placeholder_svg($product['name']);

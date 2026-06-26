@@ -45,6 +45,7 @@ function pe_build_variants(array $invRows): array {
             'stock'               => (int)($row['stock'] ?? 0),
             'variant_price_cents' => $row['variant_price_cents'] ?? null,
             'is_default'          => !empty($row['is_default']),
+            'images'              => safe_parse($row['images'] ?? '[]', []),
         ];
     }
     return $out;

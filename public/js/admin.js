@@ -166,22 +166,58 @@
       });
     }
 
-    // ── Einfache Grössen-/Bestand-Tabelle ──
+    // ── Einfache Varianten-Tabelle (Name, Bestand, Preis, Bild) ──
     function variantRowEl(data) {
       const value = data.value || '';
       const stock = Number(data.stock || 0);
       const price = data.variant_price_cents != null ? (Number(data.variant_price_cents) / 100).toFixed(2) : '';
+      const imgUrl = (data.images && data.images[0] && data.images[0].src) || data.image_url || '';
       const row = document.createElement('div');
       row.className = 'vs-row';
       row.setAttribute('data-vs-row', '');
       row.innerHTML = `
-        <input class="vs-name" type="text" maxlength="40" placeholder="z.B. M oder Rot" value="${esc(value)}">
-        <input class="vs-stock" type="number" min="0" max="999999" placeholder="0" value="${stock}">
-        <input class="vs-price" type="text" inputmode="decimal" placeholder="—" value="${price}">
-        <label class="vs-default"><input type="radio" name="vs_default" ${data.is_default ? 'checked' : ''}></label>
-        <button type="button" class="vs-remove" title="Entfernen" aria-label="Entfernen">×</button>
+        <div class="vs-main">
+          <input class="vs-name" type="text" maxlength="40" placeholder="z.B. M oder Rot" value="${esc(value)}">
+          <input class="vs-stock" type="number" min="0" max="999999" placeholder="0" value="${stock}">
+          <input class="vs-price" type="text" inputmode="decimal" placeholder="—" value="${price}">
+          <label class="vs-default"><input type="radio" name="vs_default" ${data.is_default ? 'checked' : ''}></label>
+          <button type="button" class="vs-remove" title="Entfernen" aria-label="Entfernen">×</button>
+        </div>
+        <div class="vs-img">
+          <img class="vs-thumb" src="${esc(imgUrl)}" alt=""${imgUrl ? '' : ' hidden'}>
+          <input class="vs-image-url" type="text" placeholder="Bild dieser Variante (z.B. Farbe) – URL oder hochladen" value="${esc(imgUrl)}">
+          <button type="button" class="btn btn-ghost btn-sm vs-upload">↑ Bild</button>
+        </div>
       `;
       row.querySelector('.vs-remove').addEventListener('click', () => { row.remove(); ensureOneDefault(); });
+
+      const urlInput = row.querySelector('.vs-image-url');
+      const thumb = row.querySelector('.vs-thumb');
+      function syncThumb() {
+        const v = urlInput.value.trim();
+        if (v) { thumb.src = v; thumb.hidden = false; } else { thumb.hidden = true; }
+      }
+      urlInput.addEventListener('input', syncThumb);
+
+      const upBtn = row.querySelector('.vs-upload');
+      const fileEl = document.createElement('input');
+      fileEl.type = 'file'; fileEl.accept = 'image/*'; fileEl.style.display = 'none';
+      row.querySelector('.vs-img').appendChild(fileEl);
+      upBtn.addEventListener('click', () => fileEl.click());
+      fileEl.addEventListener('change', async () => {
+        const file = fileEl.files[0];
+        if (!file) return;
+        upBtn.disabled = true; upBtn.textContent = 'Lädt…';
+        try {
+          const fd = new FormData();
+          fd.append('image', file);
+          const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd });
+          const d = await res.json().catch(() => ({}));
+          if (d.ok && d.src) { urlInput.value = d.src; syncThumb(); upBtn.textContent = '✓ Bild'; }
+          else { window.alert('Upload fehlgeschlagen'); upBtn.textContent = '↑ Bild'; }
+        } catch { window.alert('Netzwerkfehler beim Upload'); upBtn.textContent = '↑ Bild'; }
+        finally { upBtn.disabled = false; }
+      });
       return row;
     }
 
@@ -232,6 +268,7 @@
           option_values: [{ key: 'size', label: 'Variante', value }],
           stock: Math.max(0, Number(row.querySelector('.vs-stock').value) || 0),
           variant_price_cents: parseCents(row.querySelector('.vs-price').value),
+          image_url: (row.querySelector('.vs-image-url')?.value || '').trim(),
           is_default: row.querySelector('input[name="vs_default"]').checked,
         };
       }).filter(Boolean);

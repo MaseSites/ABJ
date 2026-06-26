@@ -66,7 +66,7 @@ foreach ($allOrders as $o) {
 $returning = count(array_filter($emailCounts, fn($c) => $c > 1));
 $oneTime   = count($emailCounts) - $returning;
 
-$payLabels = ['stripe' => 'Karte (Stripe)', 'vorkasse' => 'Banküberweisung', 'unbekannt' => 'Unbekannt'];
+$payLabels = ['vorkasse' => 'Banküberweisung', 'unbekannt' => 'Unbekannt'];
 $statusLabels = ['neu' => 'Neu', 'in_bearbeitung' => 'In Bearbeitung', 'versendet' => 'Versendet', 'storniert' => 'Storniert'];
 
 // --- Chart-Helfer ---

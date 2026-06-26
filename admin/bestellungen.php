@@ -8,6 +8,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     redirect('/admin/bestellungen.php');
 }
 
+// Zahlungsstatus pro Bestellung umstellen (offen <-> bezahlt)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'set_payment') {
+    $ref = trim($_POST['ref'] ?? '');
+    $ps  = ($_POST['payment_status'] ?? '') === 'bezahlt' ? 'bezahlt' : 'offen';
+    if ($ref) {
+        $o = order_by_ref($ref);
+        if ($o) {
+            // Beim Bezahlen eine noch "neue" Bestellung in Bearbeitung nehmen.
+            $newStatus = ($ps === 'bezahlt' && $o['status'] === 'neu') ? 'in_bearbeitung' : $o['status'];
+            order_update_status($ref, $newStatus, $ps);
+        }
+    }
+    $back = trim($_POST['filter'] ?? '');
+    redirect('/admin/bestellungen.php' . ($back ? '?filter=' . urlencode($back) : ''));
+}
+
 // NEU-Markierung entfernen (als gelesen markieren) – AJAX oder Fallback
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_seen') {
     $ref = trim($_POST['ref'] ?? '');
@@ -91,8 +107,20 @@ include __DIR__ . '/partials/admin-layout-top.php';
       <td><?= h(substr($o['created_at'], 0, 16)) ?></td>
       <td><?= format_price((int)$o['total_cents'], $currency) ?></td>
       <td><span class="tag"><?= h($o['status']) ?></span></td>
-      <td><span class="tag <?= $o['payment_status'] === 'bezahlt' ? 'tag-ok' : 'tag-warn' ?>"><?= h($o['payment_status']) ?></span></td>
+      <td><span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span></td>
       <td style="white-space:nowrap;display:flex;gap:.4rem;align-items:center">
+        <form method="post" action="<?= url('/admin/bestellungen.php') ?>">
+          <input type="hidden" name="action" value="set_payment">
+          <input type="hidden" name="ref" value="<?= h($o['reference']) ?>">
+          <input type="hidden" name="filter" value="<?= h($filter) ?>">
+          <?php if ($o['payment_status'] === 'bezahlt'): ?>
+            <input type="hidden" name="payment_status" value="offen">
+            <button class="btn btn-ghost btn-sm" type="submit" title="Auf „Zahlung ausstehend" zurücksetzen">Als offen</button>
+          <?php else: ?>
+            <input type="hidden" name="payment_status" value="bezahlt">
+            <button class="btn btn-sm" type="submit" style="background:#1f7a4d;border-color:#1f7a4d;color:#fff" title="Als bezahlt markieren">Als bezahlt</button>
+          <?php endif; ?>
+        </form>
         <a href="<?= url('/admin/bestellung.php?ref=' . urlencode($o['reference'])) ?>" class="btn btn-ghost btn-sm">Details</a>
         <form method="post" action="<?= url('/admin/bestellungen.php') ?>" onsubmit="return confirm('Bestellung <?= h($o['reference']) ?> wirklich löschen?')">
           <input type="hidden" name="action" value="delete">

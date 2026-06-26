@@ -120,3 +120,18 @@ function current_path(): string {
 function str_has(string $haystack, string $needle): bool {
     return strpos($haystack, $needle) !== false;
 }
+
+/**
+ * Anzeige-Label für den Zahlungsstatus einer Bestellung.
+ * Alles ausser "bezahlt" gilt als noch offen → "Zahlung ausstehend".
+ */
+function payment_status_label(string $status): string {
+    return $status === 'bezahlt' ? 'Bezahlt' : 'Zahlung ausstehend';
+}
+
+/**
+ * Tag-CSS-Klasse: grün (tag-ok) für bezahlt, rot (tag-pending) für ausstehend.
+ */
+function payment_status_class(string $status): string {
+    return $status === 'bezahlt' ? 'tag-ok' : 'tag-pending';
+}

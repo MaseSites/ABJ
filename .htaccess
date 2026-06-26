@@ -58,7 +58,6 @@ RewriteRule ^warenkorb/api/update$  /api/cart-update.php [L,QSA]
 
 # Checkout API
 RewriteRule ^api/checkout$           /api/checkout.php          [L,QSA]
-RewriteRule ^api/stripe-webhook$     /api/stripe-webhook.php    [L,QSA]
 
 # Shop-API
 RewriteRule ^api/produkte$           /api/produkte.php          [L,QSA]

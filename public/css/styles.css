@@ -1235,11 +1235,13 @@ h1, h2, h3, h4 {
 .bank-info > div { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .bank-info > div > span { color: var(--ink-dim); }
 
-.stripe-element-wrap { position: relative; min-height: 52px; }
-.stripe-element-loading { display: flex; align-items: center; gap: .55rem; font-size: .84rem; color: var(--ink-dim); padding: .6rem 0; }
-.stripe-element-loading::before { content: ''; width: 15px; height: 15px; border: 2px solid var(--line); border-top-color: var(--gold); border-radius: 50%; animation: spin .65s linear infinite; flex: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.stripe-not-configured { padding: .85rem 1rem; border: 1px dashed rgba(184,156,103,.35); border-radius: var(--radius-sm); font-size: .84rem; color: var(--ink-soft); }
+
+/* Hinweisbox „ohne Zahlung" auf der Kasse */
+.pay-pending-note { display: flex; align-items: flex-start; gap: .7rem; padding: .95rem 1.1rem; border: 1px solid rgba(226,96,76,.3); background: rgba(226,96,76,.06); border-radius: var(--radius-sm); }
+.pay-pending-note svg { color: var(--danger); flex: none; margin-top: .1rem; }
+.pay-pending-note strong { display: block; margin-bottom: .15rem; }
+.pay-pending-note p { margin: 0; font-size: .84rem; color: var(--ink-soft); }
 
 .checkout-error { background: rgba(226,96,76,.08); color: #ffb0a4; border: 1px solid rgba(226,96,76,.3); border-radius: var(--radius-sm); padding: .85em 1.1em; font-size: .88rem; margin-bottom: 1rem; }
 
@@ -1262,6 +1264,20 @@ h1, h2, h3, h4 {
 }
 .confirmation-icon--fail { background: rgba(226,96,76,.1); border-color: rgba(226,96,76,.4); color: var(--danger); }
 .confirmation-icon--pending { background: rgba(184,156,103,.1); border-color: rgba(184,156,103,.4); color: var(--accent-3); }
+
+/* Zahlungsstatus-Badge oben rechts auf der Bestätigungsseite */
+.confirm-pay-badge {
+  position: absolute; top: 0; right: 0;
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .74rem; font-weight: 700; letter-spacing: .04em;
+  padding: .42em .85em; border-radius: 999px;
+  border: 1px solid rgba(226,96,76,.4);
+  background: rgba(226,96,76,.1); color: #ffb0a4;
+  white-space: nowrap;
+}
+.confirm-pay-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.confirm-pay-badge.is-paid { border-color: rgba(111,190,131,.4); background: rgba(111,190,131,.1); color: #a8e6b8; }
+@media (max-width: 560px) { .confirm-pay-badge { position: static; margin: 0 auto 1rem; } }
 .order-confirm-box { background: var(--elev); border: 1px solid var(--line); border-radius: var(--radius); margin: 1.5rem auto 0; max-width: 500px; text-align: left; overflow: hidden; }
 .order-confirm-section { padding: 1.05rem 1.3rem; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: .5rem; }
 .order-confirm-section:last-child { border-bottom: none; }
@@ -1706,6 +1722,7 @@ body.no-scroll { overflow: hidden; }
 }
 .konto-order-tags .tag-ok  { color: var(--ok); border-color: rgba(111,190,131,.35); background: rgba(111,190,131,.08); }
 .konto-order-tags .tag-warn{ color: #d4af56; border-color: rgba(212,175,86,.35); background: rgba(212,175,86,.08); }
+.konto-order-tags .tag-pending { color: #ffb0a4; border-color: rgba(226,96,76,.4); background: rgba(226,96,76,.08); }
 .konto-order-tags .tag-off { color: var(--ink-dim); }
 .konto-order-items { display: flex; flex-wrap: wrap; gap: .4rem .9rem; margin-bottom: .8rem; }
 .konto-order-item { font-size: .85rem; color: var(--ink-soft); }

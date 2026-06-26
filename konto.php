@@ -22,9 +22,6 @@ $totalSpent = array_sum(array_map(fn($o) => $o['payment_status'] === 'bezahlt' ?
 function ko_status_label(string $s): string {
     return ['neu' => 'Neu', 'in_bearbeitung' => 'In Bearbeitung', 'storniert' => 'Storniert', 'versendet' => 'Versendet'][$s] ?? ucfirst($s);
 }
-function ko_pay_class(string $s): string {
-    return ['bezahlt' => 'tag-ok', 'offen' => 'tag-warn', 'fehlgeschlagen' => 'tag-off', 'storniert' => 'tag-off'][$s] ?? '';
-}
 
 $cartCount   = cart_count();
 $currentPath = '/konto';
@@ -65,7 +62,7 @@ include __DIR__ . '/partials/header.php';
             <span class="muted" style="font-size:.82rem"><?= h(substr($o['created_at'], 0, 10)) ?></span>
           </div>
           <div class="konto-order-tags">
-            <span class="tag <?= ko_pay_class($o['payment_status']) ?>"><?= h($o['payment_status']) ?></span>
+            <span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span>
             <span class="tag"><?= h(ko_status_label($o['status'])) ?></span>
           </div>
         </div>

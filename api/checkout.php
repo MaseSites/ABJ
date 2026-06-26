@@ -15,19 +15,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['ok' => false, 'error' => 'Method not allowed'], 405);
 }
 
+// Nur eingeloggte Kunden dürfen bestellen.
+if (!is_customer()) {
+    json_response(['ok' => false, 'error' => 'Bitte melde dich an, um zu bestellen.', 'login_required' => true], 401);
+}
+
 $currency = setting_get('currency') ?: 'CHF';
 
 // --- Validate required fields ---
 $firstname = trim($_POST['firstname'] ?? '');
 $lastname  = trim($_POST['lastname']  ?? '');
-$email     = trim($_POST['email']     ?? '');
+// E-Mail ist die des eingeloggten Kontos – so erscheint die Bestellung im Konto.
+$email     = trim(current_customer()['email'] ?? '');
 $phone     = trim($_POST['phone']     ?? '');
 $street    = trim($_POST['street']    ?? '');
 $housenr   = trim($_POST['housenr']   ?? '');
 $zip       = trim($_POST['zip']       ?? '');
 $city      = trim($_POST['city']      ?? '');
 $country   = trim($_POST['country']   ?? 'CH');
-$payMethod = trim($_POST['payment_method'] ?? 'stripe');
 
 $errors = [];
 if (!$firstname)           $errors[] = 'Vorname fehlt';
@@ -112,35 +117,10 @@ $orderData = [
     'discount_cents' => $discountCents,
 ];
 
-// --- Stripe online payment ---
-if ($payMethod === 'stripe' && stripe_is_configured()) {
-    $reference = order_create($orderData + ['payment_method' => 'stripe']);
-
-    try {
-        $pi = stripe_create_payment_intent($totalCents, $currency, [
-            'order_ref'   => $reference,
-            'email'       => $email,
-            'description' => "ABJ Store – Bestellung $reference",
-        ]);
-        order_set_payment_intent($reference, $pi['id']);
-        if ($discountCode) discount_redeem($discountCode);
-        cart_set([]);
-        last_order_set($reference);
-        json_response([
-            'ok'              => true,
-            'client_secret'   => $pi['client_secret'],
-            'order_ref'       => $reference,
-            'publishable_key' => stripe_publishable_key(),
-            'return_url'      => url('/bestellung.php?ref=' . urlencode($reference)),
-        ]);
-    } catch (Throwable $e) {
-        order_update_status($reference, 'storniert', 'fehlgeschlagen');
-        json_response(['ok' => false, 'error' => $e->getMessage()], 500);
-    }
-}
-
-// --- Bank transfer / fallback ---
-$reference = order_create($orderData + ['payment_method' => 'vorkasse']);
+// --- Bestellung ohne Zahlung aufgeben ---
+// Jede Bestellung startet mit Zahlungsstatus "offen" (= "Zahlung ausstehend").
+// Der Admin setzt sie später im Dashboard auf "bezahlt".
+$reference = order_create($orderData + ['payment_method' => '']);
 inv_deduct_stock($lineItems);
 if ($discountCode) discount_redeem($discountCode);
 cart_set([]);

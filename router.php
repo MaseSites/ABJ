@@ -63,7 +63,6 @@ $routes = [
     '#^/warenkorb/api/update$#'      => '/api/cart-update.php',
     '#^/api/cart-update$#'           => '/api/cart-update.php',
     '#^/api/checkout$#'              => '/api/checkout.php',
-    '#^/api/stripe-webhook$#'        => '/api/stripe-webhook.php',
     '#^/api/produkte$#'              => '/api/produkte.php',
     '#^/api/review$#'                => '/api/review.php',
     '#^/api/discount-check$#'        => '/api/discount-check.php',

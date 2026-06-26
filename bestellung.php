@@ -9,34 +9,18 @@ $currentPath    = '/bestellung';
 
 $order = $reference ? order_by_ref($reference) : null;
 
-// Mark order as paid when Stripe confirms — three paths:
-// 1. redirect_status=succeeded in URL  (3DS redirect flow)
-// 2. JS added redirect_status=succeeded after inline confirmation
-// 3. Fallback: query Stripe API directly if order still shows 'offen'
-if ($order && $order['payment_status'] !== 'bezahlt') {
-    $shouldMarkPaid = ($redirectStatus === 'succeeded');
-
-    if (!$shouldMarkPaid && !empty($order['stripe_payment_intent_id']) && stripe_is_configured()) {
-        $pi = stripe_retrieve_payment_intent($order['stripe_payment_intent_id']);
-        if ($pi && ($pi['status'] ?? '') === 'succeeded') {
-            $shouldMarkPaid = true;
-        }
-    }
-
-    if ($shouldMarkPaid) {
-        inv_deduct_stock($order['items']);
-        order_update_status($reference, 'in_bearbeitung', 'bezahlt');
-        $order['payment_status'] = 'bezahlt';
-        $order['status']         = 'in_bearbeitung';
-    }
-}
-
 $pageTitle = 'Bestellung eingegangen';
 include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/header.php';
 ?>
 
-<main id="main" class="container section narrow center">
+<main id="main" class="container section narrow center" style="position:relative">
+
+  <?php if ($order): ?>
+    <span class="confirm-pay-badge<?= $order['payment_status'] === 'bezahlt' ? ' is-paid' : '' ?>">
+      <?= h(payment_status_label($order['payment_status'])) ?>
+    </span>
+  <?php endif; ?>
 
   <?php if ($redirectStatus === 'requires_payment_method'): ?>
 

@@ -277,6 +277,7 @@
 .tag-ok  { background: rgba(52,211,153,.1); color: #6ee7b7; border-color: rgba(52,211,153,.25); }
 .tag-off { background: rgba(255,255,255,.05); color: #3d4055; border-color: rgba(255,255,255,.07); }
 .tag-warn { background: rgba(232,183,101,.1); color: #b89c67; border-color: rgba(232,183,101,.25); }
+.tag-pending { background: rgba(226,96,76,.12); color: #f08a7a; border-color: rgba(226,96,76,.35); }
 .tag-gold { background: rgba(184,156,103,.12); color: #b89c67; border-color: rgba(184,156,103,.3); margin-left: .4em; }
 .tag-new  { background: rgba(99,102,241,.12); color: #a5b4fc; border-color: rgba(99,102,241,.25); }
 

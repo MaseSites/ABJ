@@ -15,9 +15,6 @@ $SETTINGS_DEFAULTS = [
     'accent_2'                => '#B89C67',
     'accent_3'                => '#CDB27E',
     'hero_image'              => '/img/img.png',
-    'stripe_publishable_key'  => '',
-    'stripe_secret_key'       => '',
-    'stripe_webhook_secret'   => '',
     // Versand
     'shipping_ch_cents'        => '590',
     'shipping_intl_cents'      => '1990',

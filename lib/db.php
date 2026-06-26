@@ -166,7 +166,6 @@ function db_init(PDO $pdo): void {
 
     $ord_cols = array_column($pdo->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     $ord_add = [
-        'stripe_payment_intent_id' => "TEXT DEFAULT ''",
         'is_seen'                  => 'INTEGER DEFAULT 0',
         'discount_code'            => "TEXT DEFAULT ''",
         'discount_cents'           => 'INTEGER DEFAULT 0',

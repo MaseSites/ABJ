@@ -57,7 +57,7 @@ $addr     = is_array($order['address']) ? $order['address'] : ['raw' => $order['
   </table>
   <p><strong>Versand:</strong> <?= format_price((int)$order['shipping_cents'], $currency) ?></p>
   <p><strong>Gesamt:</strong> <?= format_price((int)$order['total_cents'], $currency) ?></p>
-  <p><strong>Zahlungsmethode:</strong> <?= h($order['payment_method']) ?></p>
+  <p><strong>Zahlung:</strong> <span class="tag <?= payment_status_class($order['payment_status']) ?>"><?= h(payment_status_label($order['payment_status'])) ?></span></p>
 
   <form method="post" style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
     <label class="field"><span>Status</span>
@@ -69,8 +69,8 @@ $addr     = is_array($order['address']) ? $order['address'] : ['raw' => $order['
     </label>
     <label class="field"><span>Zahlungsstatus</span>
       <select name="payment_status">
-        <option value="offen"<?= $order['payment_status'] === 'offen' ? ' selected' : '' ?>>offen</option>
-        <option value="bezahlt"<?= $order['payment_status'] === 'bezahlt' ? ' selected' : '' ?>>bezahlt</option>
+        <option value="offen"<?= $order['payment_status'] !== 'bezahlt' ? ' selected' : '' ?>>Zahlung ausstehend</option>
+        <option value="bezahlt"<?= $order['payment_status'] === 'bezahlt' ? ' selected' : '' ?>>Bezahlt</option>
       </select>
     </label>
     <button class="btn btn-primary" type="submit">Speichern</button>

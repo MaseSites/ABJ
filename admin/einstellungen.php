@@ -6,7 +6,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fields = [
         'shop_name','tagline','currency','hero_title','hero_subtitle','contact_email','announcement',
         'members_count','ratings_count','sale_ends_at','hero_image','accent','accent_2','accent_3',
-        'stripe_publishable_key','stripe_secret_key','stripe_webhook_secret',
         'bank_recipient','bank_iban','bank_bic','bank_name',
         'instagram_url','tiktok_url',
     ];
@@ -110,18 +109,13 @@ $s = settings_all();
   </div>
 
   <div class="admin-section">
-    <h2>Zahlungen (Stripe)</h2>
-    <p style="font-size:.82rem;color:#8a8a95;margin-bottom:.4rem">
-      Schlüssel findest du im <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener" style="color:#b89c67">Stripe Dashboard</a>.
-      Nutze <code>pk_test_…</code> / <code>sk_test_…</code> zum Testen, <code>pk_live_…</code> / <code>sk_live_…</code> für echte Zahlungen.
+    <h2>Zahlungen</h2>
+    <p style="font-size:.82rem;color:#8a8a95;margin:0">
+      Bestellungen werden ohne Online-Zahlung aufgegeben und erhalten den Status
+      <strong>„Zahlung ausstehend"</strong>. Sobald die Zahlung eingegangen ist, kannst du die
+      Bestellung unter <a href="<?= url('/admin/bestellungen.php') ?>" style="color:#b89c67">Bestellungen</a>
+      auf <strong>„Bezahlt"</strong> setzen.
     </p>
-    <label class="field"><span>Publishable Key</span><input type="text" name="stripe_publishable_key" value="<?= h($s['stripe_publishable_key'] ?? '') ?>" placeholder="pk_live_…" autocomplete="off"></label>
-    <label class="field"><span>Secret Key</span><input type="password" name="stripe_secret_key" value="<?= h($s['stripe_secret_key'] ?? '') ?>" placeholder="sk_live_…" autocomplete="new-password"></label>
-    <label class="field">
-      <span>Webhook Secret (whsec_…)</span>
-      <input type="password" name="stripe_webhook_secret" value="<?= h($s['stripe_webhook_secret'] ?? '') ?>" placeholder="whsec_…" autocomplete="new-password">
-      <small style="color:#8a8a95;font-size:.75rem">Webhook-Endpoint: <code><?= h((isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'deineshop.ch') . url('/api/stripe-webhook.php')) ?></code></small>
-    </label>
   </div>
 
   <div class="admin-section">

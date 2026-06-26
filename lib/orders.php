@@ -41,11 +41,6 @@ function order_update_status(string $ref, string $status, string $paymentStatus)
     return $stmt->rowCount() > 0;
 }
 
-function order_set_payment_intent(string $ref, string $intentId): void {
-    db()->prepare('UPDATE orders SET stripe_payment_intent_id=?, updated_at=datetime(\'now\') WHERE reference=?')
-       ->execute([$intentId, $ref]);
-}
-
 function order_mark_seen(string $ref): void {
     db()->prepare('UPDATE orders SET is_seen=1 WHERE reference=?')->execute([$ref]);
 }

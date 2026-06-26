@@ -87,14 +87,12 @@
     const existingWrap = $('#existing-images');
     const uploadPreview = $('#upload-preview');
     const fileInput = $('[data-file-input]');
-    const groupsWrap = $('#option-groups-list');
-    const previewWrap = $('#variant-preview');
-    const optionBuilder = $('#option-builder');
+    const variantWrap = $('#vs-rows');
+    const variantBox = $('#variant-simple');
     const variantToggle = form.querySelector('input[name="has_variants"]');
-    const productNameInput = form.querySelector('input[name="name"]');
+    const noVariantStock = $('#no-variant-stock');
 
     let existingImages = parseJsonScript('existing-images-data', []);
-    let optionGroups = parseJsonScript('existing-option-groups-data', []).map(normalizeGroup).filter((group) => group.label);
     let existingVariants = parseJsonScript('existing-variants-data', []);
 
     function showError(message, issues) {
@@ -168,211 +166,81 @@
       });
     }
 
-    function renderOptionGroups() {
-      if (!groupsWrap) return;
-      groupsWrap.innerHTML = '';
-      if (!optionGroups.length) {
-        groupsWrap.innerHTML = '<p class="muted small">Keine Optionen aktiv. Füge Size, Color oder eine eigene Option hinzu.</p>';
-        renderVariantPreview();
-        return;
+    // ── Einfache Grössen-/Bestand-Tabelle ──
+    function variantRowEl(data) {
+      const value = data.value || '';
+      const stock = Number(data.stock || 0);
+      const price = data.variant_price_cents != null ? (Number(data.variant_price_cents) / 100).toFixed(2) : '';
+      const row = document.createElement('div');
+      row.className = 'vs-row';
+      row.setAttribute('data-vs-row', '');
+      row.innerHTML = `
+        <input class="vs-name" type="text" maxlength="40" placeholder="z.B. M" value="${esc(value)}">
+        <input class="vs-stock" type="number" min="0" max="999999" placeholder="0" value="${stock}">
+        <input class="vs-price" type="text" inputmode="decimal" placeholder="—" value="${price}">
+        <label class="vs-default"><input type="radio" name="vs_default" ${data.is_default ? 'checked' : ''}></label>
+        <button type="button" class="vs-remove" title="Entfernen" aria-label="Entfernen">×</button>
+      `;
+      row.querySelector('.vs-remove').addEventListener('click', () => { row.remove(); ensureOneDefault(); });
+      return row;
+    }
+
+    function ensureOneDefault() {
+      const rows = $$('#vs-rows .vs-row');
+      if (!rows.length) return;
+      if (!rows.some((r) => r.querySelector('input[name="vs_default"]').checked)) {
+        rows[0].querySelector('input[name="vs_default"]').checked = true;
       }
-      optionGroups.forEach((group, index) => {
-        const card = document.createElement('div');
-        card.className = 'option-card';
-        const presetValues = PRESET_OPTIONS[group.key] || [];
-        const customValues = group.values.filter((value) => !presetValues.includes(value));
-        card.innerHTML = `
-          <div class="variant-header">
-            <strong>${esc(group.label || `Option ${index + 1}`)}</strong>
-            <button type="button" class="btn btn-ghost btn-sm" data-remove-group>Entfernen</button>
-          </div>
-          <div class="option-card-body">
-            <label class="field"><span>Name</span><input type="text" name="group_label" maxlength="80" value="${esc(group.label)}" placeholder="Size"></label>
-            <div>
-              <span class="field-caption">Werte anklicken</span>
-              <div class="option-chip-grid" data-chip-grid>
-                ${presetValues.map((value) => `
-                  <label class="option-chip">
-                    <input type="checkbox" value="${esc(value)}" ${group.values.includes(value) ? 'checked' : ''}>
-                    <span>${esc(value)}</span>
-                  </label>
-                `).join('')}
-                ${customValues.map((value) => `
-                  <label class="option-chip custom-chip">
-                    <input type="checkbox" value="${esc(value)}" checked>
-                    <span>${esc(value)}</span>
-                  </label>
-                `).join('')}
-              </div>
-              <div class="option-add-row">
-                <input type="text" data-new-value placeholder="${group.key === 'color' ? 'Eigene Farbe' : 'Eigener Wert'}" maxlength="40">
-                <button type="button" class="btn btn-ghost btn-sm" data-add-value>Hinzufügen</button>
-              </div>
-            </div>
-          </div>
-        `;
-        card.querySelector('[name="group_label"]').addEventListener('input', (event) => {
-          optionGroups[index].label = event.target.value.trim();
-          if (!PRESET_OPTIONS[optionGroups[index].key]) {
-            optionGroups[index].key = slugify(event.target.value) || optionGroups[index].key || `option-${index + 1}`;
-          }
-          renderVariantPreview();
-        });
-        function syncValuesFromChips() {
-          optionGroups[index].values = $$('[data-chip-grid] input:checked', card).map((input) => input.value);
-          renderVariantPreview();
-        }
-        $$('[data-chip-grid] input', card).forEach((input) => {
-          input.addEventListener('change', syncValuesFromChips);
-        });
-        card.querySelector('[data-add-value]').addEventListener('click', () => {
-          const input = card.querySelector('[data-new-value]');
-          const value = input.value.trim();
-          if (!value) return;
-          if (!optionGroups[index].values.includes(value)) optionGroups[index].values.push(value);
-          input.value = '';
-          renderOptionGroups();
-        });
-        card.querySelector('[data-new-value]').addEventListener('keydown', (event) => {
-          if (event.key !== 'Enter') return;
-          event.preventDefault();
-          card.querySelector('[data-add-value]').click();
-        });
-        card.querySelector('[data-remove-group]').addEventListener('click', () => {
-          optionGroups.splice(index, 1);
-          renderOptionGroups();
-        });
-        groupsWrap.appendChild(card);
+    }
+
+    function renderVariantRows() {
+      if (!variantWrap) return;
+      variantWrap.innerHTML = '';
+      (existingVariants || []).forEach((v) => {
+        const value = (v.option_values && v.option_values[0] && v.option_values[0].value) || v.size || v.title || '';
+        if (!String(value).trim()) return;
+        variantWrap.appendChild(variantRowEl({
+          value, stock: v.stock || 0, variant_price_cents: v.variant_price_cents, is_default: v.is_default,
+        }));
       });
-      renderVariantPreview();
+      ensureOneDefault();
     }
 
-    function variantMap() {
-      return new Map(existingVariants.map((variant) => [String(variant.size || variant.signature || ''), variant]));
+    function addVariantRow(data) {
+      if (!variantWrap) return;
+      // Doppelte Grössennamen vermeiden
+      const name = (data && data.value || '').trim().toLowerCase();
+      if (name && $$('#vs-rows .vs-name').some((i) => i.value.trim().toLowerCase() === name)) return;
+      variantWrap.appendChild(variantRowEl(data || {}));
+      ensureOneDefault();
     }
-
-    function renderVariantPreview() {
-      if (!previewWrap) return;
-      const combos = buildCombinations(optionGroups);
-      const productName = (productNameInput?.value || form.getAttribute('data-product-name') || 'Produkt').trim() || 'Produkt';
-      const map = variantMap();
-      const selectedDefault = existingVariants.find((variant) => variant.is_default)?.size || combos[0]?.signature || '';
-
-      if (!combos.length) {
-        previewWrap.innerHTML = '<p class="muted small">Sobald Optionen Werte haben, erscheinen hier automatisch alle Varianten.</p>';
-        return;
-      }
-
-      previewWrap.innerHTML = combos.map((combo) => {
-        const saved = map.get(combo.signature) || {};
-        const checked = saved.is_default || combo.signature === selectedDefault;
-        const imageUrl = (saved.images && saved.images[0] && saved.images[0].src) || '';
-        return `
-          <div class="variant-row" data-signature="${esc(combo.signature)}" data-option-values='${esc(JSON.stringify(combo.values))}'>
-            <div class="variant-header">
-              <strong>${esc(productName)} <span>${esc(combo.titleSuffix)}</span></strong>
-              <label class="checkbox"><input type="radio" name="variant_default_signature" value="${esc(combo.signature)}" ${checked ? 'checked' : ''}> Standard</label>
-            </div>
-            <div class="field-grid">
-              <label class="field"><span>SKU</span><input name="variant_sku" value="${esc(saved.sku || '')}" maxlength="100" placeholder="optional"></label>
-              <label class="field"><span>Bestand</span><input type="number" name="variant_stock" min="0" value="${Number(saved.stock || 0)}"></label>
-              <label class="field"><span>Preis (CHF) <small class="muted">optional</small></span><input type="text" name="variant_price" value="${saved.variant_price_cents != null ? (Number(saved.variant_price_cents) / 100).toFixed(2) : ''}" placeholder="wie Produktpreis"></label>
-              <label class="field span-2"><span>Variantenbild <small class="muted">optional</small></span><input type="text" name="variant_image_url" value="${esc(imageUrl)}" placeholder="https://... oder Datei hochladen"></label>
-            </div>
-            <p class="muted small">${esc(combo.values.map((entry) => `${entry.label}: ${entry.value}`).join(' · '))}</p>
-          </div>
-        `;
-      }).join('');
-
-      // Attach upload buttons next to each variant image URL input
-      $$('.variant-row [name="variant_image_url"]', previewWrap).forEach((urlInput) => {
-        const wrap = urlInput.closest('.field');
-        if (!wrap) return;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn btn-ghost btn-sm';
-        btn.style.cssText = 'margin-top:4px;font-size:.75rem';
-        btn.textContent = '↑ Bild hochladen';
-        const fi = document.createElement('input');
-        fi.type = 'file';
-        fi.accept = 'image/*';
-        fi.style.display = 'none';
-        btn.addEventListener('click', () => fi.click());
-        fi.addEventListener('change', async () => {
-          const file = fi.files[0];
-          if (!file) return;
-          btn.disabled = true; btn.textContent = 'Lädt…';
-          try {
-            const fd = new FormData();
-            fd.append('image', file);
-            const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd });
-            const data = await res.json().catch(() => ({}));
-            if (data.ok && data.src) {
-              urlInput.value = data.src;
-              btn.textContent = '✓ Hochgeladen';
-            } else {
-              window.alert('Upload fehlgeschlagen');
-              btn.disabled = false; btn.textContent = '↑ Bild hochladen';
-            }
-          } catch {
-            window.alert('Netzwerkfehler beim Upload');
-            btn.disabled = false; btn.textContent = '↑ Bild hochladen';
-          }
-        });
-        wrap.appendChild(btn);
-        wrap.appendChild(fi);
-      });
-    }
-
-    function addOption(kind) {
-      if (kind === 'size') {
-        optionGroups.push({ key: 'size', label: 'Größe', values: ['S', 'M', 'L', 'XL'] });
-      } else if (kind === 'color') {
-        optionGroups.push({ key: 'color', label: 'Farbe', values: ['Schwarz', 'Weiß'] });
-      } else {
-        optionGroups.push({ key: `option-${optionGroups.length + 1}`, label: 'Variante', values: [] });
-      }
-      renderOptionGroups();
-    }
-
-    const noVariantStock = $('#no-variant-stock');
 
     function updateVariantMode() {
       const enabled = !!variantToggle?.checked;
-      if (optionBuilder) optionBuilder.hidden = !enabled;
+      if (variantBox) variantBox.hidden = !enabled;
       if (noVariantStock) noVariantStock.hidden = enabled;
-      if (enabled && !optionGroups.length) {
-        optionGroups.push({ key: 'size', label: 'Größe', values: ['S', 'M', 'L', 'XL'] });
-        renderOptionGroups();
+      if (enabled && !$$('#vs-rows .vs-row').length) {
+        ['S', 'M', 'L'].forEach((s) => addVariantRow({ value: s, stock: 0 }));
       }
     }
 
     function collectVariants() {
-      return $$('#variant-preview .variant-row').map((row) => {
-        const get = (name) => row.querySelector(`[name="${name}"]`)?.value || '';
-        const signature = row.getAttribute('data-signature') || '';
-        const checked = document.querySelector('input[name="variant_default_signature"]:checked')?.value;
+      return $$('#vs-rows .vs-row').map((row) => {
+        const value = row.querySelector('.vs-name').value.trim();
+        if (!value) return null;
         return {
-          signature,
-          option_values: JSON.parse(row.getAttribute('data-option-values') || '[]'),
-          sku: get('variant_sku').trim(),
-          stock: Math.max(0, Number(get('variant_stock')) || 0),
-          min_stock: 3,
-          variant_price_cents: parseCents(get('variant_price')),
-          image_url: get('variant_image_url').trim(),
-          is_default: checked === signature,
+          option_values: [{ key: 'size', label: 'Grösse', value }],
+          stock: Math.max(0, Number(row.querySelector('.vs-stock').value) || 0),
+          variant_price_cents: parseCents(row.querySelector('.vs-price').value),
+          is_default: row.querySelector('input[name="vs_default"]').checked,
         };
-      });
+      }).filter(Boolean);
     }
 
     function validateBeforeSubmit(formData, hasVariants) {
       if (!String(formData.get('name') || '').trim()) return 'Bitte gib einen Produktnamen ein.';
       if (parseCents(formData.get('price')) == null) return 'Bitte gib einen gültigen Preis ein.';
-      if (hasVariants) {
-        const groups = optionGroups.map(normalizeGroup).filter((group) => group.label && group.values.length);
-        if (!groups.length) return 'Bitte füge mindestens eine Option mit Werten hinzu.';
-        if (!buildCombinations(groups).length) return 'Bitte prüfe die Varianten-Werte.';
-      }
+      if (hasVariants && !collectVariants().length) return 'Bitte gib mindestens einer Größe einen Namen.';
       return null;
     }
 
@@ -393,14 +261,15 @@
     }
 
     renderExistingImages();
-    renderOptionGroups();
+    renderVariantRows();
     updateVariantMode();
 
     if (fileInput) fileInput.addEventListener('change', renderUploadPreview);
     if (variantToggle) variantToggle.addEventListener('change', updateVariantMode);
-    if (productNameInput) productNameInput.addEventListener('input', renderVariantPreview);
-    $$('[data-add-option]').forEach((button) => {
-      button.addEventListener('click', () => addOption(button.getAttribute('data-add-option')));
+    const addRowBtn = $('[data-vs-add]');
+    if (addRowBtn) addRowBtn.addEventListener('click', () => addVariantRow());
+    $$('[data-vs-quick]').forEach((b) => {
+      b.addEventListener('click', () => addVariantRow({ value: b.getAttribute('data-vs-quick'), stock: 0 }));
     });
 
     form.addEventListener('submit', async (event) => {
@@ -429,14 +298,9 @@
         return;
       }
 
-      if (hasVariants) {
-        const groups = optionGroups.map(normalizeGroup).filter((group) => group.label && group.values.length);
-        formData.set('option_groups', JSON.stringify(groups));
-        formData.set('variants', JSON.stringify(collectVariants()));
-      } else {
-        formData.set('option_groups', '[]');
-        formData.set('variants', '[]');
-      }
+      // Optionsgruppen leitet der Server aus den Varianten ab (immer synchron).
+      formData.set('option_groups', '[]');
+      formData.set('variants', hasVariants ? JSON.stringify(collectVariants()) : '[]');
 
       try {
         const response = await fetch(form.getAttribute('data-action'), {

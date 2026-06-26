@@ -119,13 +119,13 @@ $currency   = setting_get('currency') ?: 'CHF';
     </div>
   </div>
 
-  <!-- ── Schritt 2: Varianten ── -->
+  <!-- ── Schritt 2: Bestand & Größen ── -->
   <div class="admin-section">
     <div class="step-head">
       <span class="step-num">2</span>
       <div>
-        <h2>Größen &amp; Farben</h2>
-        <p>Varianten wählen — werden automatisch im Lager angelegt</p>
+        <h2>Bestand &amp; Größen</h2>
+        <p>Ein Gesamtbestand — oder mehrere Größen mit eigenem Bestand</p>
       </div>
     </div>
     <div class="form-step">
@@ -133,35 +133,33 @@ $currency   = setting_get('currency') ?: 'CHF';
         <input type="checkbox" name="has_variants" value="1"
                <?= $hasVariants ? 'checked' : '' ?>>
         <div>
-          <strong>Varianten aktivieren</strong>
-          <small>Wähle Größen, Farben oder eigene Optionen. Bestand wird pro Variante verwaltet.</small>
+          <strong>Mehrere Größen</strong>
+          <small>An: Bestand pro Größe (S, M, L …). Aus: ein Gesamtbestand.</small>
         </div>
       </label>
 
       <!-- Kein-Varianten-Bestand -->
       <div id="no-variant-stock" <?= $hasVariants ? 'hidden' : '' ?>>
-        <label class="field" style="max-width:180px">
+        <label class="field" style="max-width:200px">
           <span>Lagerbestand</span>
           <input type="number" name="stock" min="0" max="1000000"
                  value="<?= (int)($p['stock'] ?? 0) ?>">
         </label>
       </div>
 
-      <!-- Option-Builder -->
-      <div id="option-builder" <?= !$hasVariants ? 'hidden' : '' ?>>
-        <div id="option-groups-list"></div>
-
-        <div class="option-toolbar" style="margin-top:1rem">
-          <button type="button" class="btn btn-ghost btn-sm" data-add-option="size">+ Größe hinzufügen</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-add-option="color">+ Farbe hinzufügen</button>
-          <button type="button" class="btn btn-ghost btn-sm" data-add-option="custom">+ Eigene Option</button>
+      <!-- Einfache Größen-Tabelle -->
+      <div id="variant-simple" <?= !$hasVariants ? 'hidden' : '' ?>>
+        <div class="vs-quickadd">
+          <span class="muted small">Schnell:</span>
+          <?php foreach (['S','M','L','XL','XXL','One Size'] as $qs): ?>
+          <button type="button" class="btn btn-ghost btn-sm" data-vs-quick="<?= h($qs) ?>">+ <?= h($qs) ?></button>
+          <?php endforeach; ?>
         </div>
-
-        <div class="variant-preview-head" style="margin-top:1.2rem">
-          <h3>Varianten &amp; Bestand</h3>
-          <span class="muted" style="font-size:.8rem">Bestand für jede Variante eintragen</span>
+        <div class="vs-head">
+          <span>Größe</span><span>Bestand</span><span>Preis <small class="muted">optional</small></span><span>Standard</span><span></span>
         </div>
-        <div id="variant-preview" class="variant-preview"></div>
+        <div id="vs-rows"></div>
+        <button type="button" class="btn btn-ghost btn-sm" data-vs-add style="margin-top:.7rem">+ Größe hinzufügen</button>
       </div>
     </div>
   </div>
@@ -232,7 +230,6 @@ $currency   = setting_get('currency') ?: 'CHF';
 
 <!-- Daten für admin.js -->
 <script type="application/json" id="existing-images-data"><?= json_encode($existingImages) ?></script>
-<script type="application/json" id="existing-option-groups-data"><?= json_encode($optionGroups) ?></script>
 <script type="application/json" id="existing-variants-data"><?= json_encode($existingVariants) ?></script>
 
 <?php include __DIR__ . '/partials/admin-layout-bottom.php'; ?>

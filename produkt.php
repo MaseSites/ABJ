@@ -163,7 +163,7 @@ include __DIR__ . '/partials/header.php';
         </details>
         <details>
           <summary>Rückgabe &amp; Umtausch</summary>
-          <div class="acc-body">14 Tage Rückgaberecht ab Erhalt. Artikel müssen ungetragen und im Originalzustand sein. Details siehe <a href="<?= url('/widerruf.php') ?>" style="color:var(--accent-3)">Widerruf</a>.</div>
+          <div class="acc-body">14 Tage Rückgaberecht ab Erhalt. Artikel müssen ungetragen und im Originalzustand sein.</div>
         </details>
         <details>
           <summary>Echtheit &amp; Zustand</summary>

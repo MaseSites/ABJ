@@ -39,16 +39,36 @@ if ($method === 'POST') {
             }
         }
 
-        /* Varianten */
-        $hasVariants  = ($_POST['has_variants'] ?? '0') === '1';
-        $optionGroups = json_decode($_POST['option_groups'] ?? '[]', true) ?: [];
-        $variants     = $hasVariants ? (json_decode($_POST['variants'] ?? '[]', true) ?: []) : [];
-        $stock        = $hasVariants ? 0 : (int)($_POST['stock'] ?? 0);
+        /* Varianten (vereinfacht: nur Grössen mit eigenem Bestand) */
+        $hasVariants = ($_POST['has_variants'] ?? '0') === '1';
+        $variants    = json_decode($_POST['variants'] ?? '[]', true) ?: [];
 
-        $sizes = [];
-        foreach ($optionGroups as $g) {
-            if (($g['key'] ?? '') === 'size') { $sizes = $g['values'] ?? []; break; }
+        // Nur gültige Grössen-Varianten (mit Namen) behalten.
+        $cleanVariants = [];
+        foreach ($variants as $v) {
+            $size = '';
+            foreach ($v['option_values'] ?? [] as $ov) {
+                if (($ov['key'] ?? '') === 'size') $size = trim((string)($ov['value'] ?? ''));
+            }
+            if ($size === '') continue;
+            $cleanVariants[$size] = [
+                'size'                => $size,
+                'stock'               => max(0, (int)($v['stock'] ?? 0)),
+                'variant_price_cents' => ($v['variant_price_cents'] !== null && $v['variant_price_cents'] !== '')
+                                         ? max(0, (int)$v['variant_price_cents']) : null,
+                'is_default'          => !empty($v['is_default']),
+            ];
         }
+        $cleanVariants = array_values($cleanVariants);
+
+        // Varianten zählen nur, wenn der Schalter an ist UND echte Grössen da sind.
+        $useVariants = $hasVariants && !empty($cleanVariants);
+        $stock       = $useVariants ? 0 : max(0, (int)($_POST['stock'] ?? 0));
+
+        // WICHTIG: Optionsgruppen werden IMMER aus den Varianten abgeleitet,
+        // damit Lager und Shop-Anzeige nie auseinanderlaufen (Soldout-Bug).
+        $sizes        = $useVariants ? array_column($cleanVariants, 'size') : [];
+        $optionGroups = $useVariants ? [['key' => 'size', 'label' => 'Grösse', 'values' => $sizes]] : [];
 
         $data = [
             'name'             => $name,
@@ -72,57 +92,46 @@ if ($method === 'POST') {
             $productId = $new['id'];
         }
 
-        /* Lager-Einträge speichern */
-        if ($hasVariants && !empty($variants)) {
-            inv_delete_by_product($productId);
-            foreach ($variants as $v) {
-                $size  = '';
-                $color = '';
-                foreach ($v['option_values'] ?? [] as $ov) {
-                    if (($ov['key'] ?? '') === 'size')  $size  = $ov['value'] ?? '';
-                    if (($ov['key'] ?? '') === 'color') $color = $ov['value'] ?? '';
-                }
-                $imgUrl = secure_url(trim($v['image_url'] ?? ''));
+        /* Lager IMMER vollständig mit dem Formular synchronisieren */
+        inv_delete_by_product($productId);
+        if ($useVariants) {
+            $hasDefault = false;
+            foreach ($cleanVariants as $v) { if ($v['is_default']) { $hasDefault = true; break; } }
+            foreach ($cleanVariants as $i => $v) {
                 inv_upsert([
                     'product_id'          => $productId,
-                    'sku'                 => $v['sku'] ?? '',
-                    'size'                => $size,
-                    'color'               => $color,
-                    'option_values'       => $v['option_values'] ?? [],
-                    'stock'               => (int)($v['stock'] ?? 0),
+                    'sku'                 => '',
+                    'size'                => $v['size'],
+                    'color'               => '',
+                    'option_values'       => [['key' => 'size', 'label' => 'Grösse', 'value' => $v['size']]],
+                    'stock'               => $v['stock'],
                     'reserved'            => 0,
-                    'min_stock'           => (int)($v['min_stock'] ?? 3),
+                    'min_stock'           => 3,
                     'next_delivery'       => '',
                     'notes'               => '',
-                    'title'               => implode(' / ', array_column($v['option_values'] ?? [], 'value')),
-                    'images'              => $imgUrl ? [['src' => $imgUrl]] : [],
-                    'variant_price_cents' => ($v['variant_price_cents'] !== null && $v['variant_price_cents'] !== '')
-                                             ? (int)$v['variant_price_cents'] : null,
-                    'is_default'          => !empty($v['is_default']),
+                    'title'               => $v['size'],
+                    'images'              => [],
+                    'variant_price_cents' => $v['variant_price_cents'],
+                    'is_default'          => $v['is_default'] || (!$hasDefault && $i === 0),
                 ]);
             }
-        } elseif (!$hasVariants) {
-            // Automatischer Lagereintrag: jedes Produkt erscheint in der
-            // Lagerverwaltung — bestehende Daten der Standardvariante bleiben erhalten.
-            $existing = inv_by_variant($productId, '', '');
-            db()->prepare("DELETE FROM inventory WHERE product_id = ? AND NOT (size = '' AND color = '')")
-               ->execute([$productId]);
+        } else {
+            // Ein einziger Lagereintrag mit dem Gesamtbestand.
             inv_upsert([
                 'product_id'          => $productId,
-                'sku'                 => $existing['sku'] ?? '',
+                'sku'                 => '',
                 'size'                => '',
                 'color'               => '',
                 'option_values'       => [],
                 'stock'               => $stock,
-                'reserved'            => (int)($existing['reserved'] ?? 0),
-                'min_stock'           => (int)($existing['min_stock'] ?? 3),
-                'next_delivery'       => $existing['next_delivery'] ?? '',
-                'notes'               => $existing['notes'] ?? '',
+                'reserved'            => 0,
+                'min_stock'           => 3,
+                'next_delivery'       => '',
+                'notes'               => '',
                 'title'               => '',
                 'images'              => [],
                 'variant_price_cents' => null,
                 'is_default'          => true,
-                'back_order'          => !empty($existing['back_order']),
             ]);
         }
 

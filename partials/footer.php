@@ -56,26 +56,12 @@ $tiktok       = setting_get('tiktok_url') ?: '';
       <div class="footer-col">
         <h4>Service</h4>
         <a href="<?= url('/kontakt.php') ?>">Kontakt</a>
-        <a href="<?= url('/widerruf.php') ?>">Rückgabe &amp; Widerruf</a>
         <?php if ($contactEmail): ?><a href="mailto:<?= h($contactEmail) ?>"><?= h($contactEmail) ?></a><?php endif; ?>
-      </div>
-
-      <div class="footer-col">
-        <h4>Rechtliches</h4>
-        <a href="<?= url('/impressum.php') ?>">Impressum</a>
-        <a href="<?= url('/datenschutz.php') ?>">Datenschutz</a>
-        <a href="<?= url('/agb.php') ?>">AGB</a>
       </div>
     </div>
 
     <div class="container footer-bottom">
       <span>&copy; <?= date('Y') ?> <?= h($shopName) ?>. Alle Rechte vorbehalten.</span>
-      <div class="footer-payments" aria-label="Zahlungsarten">
-        <span class="pay-badge">VISA</span>
-        <span class="pay-badge">Mastercard</span>
-        <span class="pay-badge">TWINT</span>
-        <span class="pay-badge">Überweisung</span>
-      </div>
     </div>
   </div>
 </footer>
@@ -106,6 +92,6 @@ $tiktok       = setting_get('tiktok_url') ?: '';
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
 </button>
 
-<script src="<?= url('/js/shop.js') ?>?v=8"></script>
+<script src="<?= url('/js/shop.js') ?>?v=9"></script>
 </body>
 </html>

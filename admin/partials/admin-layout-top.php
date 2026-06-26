@@ -24,8 +24,8 @@ try {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=8">
-  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=8">
+  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=9">
+  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=9">
 </head>
 <body>
 <div class="admin-shell">
@@ -88,6 +88,13 @@ try {
           <path d="M2 6l6-4 6 4v8H2V6z"/><path d="M5.5 14V9.5h5V14"/>
         </svg>
         Lager
+      </a>
+
+      <a href="<?= url('/admin/preisrechner.php') ?>" class="<?= str_has($_cur, 'preisrechner') ? 'active' : '' ?>">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2.5" y="1" width="11" height="14" rx="1.5"/><path d="M5 4h6"/><path d="M5 7h.01M8 7h.01M11 7h.01M5 10h.01M8 10h.01M11 10v2.5"/>
+        </svg>
+        Preisrechner
       </a>
 
       <a href="<?= url('/admin/bewertungen.php') ?>" class="<?= str_has($_cur, 'bewertung') ? 'active' : '' ?>">

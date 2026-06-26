@@ -27,6 +27,9 @@ $SETTINGS_DEFAULTS = [
     // Social Media (Footer)
     'instagram_url'  => '',
     'tiktok_url'     => '',
+    // Finanzen (manuell pflegbar)
+    'finance_account_cents'  => '0',
+    'finance_invested_cents' => '0',
 ];
 
 function setting_get(string $key): ?string {

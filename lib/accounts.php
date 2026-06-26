@@ -15,6 +15,15 @@ function account_by_id(int $id): ?array {
     return $row ?: null;
 }
 
+/** Alle registrierten Kundenkonten (neueste zuerst). */
+function accounts_list(): array {
+    return db()->query('SELECT id, email, name, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
+}
+
+function accounts_count(): int {
+    return (int)db()->query('SELECT COUNT(*) AS n FROM accounts')->fetch()['n'];
+}
+
 /**
  * Legt ein Konto an. Rückgabe: ['ok'=>bool, 'error'=>?, 'id'=>?].
  */

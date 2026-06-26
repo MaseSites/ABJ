@@ -74,6 +74,7 @@ $routes = [
     '#^/admin/rabatte/?$#'           => '/admin/rabatte.php',
     '#^/admin/analytics/?$#'         => '/admin/analytics.php',
     '#^/admin/preisrechner/?$#'      => '/admin/preisrechner.php',
+    '#^/admin/finanzen/?$#'          => '/admin/finanzen.php',
     '#^/admin/bewertungen/?$#'       => '/admin/bewertungen.php',
     '#^/admin/kunden/?$#'            => '/admin/kunden.php',
     '#^/admin/api/products$#'        => '/admin/api/products.php',

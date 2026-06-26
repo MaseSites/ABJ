@@ -24,8 +24,8 @@ try {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=12">
-  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=12">
+  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=13">
+  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=13">
 </head>
 <body>
 <div class="admin-shell">
@@ -54,6 +54,13 @@ try {
           <path d="M1.5 14.5h13"/><path d="M3 11l3-3.5 2.5 2L13 5"/><circle cx="13" cy="5" r="1.2"/>
         </svg>
         Analytics
+      </a>
+
+      <a href="<?= url('/admin/finanzen.php') ?>" class="<?= str_has($_cur, 'finanzen') ? 'active' : '' ?>">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v7M6.2 6.3h2.4a1.3 1.3 0 010 2.5H6.2M6.2 9.4h2.6"/>
+        </svg>
+        Finanzen
       </a>
 
       <a href="<?= url('/admin/bestellungen.php') ?>" class="<?= str_has($_cur, 'bestellung') ? 'active' : '' ?>">

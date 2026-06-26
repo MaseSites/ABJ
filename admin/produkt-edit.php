@@ -123,6 +123,13 @@ $currency   = setting_get('currency') ?: 'CHF';
           <textarea name="description" rows="4" maxlength="8000"
                     placeholder="Produktbeschreibung…"><?= h($p['description'] ?? '') ?></textarea>
         </label>
+
+        <label class="field span-2">
+          <span>Such-Tags <small class="muted">(Komma-getrennt, erscheinen nicht im Shop)</small></span>
+          <input type="text" name="tags" maxlength="300"
+                 value="<?= h($p['tags'] ?? '') ?>" placeholder="z.B. nike, sneaker, retro, geschenk">
+          <small style="color:#8a8a95;font-size:.75rem">Hilft Kunden, das Produkt über die Suche zu finden, ohne dass die Begriffe im Titel stehen.</small>
+        </label>
       </div>
     </div>
   </div>

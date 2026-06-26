@@ -29,6 +29,7 @@ function db_init(PDO $pdo): void {
             sizes TEXT DEFAULT '[]',
             option_groups TEXT DEFAULT '[]',
             images TEXT DEFAULT '[]',
+            tags TEXT DEFAULT '',
             stock INTEGER DEFAULT 0,
             is_bestseller INTEGER DEFAULT 0,
             is_active INTEGER DEFAULT 1,
@@ -152,6 +153,7 @@ function db_init(PDO $pdo): void {
         'option_groups' => "TEXT DEFAULT '[]'",
         'sizes'         => "TEXT DEFAULT '[]'",
         'back_order'    => 'INTEGER DEFAULT 0',
+        'tags'          => "TEXT DEFAULT ''",
     ];
     foreach ($prod_add as $col => $def) {
         if (!in_array($col, $prod_cols)) {

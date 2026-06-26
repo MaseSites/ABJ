@@ -119,6 +119,7 @@ if ($method === 'POST') {
             'images'           => $images,
             'sizes'            => $sizesList,
             'option_groups'    => $optionGroups,
+            'tags'             => trim($_POST['tags'] ?? ''),
         ];
 
         if ($id) {

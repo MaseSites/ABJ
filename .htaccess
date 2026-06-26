@@ -80,6 +80,7 @@ RewriteRule ^admin/einstellungen$              /admin/einstellungen.php    [L,QS
 RewriteRule ^admin/rabatte$                    /admin/rabatte.php          [L,QSA]
 RewriteRule ^admin/analytics$                  /admin/analytics.php        [L,QSA]
 RewriteRule ^admin/preisrechner$               /admin/preisrechner.php     [L,QSA]
+RewriteRule ^admin/finanzen$                   /admin/finanzen.php         [L,QSA]
 RewriteRule ^admin/bewertungen$                /admin/bewertungen.php      [L,QSA]
 RewriteRule ^admin/kunden$                     /admin/kunden.php           [L,QSA]
 RewriteRule ^admin/produkt/([0-9]+)/?$         /admin/produkt-edit.php?id=$1  [L,QSA]

@@ -52,8 +52,8 @@ function products_categories(): array {
 function products_search(string $q, ?string $category = null): array {
     $term = '%' . strtolower(trim($q)) . '%';
     $sql = "SELECT * FROM products WHERE is_active = 1
-        AND (lower(name) LIKE ? OR lower(category) LIKE ? OR lower(description) LIKE ?)";
-    $params = [$term, $term, $term];
+        AND (lower(name) LIKE ? OR lower(category) LIKE ? OR lower(description) LIKE ? OR lower(tags) LIKE ?)";
+    $params = [$term, $term, $term, $term];
     if ($category) { $sql .= ' AND category = ?'; $params[] = $category; }
     $sql .= ' ORDER BY is_bestseller DESC, created_at DESC';
     $stmt = db()->prepare($sql);
@@ -80,13 +80,13 @@ function products_shuffle(array $items): array {
 
 function product_create(array $p): array {
     $slug = unique_slug($p['name']);
-    $stmt = db()->prepare("INSERT INTO products (slug,name,description,category,price_cents,sale_price_cents,sizes,option_groups,images,stock,is_bestseller,is_active)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+    $stmt = db()->prepare("INSERT INTO products (slug,name,description,category,price_cents,sale_price_cents,sizes,option_groups,images,tags,stock,is_bestseller,is_active)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
     $stmt->execute([
         $slug, $p['name'], $p['description'] ?? '', $p['category'] ?? 'Allgemein',
         $p['price_cents'] ?? 0, $p['sale_price_cents'] ?: null,
         json_encode($p['sizes'] ?? []), json_encode($p['option_groups'] ?? []),
-        json_encode($p['images'] ?? []), $p['stock'] ?? 0,
+        json_encode($p['images'] ?? []), $p['tags'] ?? '', $p['stock'] ?? 0,
         $p['is_bestseller'] ? 1 : 0, $p['is_active'] ? 1 : 0,
     ]);
     return product_by_id((int)db()->lastInsertId());
@@ -94,12 +94,12 @@ function product_create(array $p): array {
 
 function product_update(int $id, array $p): array {
     $slug = unique_slug($p['name'], $id);
-    $stmt = db()->prepare("UPDATE products SET slug=?,name=?,description=?,category=?,price_cents=?,sale_price_cents=?,sizes=?,option_groups=?,images=?,stock=?,is_bestseller=?,is_active=?,updated_at=datetime('now') WHERE id=?");
+    $stmt = db()->prepare("UPDATE products SET slug=?,name=?,description=?,category=?,price_cents=?,sale_price_cents=?,sizes=?,option_groups=?,images=?,tags=?,stock=?,is_bestseller=?,is_active=?,updated_at=datetime('now') WHERE id=?");
     $stmt->execute([
         $slug, $p['name'], $p['description'] ?? '', $p['category'] ?? 'Allgemein',
         $p['price_cents'] ?? 0, $p['sale_price_cents'] ?: null,
         json_encode($p['sizes'] ?? []), json_encode($p['option_groups'] ?? []),
-        json_encode($p['images'] ?? []), $p['stock'] ?? 0,
+        json_encode($p['images'] ?? []), $p['tags'] ?? '', $p['stock'] ?? 0,
         $p['is_bestseller'] ? 1 : 0, $p['is_active'] ? 1 : 0,
         $id,
     ]);

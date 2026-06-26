@@ -52,6 +52,18 @@ $custName = is_customer() ? trim(current_customer()['name'] ?? '') : '';
 $custFirst = $custName ? explode(' ', $custName)[0] : '';
 $custLast  = ($custName && str_contains($custName, ' ')) ? trim(substr($custName, strpos($custName, ' ') + 1)) : '';
 
+// Gespeicherte Standard-Adresse des Kontos zum Vorausfüllen laden.
+$acc       = is_customer() ? account_by_id((int)current_customer()['id']) : null;
+$savedAddr = account_address($acc);
+$preFirst  = $savedAddr['firstname'] ?? $custFirst;
+$preLast   = $savedAddr['lastname']  ?? $custLast;
+$prePhone  = $acc['phone']           ?? '';
+$preStreet = $savedAddr['street']    ?? '';
+$preHouse  = $savedAddr['housenr']   ?? '';
+$preZip    = $savedAddr['zip']       ?? '';
+$preCity   = $savedAddr['city']      ?? '';
+$preCountry = $savedAddr['country']  ?? 'CH';
+
 $currentPath = '/kasse';
 $cartCount   = cart_count();
 $pageTitle   = 'Kasse';
@@ -96,7 +108,7 @@ include __DIR__ . '/partials/header.php';
           <label class="field">
             <span>Telefon <small class="muted">(optional)</small></span>
             <input type="tel" name="phone" maxlength="30"
-              autocomplete="tel" placeholder="+41 79 123 45 67">
+              autocomplete="tel" placeholder="+41 79 123 45 67" value="<?= h($prePhone) ?>">
           </label>
         </div>
       </div>
@@ -110,42 +122,42 @@ include __DIR__ . '/partials/header.php';
           <label class="field">
             <span>Vorname *</span>
             <input type="text" name="firstname" required maxlength="80"
-              autocomplete="given-name" placeholder="Max" value="<?= h($custFirst) ?>">
+              autocomplete="given-name" placeholder="Max" value="<?= h($preFirst) ?>">
           </label>
           <label class="field">
             <span>Nachname *</span>
             <input type="text" name="lastname" required maxlength="80"
-              autocomplete="family-name" placeholder="Muster" value="<?= h($custLast) ?>">
+              autocomplete="family-name" placeholder="Muster" value="<?= h($preLast) ?>">
           </label>
         </div>
         <div class="form-row-2" style="grid-template-columns:2fr 1fr">
           <label class="field">
             <span>Strasse *</span>
             <input type="text" name="street" required maxlength="120"
-              autocomplete="address-line1" placeholder="Musterstrasse">
+              autocomplete="address-line1" placeholder="Musterstrasse" value="<?= h($preStreet) ?>">
           </label>
           <label class="field">
             <span>Nr. *</span>
-            <input type="text" name="housenr" required maxlength="20" placeholder="12a">
+            <input type="text" name="housenr" required maxlength="20" placeholder="12a" value="<?= h($preHouse) ?>">
           </label>
         </div>
         <div class="form-row-2" style="grid-template-columns:1fr 2fr">
           <label class="field">
             <span>PLZ *</span>
             <input type="text" name="zip" required maxlength="10"
-              autocomplete="postal-code" placeholder="8000">
+              autocomplete="postal-code" placeholder="8000" value="<?= h($preZip) ?>">
           </label>
           <label class="field">
             <span>Stadt *</span>
             <input type="text" name="city" required maxlength="80"
-              autocomplete="address-level2" placeholder="Zürich">
+              autocomplete="address-level2" placeholder="Zürich" value="<?= h($preCity) ?>">
           </label>
         </div>
         <label class="field">
           <span>Land *</span>
           <select name="country" autocomplete="country" data-country-select>
             <?php foreach ($COUNTRIES as [$code, $name]): ?>
-              <option value="<?= h($code) ?>"<?= $code === 'CH' ? ' selected' : '' ?>><?= h($name) ?></option>
+              <option value="<?= h($code) ?>"<?= $code === $preCountry ? ' selected' : '' ?>><?= h($name) ?></option>
             <?php endforeach; ?>
           </select>
         </label>

@@ -65,6 +65,19 @@ function account_update_password(int $id, string $newPassword): bool {
     return true;
 }
 
+/** Profil (Name, Telefon, Standard-Lieferadresse) aktualisieren. */
+function account_update_profile(int $id, string $name, string $phone, array $address): void {
+    db()->prepare('UPDATE accounts SET name = ?, phone = ?, address = ? WHERE id = ?')
+       ->execute([mb_substr(trim($name), 0, 120), mb_substr(trim($phone), 0, 40), json_encode($address), $id]);
+}
+
+/** Gespeicherte Standard-Adresse eines Kontos als Array (oder leer). */
+function account_address(?array $account): array {
+    if (!$account || empty($account['address'])) return [];
+    $a = json_decode($account['address'], true);
+    return is_array($a) ? $a : [];
+}
+
 // ---- Session ----
 function customer_login(int $id, string $email, string $name): void {
     session_start_once();

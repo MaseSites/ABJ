@@ -130,6 +130,8 @@ function db_init(PDO $pdo): void {
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             name TEXT DEFAULT '',
+            phone TEXT DEFAULT '',
+            address TEXT DEFAULT '{}',
             created_at TEXT DEFAULT (datetime('now'))
         );
     ");
@@ -165,6 +167,13 @@ function db_init(PDO $pdo): void {
         $pdo->exec("DELETE FROM inventory WHERE id NOT IN (SELECT MAX(id) FROM inventory GROUP BY product_id, size, color)");
         $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_inv_pid_size_color ON inventory(product_id, size, color)");
     } catch (\Throwable $e) {}
+
+    $acc_cols = array_column($pdo->query("PRAGMA table_info(accounts)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    foreach (['phone' => "TEXT DEFAULT ''", 'address' => "TEXT DEFAULT '{}'"] as $col => $def) {
+        if (!in_array($col, $acc_cols)) {
+            try { $pdo->exec("ALTER TABLE accounts ADD COLUMN $col $def"); } catch (\Throwable $e) {}
+        }
+    }
 
     $ord_cols = array_column($pdo->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     $ord_add = [

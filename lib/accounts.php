@@ -24,6 +24,13 @@ function accounts_count(): int {
     return (int)db()->query('SELECT COUNT(*) AS n FROM accounts')->fetch()['n'];
 }
 
+/** Kundenkonto löschen. Bestellungen bleiben als Historie erhalten. */
+function account_delete(int $id): bool {
+    $stmt = db()->prepare('DELETE FROM accounts WHERE id = ?');
+    $stmt->execute([$id]);
+    return $stmt->rowCount() > 0;
+}
+
 /**
  * Legt ein Konto an. Rückgabe: ['ok'=>bool, 'error'=>?, 'id'=>?].
  */

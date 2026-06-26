@@ -6,6 +6,13 @@ $cust     = current_customer();
 $account  = account_by_id((int)$cust['id']);
 $currency = setting_get('currency') ?: 'CHF';
 
+// Eigenes Konto löschen
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_account') {
+    account_delete((int)$cust['id']);
+    customer_logout();
+    redirect('/?konto_geloescht=1');
+}
+
 $msg = ''; $msgType = 'ok';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'password') {
     $new = $_POST['new_password'] ?? '';
@@ -89,5 +96,17 @@ include __DIR__ . '/partials/header.php';
     </label>
     <button class="btn btn-line" type="submit" style="align-self:flex-start">Passwort speichern</button>
   </form>
+
+  <h2 style="font-size:1.2rem;margin:2.8rem 0 1.2rem">Konto löschen</h2>
+  <div class="danger-zone">
+    <div>
+      <strong>Konto dauerhaft löschen</strong>
+      <p class="muted" style="margin:.25rem 0 0;font-size:.85rem">Dein Zugang wird entfernt und du wirst abgemeldet. Bereits aufgegebene Bestellungen bleiben für die Abwicklung bestehen.</p>
+    </div>
+    <form method="post" action="<?= url('/konto.php') ?>" onsubmit="return confirm('Möchtest du dein Konto wirklich dauerhaft löschen?')">
+      <input type="hidden" name="action" value="delete_account">
+      <button class="btn btn-danger" type="submit">Konto löschen</button>
+    </form>
+  </div>
 </main>
 <?php include __DIR__ . '/partials/footer.php'; ?>

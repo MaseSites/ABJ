@@ -1704,6 +1704,13 @@ body.no-scroll { overflow: hidden; }
 .konto-stat strong { font-size: 1.4rem; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .konto-stat span { font-size: .78rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; }
 
+.danger-zone {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; flex-wrap: wrap;
+  max-width: 560px; padding: 1.1rem 1.3rem; border-radius: var(--radius-sm);
+  border: 1px solid rgba(226,96,76,.3); background: rgba(226,96,76,.05);
+}
+.danger-zone strong { color: #ffb0a4; }
+
 .konto-orders { display: flex; flex-direction: column; gap: .9rem; }
 .konto-order {
   background: var(--elev);

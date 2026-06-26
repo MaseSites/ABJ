@@ -68,7 +68,7 @@ if ($method === 'POST') {
         // WICHTIG: Optionsgruppen werden IMMER aus den Varianten abgeleitet,
         // damit Lager und Shop-Anzeige nie auseinanderlaufen (Soldout-Bug).
         $sizes        = $useVariants ? array_column($cleanVariants, 'size') : [];
-        $optionGroups = $useVariants ? [['key' => 'size', 'label' => 'Grösse', 'values' => $sizes]] : [];
+        $optionGroups = $useVariants ? [['key' => 'size', 'label' => 'Variante', 'values' => $sizes]] : [];
 
         $data = [
             'name'             => $name,
@@ -103,7 +103,7 @@ if ($method === 'POST') {
                     'sku'                 => '',
                     'size'                => $v['size'],
                     'color'               => '',
-                    'option_values'       => [['key' => 'size', 'label' => 'Grösse', 'value' => $v['size']]],
+                    'option_values'       => [['key' => 'size', 'label' => 'Variante', 'value' => $v['size']]],
                     'stock'               => $v['stock'],
                     'reserved'            => 0,
                     'min_stock'           => 3,

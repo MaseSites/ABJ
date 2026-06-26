@@ -54,8 +54,10 @@ $existingImages   = is_array($p['images'] ?? null) ? $p['images'] : [];
 $invRows          = $id ? inv_by_product($id) : [];
 $optionGroups     = pe_build_option_groups($p ?? [], $invRows);
 $existingVariants = pe_build_variants($invRows);
-$hasVariants      = $isNew ? true
-    : (!empty($optionGroups) || count($invRows) > 1
+// Neue Produkte starten einfach (ein Gesamtbestand). Varianten nur, wenn das
+// Produkt bereits welche hat – so entstehen keine versehentlichen 0-Bestände.
+$hasVariants      = $isNew ? false
+    : (count($invRows) > 1
        || (count($invRows) === 1 && ($invRows[0]['size'] || $invRows[0]['color'])));
 
 $formAction = url($isNew ? '/admin/api/products.php' : '/admin/api/products.php?id=' . $id);
@@ -119,13 +121,13 @@ $currency   = setting_get('currency') ?: 'CHF';
     </div>
   </div>
 
-  <!-- ── Schritt 2: Bestand & Größen ── -->
+  <!-- ── Schritt 2: Bestand & Varianten ── -->
   <div class="admin-section">
     <div class="step-head">
       <span class="step-num">2</span>
       <div>
-        <h2>Bestand &amp; Größen</h2>
-        <p>Ein Gesamtbestand — oder mehrere Größen mit eigenem Bestand</p>
+        <h2>Bestand &amp; Varianten</h2>
+        <p>Ein Gesamtbestand — oder mehrere Varianten (Größen, Farben …) mit eigenem Bestand</p>
       </div>
     </div>
     <div class="form-step">
@@ -133,8 +135,8 @@ $currency   = setting_get('currency') ?: 'CHF';
         <input type="checkbox" name="has_variants" value="1"
                <?= $hasVariants ? 'checked' : '' ?>>
         <div>
-          <strong>Mehrere Größen</strong>
-          <small>An: Bestand pro Größe (S, M, L …). Aus: ein Gesamtbestand.</small>
+          <strong>Mehrere Varianten</strong>
+          <small>An: Bestand pro Variante (z.B. „M", „Rot" oder „Rot / M"). Aus: ein Gesamtbestand.</small>
         </div>
       </label>
 
@@ -147,19 +149,25 @@ $currency   = setting_get('currency') ?: 'CHF';
         </label>
       </div>
 
-      <!-- Einfache Größen-Tabelle -->
+      <!-- Einfache Varianten-Tabelle -->
       <div id="variant-simple" <?= !$hasVariants ? 'hidden' : '' ?>>
         <div class="vs-quickadd">
-          <span class="muted small">Schnell:</span>
+          <span class="muted small">Größen:</span>
           <?php foreach (['S','M','L','XL','XXL','One Size'] as $qs): ?>
           <button type="button" class="btn btn-ghost btn-sm" data-vs-quick="<?= h($qs) ?>">+ <?= h($qs) ?></button>
           <?php endforeach; ?>
         </div>
+        <div class="vs-quickadd">
+          <span class="muted small">Farben:</span>
+          <?php foreach (['Schwarz','Weiß','Grau','Beige','Blau','Rot','Grün'] as $qc): ?>
+          <button type="button" class="btn btn-ghost btn-sm" data-vs-quick="<?= h($qc) ?>">+ <?= h($qc) ?></button>
+          <?php endforeach; ?>
+        </div>
         <div class="vs-head">
-          <span>Größe</span><span>Bestand</span><span>Preis <small class="muted">optional</small></span><span>Standard</span><span></span>
+          <span>Variante (Größe/Farbe)</span><span>Bestand</span><span>Preis <small class="muted">optional</small></span><span>Standard</span><span></span>
         </div>
         <div id="vs-rows"></div>
-        <button type="button" class="btn btn-ghost btn-sm" data-vs-add style="margin-top:.7rem">+ Größe hinzufügen</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-vs-add style="margin-top:.7rem">+ Variante hinzufügen</button>
       </div>
     </div>
   </div>

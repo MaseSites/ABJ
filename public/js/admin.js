@@ -175,7 +175,7 @@
       row.className = 'vs-row';
       row.setAttribute('data-vs-row', '');
       row.innerHTML = `
-        <input class="vs-name" type="text" maxlength="40" placeholder="z.B. M" value="${esc(value)}">
+        <input class="vs-name" type="text" maxlength="40" placeholder="z.B. M oder Rot" value="${esc(value)}">
         <input class="vs-stock" type="number" min="0" max="999999" placeholder="0" value="${stock}">
         <input class="vs-price" type="text" inputmode="decimal" placeholder="—" value="${price}">
         <label class="vs-default"><input type="radio" name="vs_default" ${data.is_default ? 'checked' : ''}></label>
@@ -229,7 +229,7 @@
         const value = row.querySelector('.vs-name').value.trim();
         if (!value) return null;
         return {
-          option_values: [{ key: 'size', label: 'Grösse', value }],
+          option_values: [{ key: 'size', label: 'Variante', value }],
           stock: Math.max(0, Number(row.querySelector('.vs-stock').value) || 0),
           variant_price_cents: parseCents(row.querySelector('.vs-price').value),
           is_default: row.querySelector('input[name="vs_default"]').checked,
@@ -260,9 +260,11 @@
       if (uploaded.length) existingImages = [...existingImages, ...uploaded];
     }
 
-    renderExistingImages();
-    renderVariantRows();
-    updateVariantMode();
+    // Rendern abgesichert: selbst wenn hier etwas schiefgeht, bleibt der
+    // Submit-Handler (weiter unten) aktiv und Speichern funktioniert weiter.
+    try { renderExistingImages(); } catch (e) { /* noop */ }
+    try { renderVariantRows(); } catch (e) { /* noop */ }
+    try { updateVariantMode(); } catch (e) { /* noop */ }
 
     if (fileInput) fileInput.addEventListener('change', renderUploadPreview);
     if (variantToggle) variantToggle.addEventListener('change', updateVariantMode);

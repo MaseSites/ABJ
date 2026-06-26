@@ -33,6 +33,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 <?php if (empty($subs)): ?>
   <p class="muted">Noch keine Abonnenten.</p>
 <?php else: ?>
+<div class="table-card">
 <table class="data-table">
   <thead><tr><th>E-Mail</th><th>Datum</th><th></th></tr></thead>
   <tbody>
@@ -50,6 +51,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
     <?php endforeach; ?>
   </tbody>
 </table>
+</div>
 <?php endif; ?>
 
 <?php include __DIR__ . '/partials/admin-layout-bottom.php'; ?>

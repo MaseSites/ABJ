@@ -46,18 +46,20 @@
 
 .sidebar-nav {
   flex: 1;
-  padding: .9rem 0;
+  padding: .7rem .65rem;
 }
 .sidebar-nav a {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: .75rem;
-  padding: .65rem 1.4rem;
+  gap: .7rem;
+  padding: .6rem .8rem;
+  margin-bottom: .12rem;
+  border-radius: 9px;
   color: #7a7f8e;
-  font-size: .875rem;
+  font-size: .87rem;
   font-weight: 500;
-  border-left: 3px solid transparent;
-  transition: color .15s, background .15s, border-color .15s;
+  transition: color .15s, background .15s;
 }
 .sidebar-nav a:hover {
   color: #e0e2ea;
@@ -65,23 +67,27 @@
 }
 .sidebar-nav a.active {
   color: #fff;
-  background: rgba(184,156,103,.08);
-  border-left-color: #b89c67;
-  font-weight: 700;
+  background: rgba(184,156,103,.13);
+  font-weight: 600;
+}
+.sidebar-nav a.active::before {
+  content: '';
+  position: absolute; left: -.65rem; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 20px; border-radius: 0 3px 3px 0; background: #b89c67;
 }
 .nav-icon {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
   flex: none;
-  opacity: .75;
+  opacity: .7;
 }
-.sidebar-nav a.active .nav-icon { opacity: 1; }
+.sidebar-nav a.active .nav-icon { opacity: 1; color: #cdb27e; }
 
 .sidebar-section-label {
-  padding: .9rem 1.4rem .3rem;
-  font-size: .65rem;
+  padding: .95rem .85rem .35rem;
+  font-size: .64rem;
   text-transform: uppercase;
-  letter-spacing: .14em;
+  letter-spacing: .15em;
   color: #3d4055;
   font-weight: 700;
 }
@@ -261,6 +267,10 @@
   gap: .4rem;
   justify-content: flex-end;
 }
+.prod-cell { display: flex; align-items: center; gap: .85rem; }
+.prod-cell-img { width: 42px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); flex: none; background: #080910; }
+.prod-cell-info { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+.prod-cell-info strong { color: #e8eaf2; }
 
 /* ---------- Tags / Badges ---------- */
 .tag {
@@ -434,6 +444,52 @@ input[type="checkbox"] { width: auto; accent-color: #b89c67; }
   border-color: #b89c67;
   box-shadow: 0 0 0 3px rgba(184,156,103,.12);
 }
+
+/* ---------- Tabellen-Karte (einheitliche Listen) ---------- */
+.table-card {
+  background: #0f1118;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.table-card .data-table { font-size: .87rem; }
+.table-card .data-table th {
+  padding: .8rem 1.15rem;
+  background: rgba(255,255,255,.015);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.table-card .data-table td { padding: .85rem 1.15rem; }
+.table-card .data-table tr:last-child td { border-bottom: none; }
+
+/* ---------- Page-Header (einheitlich) ---------- */
+.admin-head-row h1 { font-size: 1.55rem; letter-spacing: -.02em; }
+.admin-head-row h2 { color: #c8ccd8; }
+
+/* ---------- Chips (Filter) ---------- */
+.chip-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .45em 1em; border-radius: 999px; font-size: .8rem; font-weight: 600;
+  border: 1px solid rgba(255,255,255,.1); color: #7a7f8e; background: rgba(255,255,255,.02);
+  text-decoration: none; transition: all .15s;
+}
+.chip:hover { color: #e0e2ea; border-color: rgba(255,255,255,.2); }
+.chip.active { background: rgba(184,156,103,.14); border-color: rgba(184,156,103,.4); color: #cdb27e; }
+
+/* ---------- Sidebar-Badges ---------- */
+.nav-badge {
+  margin-left: auto; font-size: .68rem; font-weight: 700; min-width: 18px; height: 18px;
+  display: inline-flex; align-items: center; justify-content: center; padding: 0 .35rem;
+  border-radius: 999px; background: #b89c67; color: #0a0b0f;
+}
+
+/* ---------- Feinschliff ---------- */
+.admin-content::-webkit-scrollbar, .admin-sidebar::-webkit-scrollbar { width: 9px; height: 9px; }
+.admin-content::-webkit-scrollbar-thumb, .admin-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 6px; }
+.admin-content::-webkit-scrollbar-thumb:hover, .admin-sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.16); }
+.alert { padding: .85em 1.1em; border-radius: 10px; font-size: .88rem; border: 1px solid transparent; }
+.alert-ok { background: rgba(52,211,153,.08); color: #a8e6b8; border-color: rgba(52,211,153,.25); }
+.alert-error { background: rgba(226,96,76,.08); color: #ffb0a4; border-color: rgba(226,96,76,.3); }
 
 /* ---------- Chart / Bar ---------- */
 .bar-chart { width: 100%; max-width: 520px; height: auto; display: block; }

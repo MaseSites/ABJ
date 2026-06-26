@@ -88,6 +88,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
   <p class="muted">Keine Bestellungen in dieser Ansicht.</p>
 <?php else: ?>
 <input type="search" class="admin-search" data-table-filter placeholder="Bestellungen filtern… (Referenz, Kunde)" aria-label="Bestellungen filtern">
+<div class="table-card">
 <table class="data-table" data-filter-table>
   <thead><tr><th>Referenz</th><th>Kunde</th><th>Datum</th><th>Betrag</th><th>Status</th><th>Zahlung</th><th></th></tr></thead>
   <tbody>
@@ -132,6 +133,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
     <?php endforeach; ?>
   </tbody>
 </table>
+</div>
 <?php endif; ?>
 
 <?php include __DIR__ . '/partials/admin-layout-bottom.php'; ?>

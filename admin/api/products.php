@@ -39,41 +39,67 @@ if ($method === 'POST') {
             }
         }
 
-        /* Varianten (vereinfacht: nur Grössen mit eigenem Bestand) */
+        /* Varianten: Farben (mit Bild) × Größen × Bestand pro Kombination */
         $hasVariants = ($_POST['has_variants'] ?? '0') === '1';
         $variants    = json_decode($_POST['variants'] ?? '[]', true) ?: [];
 
-        // Nur gültige Grössen-Varianten (mit Namen) behalten.
+        // Jede Variante: option_values [{key:color|size, value}], stock, image_url.
+        // Der zusammengesetzte Name ("Farbe / Größe") ist der eindeutige
+        // Variantenschlüssel und wird in inventory.size gespeichert (color leer),
+        // damit Warenkorb/Kasse (die nur 'size' kennen) zuverlässig funktionieren.
         $cleanVariants = [];
         foreach ($variants as $v) {
-            $size = '';
-            foreach ($v['option_values'] ?? [] as $ov) {
-                if (($ov['key'] ?? '') === 'size') $size = trim((string)($ov['value'] ?? ''));
+            $color = '';
+            $size  = '';
+            $ovIn  = is_array($v['option_values'] ?? null) ? $v['option_values'] : [];
+            foreach ($ovIn as $ov) {
+                $k   = $ov['key'] ?? '';
+                $val = trim((string)($ov['value'] ?? ''));
+                if ($val === '') continue;
+                if ($k === 'color') $color = $val;
+                if ($k === 'size')  $size  = $val;
             }
-            if ($size === '') continue;
-            $cleanVariants[$size] = [
-                'size'                => $size,
-                'stock'               => max(0, (int)($v['stock'] ?? 0)),
-                'variant_price_cents' => ($v['variant_price_cents'] !== null && $v['variant_price_cents'] !== '')
-                                         ? max(0, (int)$v['variant_price_cents']) : null,
-                'image_url'           => secure_url(trim((string)($v['image_url'] ?? ''))),
-                'is_default'          => !empty($v['is_default']),
+            $label = trim(implode(' / ', array_filter([$color, $size])));
+            if ($label === '') continue;
+            if (isset($cleanVariants[$label])) continue;
+            $ov = [];
+            if ($color !== '') $ov[] = ['key' => 'color', 'label' => 'Farbe', 'value' => $color];
+            if ($size  !== '') $ov[] = ['key' => 'size',  'label' => 'Größe', 'value' => $size];
+            $cleanVariants[$label] = [
+                'label'         => $label,
+                'option_values' => $ov,
+                'stock'         => max(0, (int)($v['stock'] ?? 0)),
+                'image_url'     => secure_url(trim((string)($v['image_url'] ?? ''))),
+                'is_default'    => !empty($v['is_default']),
             ];
         }
         $cleanVariants = array_values($cleanVariants);
 
-        // Varianten zählen nur, wenn der Schalter an ist UND echte Grössen da sind.
         $useVariants = $hasVariants && !empty($cleanVariants);
         $stock       = $useVariants ? 0 : max(0, (int)($_POST['stock'] ?? 0));
 
-        // WICHTIG: Optionsgruppen werden IMMER aus den Varianten abgeleitet,
-        // damit Lager und Shop-Anzeige nie auseinanderlaufen (Soldout-Bug).
-        $sizes        = $useVariants ? array_column($cleanVariants, 'size') : [];
-        $optionGroups = $useVariants ? [['key' => 'size', 'label' => 'Variante', 'values' => $sizes]] : [];
+        // Optionsgruppen (Farbe/Größe) IMMER aus den Varianten ableiten,
+        // damit Lager und Shop nie auseinanderlaufen (Soldout-Bug).
+        $optionGroups = [];
+        $sizesList    = [];
+        if ($useVariants) {
+            $groups = [];
+            foreach ($cleanVariants as $v) {
+                foreach ($v['option_values'] as $ov) {
+                    $k = $ov['key'];
+                    if (!isset($groups[$k])) $groups[$k] = ['key' => $k, 'label' => $ov['label'], 'values' => []];
+                    if (!in_array($ov['value'], $groups[$k]['values'], true)) $groups[$k]['values'][] = $ov['value'];
+                }
+            }
+            // Reihenfolge: Farbe vor Größe
+            $optionGroups = [];
+            foreach (['color', 'size'] as $k) { if (isset($groups[$k])) $optionGroups[] = $groups[$k]; }
+            foreach ($groups as $k => $g) { if (!in_array($k, ['color', 'size'], true)) $optionGroups[] = $g; }
+            $sizesList = $groups['size']['values'] ?? [];
+        }
 
         // Kein Produkt-Hauptbild gesetzt? Dann das Bild der Standard-Variante
-        // (oder der ersten Variante mit Bild) als Hauptbild übernehmen, damit
-        // die Produktkarte im Shop nicht leer bleibt.
+        // (oder der ersten Variante mit Bild) als Hauptbild übernehmen.
         if (empty($images) && $useVariants) {
             $picked = '';
             foreach ($cleanVariants as $v) { if ($v['is_default'] && $v['image_url']) { $picked = $v['image_url']; break; } }
@@ -91,7 +117,7 @@ if ($method === 'POST') {
             'is_bestseller'    => !empty($_POST['is_bestseller']),
             'is_active'        => !empty($_POST['is_active']),
             'images'           => $images,
-            'sizes'            => $sizes,
+            'sizes'            => $sizesList,
             'option_groups'    => $optionGroups,
         ];
 
@@ -112,17 +138,17 @@ if ($method === 'POST') {
                 inv_upsert([
                     'product_id'          => $productId,
                     'sku'                 => '',
-                    'size'                => $v['size'],
+                    'size'                => $v['label'],   // zusammengesetzter Variantenschlüssel
                     'color'               => '',
-                    'option_values'       => [['key' => 'size', 'label' => 'Variante', 'value' => $v['size']]],
+                    'option_values'       => $v['option_values'],
                     'stock'               => $v['stock'],
                     'reserved'            => 0,
                     'min_stock'           => 3,
                     'next_delivery'       => '',
                     'notes'               => '',
-                    'title'               => $v['size'],
+                    'title'               => $v['label'],
                     'images'              => $v['image_url'] ? [['type' => 'url', 'src' => $v['image_url']]] : [],
-                    'variant_price_cents' => $v['variant_price_cents'],
+                    'variant_price_cents' => null,
                     'is_default'          => $v['is_default'] || (!$hasDefault && $i === 0),
                 ]);
             }

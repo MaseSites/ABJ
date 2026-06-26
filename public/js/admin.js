@@ -87,8 +87,10 @@
     const existingWrap = $('#existing-images');
     const uploadPreview = $('#upload-preview');
     const fileInput = $('[data-file-input]');
-    const variantWrap = $('#vs-rows');
-    const variantBox = $('#variant-simple');
+    const vbColors = $('#vb-colors');
+    const vbSizes = $('#vb-sizes');
+    const vbMatrix = $('#vb-matrix');
+    const variantBuilder = $('#variant-builder');
     const variantToggle = form.querySelector('input[name="has_variants"]');
     const noVariantStock = $('#no-variant-stock');
 
@@ -166,118 +168,184 @@
       });
     }
 
-    // ── Einfache Varianten-Tabelle (Name, Bestand, Preis, Bild) ──
-    function variantRowEl(data) {
-      const value = data.value || '';
-      const stock = Number(data.stock || 0);
-      const price = data.variant_price_cents != null ? (Number(data.variant_price_cents) / 100).toFixed(2) : '';
-      const imgUrl = (data.images && data.images[0] && data.images[0].src) || data.image_url || '';
-      const row = document.createElement('div');
-      row.className = 'vs-row';
-      row.setAttribute('data-vs-row', '');
-      row.innerHTML = `
-        <div class="vs-main">
-          <input class="vs-name" type="text" maxlength="40" placeholder="z.B. M oder Rot" value="${esc(value)}">
-          <input class="vs-stock" type="number" min="0" max="999999" placeholder="0" value="${stock}">
-          <input class="vs-price" type="text" inputmode="decimal" placeholder="—" value="${price}">
-          <label class="vs-default"><input type="radio" name="vs_default" ${data.is_default ? 'checked' : ''}></label>
-          <button type="button" class="vs-remove" title="Entfernen" aria-label="Entfernen">×</button>
-        </div>
-        <div class="vs-img">
-          <img class="vs-thumb" src="${esc(imgUrl)}" alt=""${imgUrl ? '' : ' hidden'}>
-          <input class="vs-image-url" type="text" placeholder="Bild dieser Variante (z.B. Farbe) – URL oder hochladen" value="${esc(imgUrl)}">
-          <button type="button" class="btn btn-ghost btn-sm vs-upload">↑ Bild</button>
-        </div>
-      `;
-      row.querySelector('.vs-remove').addEventListener('click', () => { row.remove(); ensureOneDefault(); });
+    // ===== Varianten-Builder: Farben (mit Bild) × Größen × Bestand =====
+    let colors = [];   // [{ name, image }]
+    let sizes  = [];    // ['S','M', ...]
+    let stockMap = {};  // "color||size" -> stock
+    let defaultKey = null;
 
-      const urlInput = row.querySelector('.vs-image-url');
-      const thumb = row.querySelector('.vs-thumb');
-      function syncThumb() {
-        const v = urlInput.value.trim();
-        if (v) { thumb.src = v; thumb.hidden = false; } else { thumb.hidden = true; }
-      }
-      urlInput.addEventListener('input', syncThumb);
-
-      const upBtn = row.querySelector('.vs-upload');
-      const fileEl = document.createElement('input');
-      fileEl.type = 'file'; fileEl.accept = 'image/*'; fileEl.style.display = 'none';
-      row.querySelector('.vs-img').appendChild(fileEl);
-      upBtn.addEventListener('click', () => fileEl.click());
-      fileEl.addEventListener('change', async () => {
-        const file = fileEl.files[0];
-        if (!file) return;
-        upBtn.disabled = true; upBtn.textContent = 'Lädt…';
-        try {
-          const fd = new FormData();
-          fd.append('image', file);
-          const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd });
-          const d = await res.json().catch(() => ({}));
-          if (d.ok && d.src) { urlInput.value = d.src; syncThumb(); upBtn.textContent = '✓ Bild'; }
-          else { window.alert('Upload fehlgeschlagen'); upBtn.textContent = '↑ Bild'; }
-        } catch { window.alert('Netzwerkfehler beim Upload'); upBtn.textContent = '↑ Bild'; }
-        finally { upBtn.disabled = false; }
-      });
-      return row;
-    }
-
-    function ensureOneDefault() {
-      const rows = $$('#vs-rows .vs-row');
-      if (!rows.length) return;
-      if (!rows.some((r) => r.querySelector('input[name="vs_default"]').checked)) {
-        rows[0].querySelector('input[name="vs_default"]').checked = true;
-      }
-    }
-
-    function renderVariantRows() {
-      if (!variantWrap) return;
-      variantWrap.innerHTML = '';
+    (function loadExistingVariants() {
+      const colorImg = {};
+      const colorOrder = [];
       (existingVariants || []).forEach((v) => {
-        const value = (v.option_values && v.option_values[0] && v.option_values[0].value) || v.size || v.title || '';
-        if (!String(value).trim()) return;
-        variantWrap.appendChild(variantRowEl({
-          value, stock: v.stock || 0, variant_price_cents: v.variant_price_cents, is_default: v.is_default,
-        }));
+        const c = v.color || '';
+        const s = v.size || '';
+        if (c) {
+          if (!(c in colorImg)) { colorImg[c] = v.image || ''; colorOrder.push(c); }
+          else if (v.image && !colorImg[c]) colorImg[c] = v.image;
+        }
+        if (s && !sizes.includes(s)) sizes.push(s);
+        stockMap[c + '||' + s] = Number(v.stock || 0);
+        if (v.is_default) defaultKey = c + '||' + s;
       });
-      ensureOneDefault();
+      colors = colorOrder.map((name) => ({ name, image: colorImg[name] || '' }));
+    })();
+
+    function combos() {
+      const cs = colors.map((c) => c.name.trim()).filter(Boolean);
+      const ss = sizes.map((s) => s.trim()).filter(Boolean);
+      if (cs.length && ss.length) {
+        const out = [];
+        cs.forEach((c) => ss.forEach((s) => out.push({ color: c, size: s })));
+        return out;
+      }
+      if (cs.length) return cs.map((c) => ({ color: c, size: '' }));
+      if (ss.length) return ss.map((s) => ({ color: '', size: s }));
+      return [];
     }
 
-    function addVariantRow(data) {
-      if (!variantWrap) return;
-      // Doppelte Grössennamen vermeiden
-      const name = (data && data.value || '').trim().toLowerCase();
-      if (name && $$('#vs-rows .vs-name').some((i) => i.value.trim().toLowerCase() === name)) return;
-      variantWrap.appendChild(variantRowEl(data || {}));
-      ensureOneDefault();
+    // ---- Farben rendern ----
+    function renderColors() {
+      if (!vbColors) return;
+      vbColors.innerHTML = '';
+      colors.forEach((color, idx) => {
+        const row = document.createElement('div');
+        row.className = 'vb-color';
+        row.innerHTML = `
+          <img class="vb-color-thumb" src="${esc(color.image)}" alt=""${color.image ? '' : ' hidden'}>
+          <input class="vb-color-name" type="text" maxlength="40" placeholder="Farbe (z.B. Schwarz)" value="${esc(color.name)}">
+          <input class="vb-color-img" type="text" placeholder="Bild-URL (optional)" value="${esc(color.image)}">
+          <button type="button" class="btn btn-ghost btn-sm vb-color-upload">↑ Bild</button>
+          <button type="button" class="vs-remove vb-color-remove" title="Entfernen">×</button>
+        `;
+        const nameI = row.querySelector('.vb-color-name');
+        const imgI = row.querySelector('.vb-color-img');
+        const thumb = row.querySelector('.vb-color-thumb');
+        nameI.addEventListener('input', () => { colors[idx].name = nameI.value; renderMatrix(); });
+        imgI.addEventListener('input', () => {
+          colors[idx].image = imgI.value.trim();
+          if (imgI.value.trim()) { thumb.src = imgI.value.trim(); thumb.hidden = false; } else thumb.hidden = true;
+        });
+        row.querySelector('.vb-color-remove').addEventListener('click', () => { colors.splice(idx, 1); renderColors(); renderMatrix(); });
+
+        const upBtn = row.querySelector('.vb-color-upload');
+        const fileEl = document.createElement('input');
+        fileEl.type = 'file'; fileEl.accept = 'image/*'; fileEl.style.display = 'none';
+        row.appendChild(fileEl);
+        upBtn.addEventListener('click', () => fileEl.click());
+        fileEl.addEventListener('change', async () => {
+          const file = fileEl.files[0];
+          if (!file) return;
+          upBtn.disabled = true; upBtn.textContent = 'Lädt…';
+          try {
+            const fd = new FormData(); fd.append('image', file);
+            const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd });
+            const d = await res.json().catch(() => ({}));
+            if (d.ok && d.src) { colors[idx].image = d.src; imgI.value = d.src; thumb.src = d.src; thumb.hidden = false; upBtn.textContent = '✓ Bild'; }
+            else { window.alert('Upload fehlgeschlagen'); upBtn.textContent = '↑ Bild'; }
+          } catch { window.alert('Netzwerkfehler beim Upload'); upBtn.textContent = '↑ Bild'; }
+          finally { upBtn.disabled = false; }
+        });
+        vbColors.appendChild(row);
+      });
+    }
+
+    function addColor(name) {
+      const n = (name || '').trim();
+      if (n && colors.some((c) => c.name.trim().toLowerCase() === n.toLowerCase())) return;
+      colors.push({ name: n, image: '' });
+      renderColors(); renderMatrix();
+    }
+
+    // ---- Größen rendern ----
+    function renderSizes() {
+      if (!vbSizes) return;
+      vbSizes.innerHTML = '';
+      sizes.forEach((size, idx) => {
+        const chip = document.createElement('span');
+        chip.className = 'vb-chip';
+        chip.innerHTML = `${esc(size)} <button type="button" title="Entfernen">×</button>`;
+        chip.querySelector('button').addEventListener('click', () => { sizes.splice(idx, 1); renderSizes(); renderMatrix(); });
+        vbSizes.appendChild(chip);
+      });
+    }
+
+    function addSize(name) {
+      const n = (name || '').trim();
+      if (!n || sizes.some((s) => s.toLowerCase() === n.toLowerCase())) return;
+      sizes.push(n);
+      renderSizes(); renderMatrix();
+    }
+
+    // ---- Bestand-Matrix rendern ----
+    function renderMatrix() {
+      if (!vbMatrix) return;
+      const list = combos();
+      if (!list.length) {
+        vbMatrix.innerHTML = '<p class="muted small">Füge mindestens eine Farbe oder Größe hinzu.</p>';
+        return;
+      }
+      vbMatrix.innerHTML = '';
+      list.forEach((combo) => {
+        const key = combo.color + '||' + combo.size;
+        const label = [combo.color, combo.size].filter(Boolean).join(' / ');
+        const stock = stockMap[key] != null ? stockMap[key] : 0;
+        const row = document.createElement('div');
+        row.className = 'vb-matrix-row';
+        row.innerHTML = `
+          <span class="vb-matrix-label">${esc(label)}</span>
+          <input type="number" class="vb-stock" min="0" max="999999" value="${Number(stock)}">
+          <label class="vb-default"><input type="radio" name="vb_default" ${defaultKey === key ? 'checked' : ''}> Standard</label>
+        `;
+        const stockI = row.querySelector('.vb-stock');
+        stockI.addEventListener('input', () => { stockMap[key] = Math.max(0, Number(stockI.value) || 0); });
+        row.querySelector('input[name="vb_default"]').addEventListener('change', () => { defaultKey = key; });
+        vbMatrix.appendChild(row);
+      });
+      if (!vbMatrix.querySelector('input[name="vb_default"]:checked')) {
+        const first = vbMatrix.querySelector('input[name="vb_default"]');
+        if (first) { first.checked = true; }
+      }
+    }
+
+    function renderVariantBuilder() {
+      renderColors();
+      renderSizes();
+      renderMatrix();
     }
 
     function updateVariantMode() {
       const enabled = !!variantToggle?.checked;
-      if (variantBox) variantBox.hidden = !enabled;
+      if (variantBuilder) variantBuilder.hidden = !enabled;
       if (noVariantStock) noVariantStock.hidden = enabled;
-      if (enabled && !$$('#vs-rows .vs-row').length) {
-        ['S', 'M', 'L'].forEach((s) => addVariantRow({ value: s, stock: 0 }));
+      if (enabled && !colors.length && !sizes.length) {
+        sizes = ['S', 'M', 'L'];
+        renderVariantBuilder();
       }
     }
 
     function collectVariants() {
-      return $$('#vs-rows .vs-row').map((row) => {
-        const value = row.querySelector('.vs-name').value.trim();
-        if (!value) return null;
+      const def = vbMatrix ? (vbMatrix.querySelector('input[name="vb_default"]:checked') ? defaultKey : null) : null;
+      const colorImg = {};
+      colors.forEach((c) => { if (c.name.trim()) colorImg[c.name.trim()] = c.image || ''; });
+      return combos().map((combo) => {
+        const key = combo.color + '||' + combo.size;
+        const ov = [];
+        if (combo.color) ov.push({ key: 'color', label: 'Farbe', value: combo.color });
+        if (combo.size)  ov.push({ key: 'size',  label: 'Größe', value: combo.size });
         return {
-          option_values: [{ key: 'size', label: 'Variante', value }],
-          stock: Math.max(0, Number(row.querySelector('.vs-stock').value) || 0),
-          variant_price_cents: parseCents(row.querySelector('.vs-price').value),
-          image_url: (row.querySelector('.vs-image-url')?.value || '').trim(),
-          is_default: row.querySelector('input[name="vs_default"]').checked,
+          option_values: ov,
+          stock: Math.max(0, Number(stockMap[key]) || 0),
+          image_url: combo.color ? (colorImg[combo.color] || '') : '',
+          is_default: def === key,
         };
-      }).filter(Boolean);
+      });
     }
 
     function validateBeforeSubmit(formData, hasVariants) {
       if (!String(formData.get('name') || '').trim()) return 'Bitte gib einen Produktnamen ein.';
       if (parseCents(formData.get('price')) == null) return 'Bitte gib einen gültigen Preis ein.';
-      if (hasVariants && !collectVariants().length) return 'Bitte gib mindestens einer Größe einen Namen.';
+      if (hasVariants && !collectVariants().length) return 'Bitte füge mindestens eine Farbe oder Größe hinzu.';
       return null;
     }
 
@@ -300,15 +368,22 @@
     // Rendern abgesichert: selbst wenn hier etwas schiefgeht, bleibt der
     // Submit-Handler (weiter unten) aktiv und Speichern funktioniert weiter.
     try { renderExistingImages(); } catch (e) { /* noop */ }
-    try { renderVariantRows(); } catch (e) { /* noop */ }
+    try { renderVariantBuilder(); } catch (e) { /* noop */ }
     try { updateVariantMode(); } catch (e) { /* noop */ }
 
     if (fileInput) fileInput.addEventListener('change', renderUploadPreview);
     if (variantToggle) variantToggle.addEventListener('change', updateVariantMode);
-    const addRowBtn = $('[data-vs-add]');
-    if (addRowBtn) addRowBtn.addEventListener('click', () => addVariantRow());
-    $$('[data-vs-quick]').forEach((b) => {
-      b.addEventListener('click', () => addVariantRow({ value: b.getAttribute('data-vs-quick'), stock: 0 }));
+
+    const addColorBtn = $('[data-vb-add-color]');
+    if (addColorBtn) addColorBtn.addEventListener('click', () => addColor(''));
+
+    const sizeInput = $('#vb-size-input');
+    const addSizeBtn = $('[data-vb-add-size]');
+    function commitSizeInput() { if (sizeInput) { addSize(sizeInput.value); sizeInput.value = ''; sizeInput.focus(); } }
+    if (addSizeBtn) addSizeBtn.addEventListener('click', commitSizeInput);
+    if (sizeInput) sizeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitSizeInput(); } });
+    $$('[data-vb-size-quick]').forEach((b) => {
+      b.addEventListener('click', () => addSize(b.getAttribute('data-vb-size-quick')));
     });
 
     form.addEventListener('submit', async (event) => {

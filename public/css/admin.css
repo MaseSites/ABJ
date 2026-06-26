@@ -558,30 +558,43 @@ input[type="checkbox"] { width: auto; accent-color: #b89c67; }
 .calc-line-profit strong { color: #6ee7b7; }
 @media (max-width: 760px) { .calc-grid { grid-template-columns: 1fr; } }
 
-/* Varianten-Tabelle im Produkt-Editor (Name, Bestand, Preis, Bild) */
-.vs-quickadd { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-bottom: .7rem; }
-.vs-head { display: grid; grid-template-columns: 1.4fr 1fr 1fr .8fr 36px; gap: .6rem; padding: .4rem .2rem .4rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: #5a5f72; }
-.vs-head span:nth-child(4) { text-align: center; }
-.vs-row { padding: .7rem; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; margin-bottom: .6rem; background: rgba(255,255,255,.015); }
-.vs-main { display: grid; grid-template-columns: 1.4fr 1fr 1fr .8fr 36px; gap: .6rem; align-items: center; }
-.vs-img { display: grid; grid-template-columns: 40px 1fr auto; gap: .5rem; align-items: center; margin-top: .55rem; }
-.vs-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); background: #0e0f17; }
-.vs-row input[type="text"], .vs-row input[type="number"] {
+/* Varianten-Builder im Produkt-Editor: Farben × Größen × Bestand */
+.vb-block { padding: 1rem; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; margin-bottom: 1rem; background: rgba(255,255,255,.015); }
+.vb-block-head { display: flex; align-items: baseline; gap: .7rem; margin-bottom: .8rem; flex-wrap: wrap; }
+.vb-block-head h3 { margin: 0; font-size: .95rem; color: #c8ccd8; }
+
+.vb-color { display: grid; grid-template-columns: 40px 1.1fr 1.6fr auto 32px; gap: .5rem; align-items: center; margin-bottom: .55rem; }
+.vb-color-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,.1); background: #0e0f17; }
+
+.vb-chips { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .7rem; min-height: 4px; }
+.vb-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .7rem; border-radius: 999px; background: rgba(184,156,103,.12); border: 1px solid rgba(184,156,103,.3); color: #cdb27e; font-size: .85rem; }
+.vb-chip button { background: none; border: none; color: inherit; cursor: pointer; font-size: 1rem; line-height: 1; opacity: .7; }
+.vb-chip button:hover { opacity: 1; }
+.vb-add-row { display: flex; gap: .5rem; margin-bottom: .6rem; max-width: 360px; }
+.vb-add-row input { flex: 1; }
+.vb-quick { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+
+.vb-matrix-row { display: grid; grid-template-columns: 1fr 130px auto; gap: .7rem; align-items: center; padding: .5rem 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+.vb-matrix-row:last-child { border-bottom: none; }
+.vb-matrix-label { font-size: .9rem; color: #e8eaf2; font-weight: 500; }
+.vb-default { display: flex; align-items: center; gap: .4rem; font-size: .82rem; color: #8a8f9f; white-space: nowrap; }
+.vb-default input { accent-color: #b89c67; }
+
+.vb-color input[type="text"], .vb-matrix-row input[type="number"] {
   width: 100%; padding: .55rem .7rem; background: #0e0f17; border: 1px solid rgba(255,255,255,.1);
   border-radius: 8px; color: #e8eaf2; font-size: .9rem;
 }
-.vs-row input:focus { outline: none; border-color: rgba(184,156,103,.55); }
-.vs-default { display: flex; justify-content: center; align-items: center; }
-.vs-default input { accent-color: #b89c67; width: 18px; height: 18px; }
+.vb-color input:focus, .vb-matrix-row input:focus { outline: none; border-color: rgba(184,156,103,.55); }
 .vs-remove {
   width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,.1);
   background: transparent; color: #8a8f9f; cursor: pointer; font-size: 1.1rem; line-height: 1;
 }
 .vs-remove:hover { border-color: rgba(226,96,76,.5); color: #f08a7a; background: rgba(226,96,76,.08); }
 @media (max-width: 640px) {
-  .vs-head { display: none; }
-  .vs-main { grid-template-columns: 1fr 1fr; grid-auto-rows: auto; gap: .5rem; }
-  .vs-main .vs-name { grid-column: 1 / -1; }
+  .vb-color { grid-template-columns: 40px 1fr 32px; }
+  .vb-color .vb-color-img, .vb-color .vb-color-upload { grid-column: 2 / -1; }
+  .vb-matrix-row { grid-template-columns: 1fr auto; }
+  .vb-matrix-row .vb-default { grid-column: 1 / -1; }
 }
 
 /* ---------- Sticky Save Bar ---------- */

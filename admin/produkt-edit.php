@@ -32,20 +32,25 @@ function pe_build_option_groups(array $p, array $invRows): array {
 function pe_build_variants(array $invRows): array {
     $out = [];
     foreach ($invRows as $row) {
-        $ov = [];
-        if ($row['size'])  $ov[] = ['key' => 'size',  'label' => 'Größe', 'value' => $row['size']];
-        if ($row['color']) $ov[] = ['key' => 'color', 'label' => 'Farbe', 'value' => $row['color']];
-        $sig = empty($ov) ? 'default' : implode('__', array_map(function($o) {
-            return pe_slugify($o['key']) . ':' . pe_slugify($o['value']);
-        }, $ov));
+        // Strukturierte Optionswerte bevorzugen, sonst aus size/color-Spalten ableiten.
+        $ov = safe_parse($row['option_values'] ?? '[]', []);
+        if (empty($ov)) {
+            if (!empty($row['color'])) $ov[] = ['key' => 'color', 'label' => 'Farbe', 'value' => $row['color']];
+            if (!empty($row['size']))  $ov[] = ['key' => 'size',  'label' => 'Größe', 'value' => $row['size']];
+        }
+        $color = '';
+        $size  = '';
+        foreach ($ov as $o) {
+            if (($o['key'] ?? '') === 'color') $color = $o['value'] ?? '';
+            if (($o['key'] ?? '') === 'size')  $size  = $o['value'] ?? '';
+        }
+        $imgs = safe_parse($row['images'] ?? '[]', []);
         $out[] = [
-            'signature'           => $sig,
-            'option_values'       => $ov,
-            'sku'                 => $row['sku'] ?? '',
-            'stock'               => (int)($row['stock'] ?? 0),
-            'variant_price_cents' => $row['variant_price_cents'] ?? null,
-            'is_default'          => !empty($row['is_default']),
-            'images'              => safe_parse($row['images'] ?? '[]', []),
+            'color'      => $color,
+            'size'       => $size,
+            'stock'      => (int)($row['stock'] ?? 0),
+            'image'      => $imgs[0]['src'] ?? '',
+            'is_default' => !empty($row['is_default']),
         ];
     }
     return $out;
@@ -122,13 +127,13 @@ $currency   = setting_get('currency') ?: 'CHF';
     </div>
   </div>
 
-  <!-- ── Schritt 2: Bestand & Varianten ── -->
+  <!-- ── Schritt 2: Varianten & Bestand ── -->
   <div class="admin-section">
     <div class="step-head">
       <span class="step-num">2</span>
       <div>
-        <h2>Bestand &amp; Varianten</h2>
-        <p>Ein Gesamtbestand — oder mehrere Varianten (Größen, Farben …) mit eigenem Bestand</p>
+        <h2>Varianten &amp; Bestand</h2>
+        <p>Farben (mit eigenem Bild), Größen und Bestand pro Kombination</p>
       </div>
     </div>
     <div class="form-step">
@@ -136,8 +141,8 @@ $currency   = setting_get('currency') ?: 'CHF';
         <input type="checkbox" name="has_variants" value="1"
                <?= $hasVariants ? 'checked' : '' ?>>
         <div>
-          <strong>Mehrere Varianten</strong>
-          <small>An: Bestand pro Variante (z.B. „M", „Rot" oder „Rot / M"). Aus: ein Gesamtbestand.</small>
+          <strong>Dieses Produkt hat Varianten</strong>
+          <small>Farben und/oder Größen mit eigenem Bestand. Aus: ein Gesamtbestand.</small>
         </div>
       </label>
 
@@ -150,25 +155,44 @@ $currency   = setting_get('currency') ?: 'CHF';
         </label>
       </div>
 
-      <!-- Einfache Varianten-Tabelle -->
-      <div id="variant-simple" <?= !$hasVariants ? 'hidden' : '' ?>>
-        <div class="vs-quickadd">
-          <span class="muted small">Größen:</span>
-          <?php foreach (['S','M','L','XL','XXL','One Size'] as $qs): ?>
-          <button type="button" class="btn btn-ghost btn-sm" data-vs-quick="<?= h($qs) ?>">+ <?= h($qs) ?></button>
-          <?php endforeach; ?>
+      <!-- Varianten-Builder -->
+      <div id="variant-builder" <?= !$hasVariants ? 'hidden' : '' ?>>
+
+        <div class="vb-block">
+          <div class="vb-block-head">
+            <h3>Farben</h3>
+            <span class="muted small">Jede Farbe kann ein eigenes Bild haben (optional)</span>
+          </div>
+          <div id="vb-colors"></div>
+          <button type="button" class="btn btn-ghost btn-sm" data-vb-add-color>+ Farbe hinzufügen</button>
         </div>
-        <div class="vs-quickadd">
-          <span class="muted small">Farben:</span>
-          <?php foreach (['Schwarz','Weiß','Grau','Beige','Blau','Rot','Grün'] as $qc): ?>
-          <button type="button" class="btn btn-ghost btn-sm" data-vs-quick="<?= h($qc) ?>">+ <?= h($qc) ?></button>
-          <?php endforeach; ?>
+
+        <div class="vb-block">
+          <div class="vb-block-head">
+            <h3>Größen</h3>
+            <span class="muted small">Leer lassen, wenn das Produkt keine Größen hat</span>
+          </div>
+          <div class="vb-chips" id="vb-sizes"></div>
+          <div class="vb-add-row">
+            <input type="text" id="vb-size-input" placeholder="Größe eingeben…" maxlength="40">
+            <button type="button" class="btn btn-ghost btn-sm" data-vb-add-size>Hinzufügen</button>
+          </div>
+          <div class="vb-quick">
+            <span class="muted small">Schnell:</span>
+            <?php foreach (['XS','S','M','L','XL','XXL','One Size'] as $qs): ?>
+            <button type="button" class="btn btn-ghost btn-sm" data-vb-size-quick="<?= h($qs) ?>">+ <?= h($qs) ?></button>
+            <?php endforeach; ?>
+          </div>
         </div>
-        <div class="vs-head">
-          <span>Variante (Größe/Farbe)</span><span>Bestand</span><span>Preis <small class="muted">optional</small></span><span>Standard</span><span></span>
+
+        <div class="vb-block">
+          <div class="vb-block-head">
+            <h3>Bestand pro Variante</h3>
+            <span class="muted small">Wird automatisch aus Farben &amp; Größen gebildet</span>
+          </div>
+          <div id="vb-matrix"></div>
         </div>
-        <div id="vs-rows"></div>
-        <button type="button" class="btn btn-ghost btn-sm" data-vs-add style="margin-top:.7rem">+ Variante hinzufügen</button>
+
       </div>
     </div>
   </div>

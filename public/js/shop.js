@@ -112,14 +112,33 @@
         });
       }
 
-      function applyVariant(variant) {
+      function applyVisual(variant) {
         if (!variant) return;
         const img = variant.images && variant.images[0] && variant.images[0].src;
         if (img && mainImg) mainImg.setAttribute('src', img);
-        if (hiddenSize) hiddenSize.value = variant.key || variant.size || variant.title || '';
         const priceNow = variant.variant_price_cents != null ? Number(variant.variant_price_cents) : (productPrice?.sale_price_cents != null ? productPrice.sale_price_cents : productPrice?.price_cents);
         const oldPrice = variant.variant_price_cents != null ? productPrice?.price_cents ?? null : (productPrice?.sale_price_cents != null ? productPrice.price_cents : null);
         renderPriceBlock(priceNow, oldPrice);
+      }
+
+      // Warenkorb-Schlüssel nur setzen, wenn die Auswahl vollständig ist.
+      function setCartKey(variant) {
+        if (!hiddenSize) return;
+        hiddenSize.value = variant ? (variant.key || variant.size || variant.title || '') : '';
+      }
+
+      // Bestes Match für die aktuelle (ggf. unvollständige) Auswahl – damit
+      // z.B. nach der Farbwahl schon das passende Bild erscheint.
+      function findVariantForImage() {
+        const full = findVariantBySelection();
+        if (full) return full;
+        const selKeys = optionGroups.map((g) => g.key).filter((k) => selected[k]);
+        if (!selKeys.length) return null;
+        const matches = variants.filter((variant) => selKeys.every((k) => {
+          const opt = (variant.option_values || []).find((e) => (e.key || e.group) === k);
+          return opt && opt.value === selected[k];
+        }));
+        return matches.find((v) => v.stock > 0) || matches[0] || null;
       }
 
       function isValueAvailable(groupKey, value) {
@@ -156,8 +175,9 @@
               if (btn.classList.contains('soldout')) return;
               selected[group.key] = value;
               renderOptionButtons();
-              const variant = findVariantBySelection();
-              if (variant) applyVariant(variant);
+              const full = findVariantBySelection();
+              applyVisual(full || findVariantForImage());
+              setCartKey(full);
             });
             if (selected[group.key] === value) btn.classList.add('active');
             row.appendChild(btn);
@@ -171,7 +191,9 @@
         selected[entry.key || entry.group] = entry.value;
       });
       renderOptionButtons();
-      applyVariant(defaultVariant);
+      const initFull = findVariantBySelection();
+      applyVisual(initFull || defaultVariant);
+      setCartKey(initFull);
     }
   }
 

@@ -13,6 +13,7 @@ function api_product_lite(array $p): array {
         'slug'             => $p['slug'],
         'name'             => $p['name'],
         'category'         => $p['category'],
+        'tags'             => $p['tags'] ?? '',
         'price_cents'      => (int)$p['price_cents'],
         'sale_price_cents' => $sale,
         'image'            => $p['images'][0]['src'] ?? ($p['image'] ?? null),

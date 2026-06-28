@@ -24,8 +24,8 @@ try {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=26">
-  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=26">
+  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=27">
+  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=27">
 </head>
 <body>
 <div class="admin-shell">
@@ -144,6 +144,13 @@ try {
           <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M12.95 3.05l-1.06 1.06M4.11 11.89l-1.06 1.06"/>
         </svg>
         Einstellungen
+      </a>
+
+      <a href="<?= url('/admin/sicherheit.php') ?>" class="<?= str_has($_cur, 'sicherheit') ? 'active' : '' ?>">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 1.5l5.5 2.2V7c0 3.5-2.3 6-5.5 7-3.2-1-5.5-3.5-5.5-7V3.7z"/><path d="M6 8l1.5 1.5L10.5 6.5"/>
+        </svg>
+        Sicherheit
       </a>
 
       <a href="<?= url('/') ?>" target="_blank" rel="noopener">

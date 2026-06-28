@@ -78,6 +78,7 @@ RewriteRule ^admin/lager$                      /admin/lager.php            [L,QS
 RewriteRule ^admin/nachrichten$                /admin/nachrichten.php      [L,QSA]
 RewriteRule ^admin/newsletter$                 /admin/newsletter.php       [L,QSA]
 RewriteRule ^admin/einstellungen$              /admin/einstellungen.php    [L,QSA]
+RewriteRule ^admin/sicherheit$                 /admin/sicherheit.php       [L,QSA]
 RewriteRule ^admin/rabatte$                    /admin/rabatte.php          [L,QSA]
 RewriteRule ^admin/analytics$                  /admin/analytics.php        [L,QSA]
 RewriteRule ^admin/preisrechner$               /admin/preisrechner.php     [L,QSA]

@@ -72,6 +72,7 @@ $routes = [
     '#^/admin/nachrichten/?$#'       => '/admin/nachrichten.php',
     '#^/admin/newsletter/?$#'        => '/admin/newsletter.php',
     '#^/admin/einstellungen/?$#'     => '/admin/einstellungen.php',
+    '#^/admin/sicherheit/?$#'        => '/admin/sicherheit.php',
     '#^/admin/rabatte/?$#'           => '/admin/rabatte.php',
     '#^/admin/analytics/?$#'         => '/admin/analytics.php',
     '#^/admin/preisrechner/?$#'      => '/admin/preisrechner.php',

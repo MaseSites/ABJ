@@ -122,6 +122,23 @@ function str_has(string $haystack, string $needle): bool {
 }
 
 /**
+ * Speichert ein hochgeladenes Bild sicher in public/uploads und gibt den
+ * öffentlichen Pfad (/uploads/…) zurück, oder null bei Fehler.
+ */
+function save_uploaded_image(?array $file, string &$error = ''): ?string {
+    if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) { $error = 'Upload fehlgeschlagen.'; return null; }
+    $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
+    $mime = function_exists('mime_content_type') ? mime_content_type($file['tmp_name']) : ($file['type'] ?? '');
+    if (!isset($allowed[$mime])) { $error = 'Nur JPG, PNG, WEBP oder GIF erlaubt.'; return null; }
+    if (($file['size'] ?? 0) > 6 * 1024 * 1024) { $error = 'Datei zu groß (max. 6 MB).'; return null; }
+    $dir = __DIR__ . '/../public/uploads';
+    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+    $name = bin2hex(random_bytes(12)) . '.' . $allowed[$mime];
+    if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $name)) { $error = 'Speichern fehlgeschlagen.'; return null; }
+    return '/uploads/' . $name;
+}
+
+/**
  * Anzeige-Label für den Zahlungsstatus einer Bestellung.
  * Alles ausser "bezahlt" gilt als noch offen → "Zahlung ausstehend".
  */

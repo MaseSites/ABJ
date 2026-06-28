@@ -40,6 +40,7 @@ RewriteRule ^newsletter$        /newsletter.php   [L,QSA]
 RewriteRule ^anmelden$          /anmelden.php     [L,QSA]
 RewriteRule ^registrieren$      /registrieren.php [L,QSA]
 RewriteRule ^konto$             /konto.php        [L,QSA]
+RewriteRule ^anfrage$           /anfrage.php      [L,QSA]
 RewriteRule ^abmelden$          /abmelden.php     [L,QSA]
 
 # Dynamische Routen

@@ -52,6 +52,7 @@ $routes = [
     '#^/anmelden/?$#'                => '/anmelden.php',
     '#^/registrieren/?$#'            => '/registrieren.php',
     '#^/konto/?$#'                   => '/konto.php',
+    '#^/anfrage/?$#'                  => '/anfrage.php',
     '#^/abmelden/?$#'                => '/abmelden.php',
     '#^/bestellung/?$#'              => '/bestellung.php',
     '#^/warenkorb/api/add$#'         => '/api/cart-add.php',

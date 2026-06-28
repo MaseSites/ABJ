@@ -35,6 +35,32 @@ function order_by_ref(string $ref): ?array {
     return $row ? order_parse($row) : null;
 }
 
+/**
+ * Setzt den Gesamtpreis einer Bestellung (z.B. nach einer Produktanfrage).
+ * Passt zusätzlich den Zeilenpreis an, wenn die Bestellung nur eine Position hat.
+ */
+function order_set_price(string $ref, int $totalCents): bool {
+    $order = order_by_ref($ref);
+    if (!$order) return false;
+    $items = $order['items'];
+    if (count($items) === 1) {
+        $items[0]['unitCents'] = $totalCents;
+        $items[0]['lineCents'] = $totalCents;
+        $items[0]['qty']       = (int)($items[0]['qty'] ?? 1) ?: 1;
+    }
+    $stmt = db()->prepare("UPDATE orders SET total_cents=?, items=?, updated_at=datetime('now') WHERE reference=?");
+    $stmt->execute([max(0, $totalCents), json_encode($items), $ref]);
+    return $stmt->rowCount() > 0;
+}
+
+/** Ist die Bestellung eine Produktanfrage (ohne festen Preis vom Kunden)? */
+function order_is_request(array $order): bool {
+    foreach ($order['items'] ?? [] as $it) {
+        if (!empty($it['request'])) return true;
+    }
+    return false;
+}
+
 function order_update_status(string $ref, string $status, string $paymentStatus): bool {
     $stmt = db()->prepare('UPDATE orders SET status=?, payment_status=? WHERE reference=?');
     $stmt->execute([$status, $paymentStatus, $ref]);

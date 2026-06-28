@@ -8,8 +8,9 @@ $cartCount      = cart_count();
 $currentPath    = '/bestellung';
 
 $order = $reference ? order_by_ref($reference) : null;
+$isAnfrage = ($order && order_is_request($order));
 
-$pageTitle = 'Bestellung eingegangen';
+$pageTitle = $isAnfrage ? 'Anfrage erhalten' : 'Bestellung eingegangen';
 include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/header.php';
 ?>
@@ -17,9 +18,11 @@ include __DIR__ . '/partials/header.php';
 <main id="main" class="container section narrow center" style="position:relative">
 
   <?php if ($order): ?>
-    <span class="confirm-pay-badge<?= $order['payment_status'] === 'bezahlt' ? ' is-paid' : '' ?>">
-      <?= h(payment_status_label($order['payment_status'])) ?>
-    </span>
+    <?php if ($isAnfrage): ?>
+      <span class="confirm-pay-badge<?= (int)$order['total_cents'] > 0 ? ' is-paid' : '' ?>"><?= (int)$order['total_cents'] > 0 ? 'Preis steht' : 'In Prüfung' ?></span>
+    <?php else: ?>
+      <span class="confirm-pay-badge<?= $order['payment_status'] === 'bezahlt' ? ' is-paid' : '' ?>"><?= h(payment_status_label($order['payment_status'])) ?></span>
+    <?php endif; ?>
   <?php endif; ?>
 
   <?php if ($redirectStatus === 'requires_payment_method'): ?>
@@ -49,14 +52,16 @@ include __DIR__ . '/partials/header.php';
     <div class="confirmation-icon">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
-    <h1>Bestellung eingegangen!</h1>
+    <h1><?= $isAnfrage ? 'Anfrage erhalten!' : 'Bestellung eingegangen!' ?></h1>
 
     <?php if ($reference): ?>
     <p class="order-ref"><?= h($reference) ?></p>
     <?php endif; ?>
 
     <?php if ($order): ?>
-      <?php if ($order['payment_status'] === 'bezahlt'): ?>
+      <?php if ($isAnfrage): ?>
+        <p class="muted">Wir prüfen die Verfügbarkeit und setzen den Preis. Du findest die Anfrage in deinem <a href="<?= url('/konto.php?tab=orders') ?>" style="color:var(--accent-3)">Profil</a> — sobald der Preis steht, kannst du bestellen.</p>
+      <?php elseif ($order['payment_status'] === 'bezahlt'): ?>
         <p class="muted">Zahlung erfolgreich &mdash; deine Bestellung wird bearbeitet.</p>
       <?php else: ?>
         <p class="muted">Wir haben deine Bestellung erhalten und melden uns bald.</p>
@@ -70,11 +75,14 @@ include __DIR__ . '/partials/header.php';
 
         <?php if (!empty($order['items'])): ?>
         <div class="order-confirm-section">
-          <div class="order-confirm-label">Artikel</div>
+          <div class="order-confirm-label"><?= $isAnfrage ? 'Deine Anfrage' : 'Artikel' ?></div>
           <?php foreach ($order['items'] as $it): ?>
           <div class="order-confirm-row">
-            <span><?= h($it['name'] ?? '') ?><?= !empty($it['size']) ? ' (' . h($it['size']) . ')' : '' ?> &times; <?= (int)($it['qty'] ?? 1) ?></span>
-            <span><?= format_price((int)($it['lineCents'] ?? 0), $currency) ?></span>
+            <span style="display:flex;align-items:center;gap:.6rem">
+              <?php if (!empty($it['image'])): ?><img src="<?= h($it['image']) ?>" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:7px;border:1px solid var(--line)"><?php endif; ?>
+              <span><?= h($it['name'] ?? '') ?><?= !empty($it['size']) ? ' (' . h($it['size']) . ')' : '' ?><?= (int)($it['qty'] ?? 1) > 1 ? ' &times; ' . (int)$it['qty'] : '' ?></span>
+            </span>
+            <span><?= (int)($it['lineCents'] ?? 0) > 0 ? format_price((int)$it['lineCents'], $currency) : '<span class="muted">Preis folgt</span>' ?></span>
           </div>
           <?php endforeach; ?>
         </div>
@@ -92,7 +100,7 @@ include __DIR__ . '/partials/header.php';
           <?php endif; ?>
           <div class="order-confirm-row" style="font-weight:700">
             <span>Gesamt</span>
-            <span style="color:var(--gold)"><?= format_price((int)$order['total_cents'], $currency) ?></span>
+            <span style="color:var(--gold)"><?= (int)$order['total_cents'] > 0 ? format_price((int)$order['total_cents'], $currency) : 'Preis folgt' ?></span>
           </div>
         </div>
 

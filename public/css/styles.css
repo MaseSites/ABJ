@@ -1711,6 +1711,30 @@ body.no-scroll { overflow: hidden; }
 }
 .danger-zone strong { color: #ffb0a4; }
 
+/* ===== Produkt-Anfrage ===== */
+.find-cta { margin-top: 3rem; }
+.find-cta-inner {
+  display: flex; align-items: center; gap: 1.3rem; flex-wrap: wrap;
+  padding: 1.8rem 2rem; border: 1px solid var(--line); border-radius: var(--radius);
+  background: linear-gradient(135deg, rgba(184,156,103,.07), rgba(255,255,255,.012));
+}
+.find-cta-inner > svg { color: var(--gold); flex: none; }
+.find-cta-text { flex: 1; min-width: 220px; }
+.find-cta-text h2 { font-size: 1.25rem; margin: 0 0 .25rem; }
+.find-cta-text p { margin: 0; color: var(--ink-soft); font-size: .92rem; }
+@media (max-width: 600px) { .find-cta-inner { padding: 1.4rem; } .find-cta-inner .btn { width: 100%; } }
+
+.anfrage-head { margin-bottom: 1.6rem; }
+.anfrage-form { display: flex; flex-direction: column; gap: 1.1rem; max-width: 560px; }
+.anfrage-drop { display: block; position: relative; border: 1.5px dashed var(--line-strong); border-radius: var(--radius); padding: 1.5rem; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+.anfrage-drop:hover, .anfrage-drop.is-over { border-color: var(--gold); background: rgba(184,156,103,.05); }
+.anfrage-drop-inner { display: flex; flex-direction: column; align-items: center; gap: .35rem; color: var(--ink-soft); }
+.anfrage-drop-inner svg { color: var(--gold); margin-bottom: .2rem; }
+.anfrage-drop-inner strong { color: var(--ink); }
+.anfrage-preview { max-width: 100%; max-height: 280px; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+
+.acc-order-tags .tag-anfrage, .konto-order-tags .tag-anfrage { color: #a5b4fc; border-color: rgba(99,102,241,.38); background: rgba(99,102,241,.1); }
+
 /* ============ Kundenkonto-Dashboard ============ */
 .acc-shell { display: grid; grid-template-columns: 250px 1fr; gap: 1.8rem; align-items: start; }
 
@@ -1772,13 +1796,34 @@ body.no-scroll { overflow: hidden; }
 .acc-card input:disabled { opacity: .55; cursor: not-allowed; }
 
 @media (max-width: 860px) {
-  .acc-shell { grid-template-columns: 1fr; }
-  .acc-side { position: static; }
-  .acc-nav { flex-direction: row; overflow-x: auto; }
-  .acc-nav-item { white-space: nowrap; }
-  .acc-nav-item span.acc-nav-count { display: none; }
-  .acc-stats { grid-template-columns: repeat(2, 1fr); }
+  .acc-shell { grid-template-columns: 1fr; gap: 1.1rem; }
+  .acc-side { position: static; flex-direction: column; gap: .8rem; }
+  /* Navigation als horizontale Pill-Leiste */
+  .acc-nav {
+    flex-direction: row; overflow-x: auto; gap: .35rem; padding: .35rem;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .acc-nav::-webkit-scrollbar { display: none; }
+  .acc-nav-item { flex: none; white-space: nowrap; padding: .58rem .85rem; border-radius: 999px; font-size: .85rem; }
+  .acc-nav-item svg { width: 16px; height: 16px; }
+  .acc-nav-count { display: none; }
+  .acc-panel-head h1 { font-size: 1.4rem; }
+  .acc-stats { grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+  .acc-stat { padding: .9rem 1rem; }
+  .acc-stat strong { font-size: 1.15rem; }
   .acc-quick { grid-template-columns: 1fr; }
+  .acc-form { max-width: 100%; }
+  .acc-card { padding: 1.1rem; }
+}
+@media (max-width: 520px) {
+  .acc-profile { padding: .85rem; }
+  .acc-order { padding: 1rem 1.1rem; }
+  .acc-order-foot { flex-direction: column; align-items: stretch; gap: .7rem; }
+  .acc-order-actions { display: flex; gap: .5rem; }
+  .acc-order-actions .btn, .acc-order-actions form { flex: 1; }
+  .acc-order-actions .btn { width: 100%; }
+  .danger-zone { flex-direction: column; align-items: stretch; }
+  .danger-zone .btn { width: 100%; }
 }
 
 .konto-orders { display: flex; flex-direction: column; gap: .9rem; }

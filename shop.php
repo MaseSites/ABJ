@@ -102,6 +102,18 @@ include __DIR__ . '/partials/header.php';
       <a class="btn btn-primary" href="<?= url('/shop.php') ?>">Alle Produkte ansehen</a>
     </div>
   <?php endif; ?>
+
+  <!-- Produkt nicht gefunden? Anfrage-CTA -->
+  <section class="find-cta">
+    <div class="find-cta-inner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="34" height="34"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M11 8v3M11 14h.01"/></svg>
+      <div class="find-cta-text">
+        <h2>Dein Produkt nicht gefunden?</h2>
+        <p>Kein Problem — schick uns dein Wunschprodukt und wir schauen, ob wir es noch auf Lager haben.</p>
+      </div>
+      <a class="btn btn-primary" href="<?= url('/anfrage.php') ?>">Schau ob wir es haben</a>
+    </div>
+  </section>
 </main>
 
 <?php include __DIR__ . '/partials/footer.php'; ?>

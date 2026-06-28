@@ -102,7 +102,10 @@ include __DIR__ . '/partials/head.php';
 include __DIR__ . '/partials/header.php';
 
 // Hilfsfunktion: Bestellkarte rendern
-function ko_render_order(array $o, string $currency): void { ?>
+function ko_render_order(array $o, string $currency): void {
+  $isReq   = order_is_request($o);
+  $hasPrice = (int)$o['total_cents'] > 0;
+?>
   <article class="acc-order">
     <div class="acc-order-head">
       <div>
@@ -110,23 +113,30 @@ function ko_render_order(array $o, string $currency): void { ?>
         <span class="acc-order-date"><?= h(substr($o['created_at'], 0, 10)) ?></span>
       </div>
       <div class="acc-order-tags">
-        <span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span>
+        <?php if ($isReq): ?>
+          <span class="tag tag-anfrage">Anfrage</span>
+          <?php if (!$hasPrice): ?><span class="tag tag-pending">In Prüfung</span><?php endif; ?>
+        <?php else: ?>
+          <span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span>
+        <?php endif; ?>
         <span class="tag"><?= h(ko_status_label($o['status'])) ?></span>
       </div>
     </div>
     <div class="acc-order-items">
       <?php foreach ($o['items'] as $it): ?>
-        <span class="acc-order-item"><?= (int)($it['qty'] ?? 1) ?>× <?= h($it['name'] ?? '') ?><?= !empty($it['size']) ? ' · ' . h($it['size']) : '' ?></span>
+        <span class="acc-order-item"><?= (int)($it['qty'] ?? 1) > 1 ? (int)$it['qty'] . '× ' : '' ?><?= h($it['name'] ?? '') ?><?= !empty($it['size']) ? ' · ' . h($it['size']) : '' ?></span>
       <?php endforeach; ?>
     </div>
     <div class="acc-order-foot">
-      <strong><?= format_price((int)$o['total_cents'], $currency) ?></strong>
+      <strong><?= $hasPrice ? format_price((int)$o['total_cents'], $currency) : '<span class="muted" style="font-weight:500;font-size:.9rem">' . ($isReq ? 'Preis folgt' : '–') . '</span>' ?></strong>
       <div class="acc-order-actions">
+        <?php if (!$isReq): ?>
         <form method="post" action="<?= url('/konto.php') ?>" style="display:inline">
           <input type="hidden" name="action" value="reorder">
           <input type="hidden" name="ref" value="<?= h($o['reference']) ?>">
           <button class="btn btn-line btn-sm" type="submit">Erneut bestellen</button>
         </form>
+        <?php endif; ?>
         <a class="btn btn-ghost btn-sm" href="<?= url('/bestellung.php?ref=' . urlencode($o['reference'])) ?>">Details</a>
       </div>
     </div>

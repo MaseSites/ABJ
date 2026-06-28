@@ -7,17 +7,23 @@ if (!$order) redirect('/admin/bestellungen.php');
 try { order_mark_seen($ref); } catch (Throwable $e) { /* column may not exist yet */ }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    order_update_status($ref, trim($_POST['status'] ?? 'neu'), trim($_POST['payment_status'] ?? 'offen'));
+    if (($_POST['action'] ?? '') === 'set_price') {
+        $raw = str_replace(',', '.', trim($_POST['total'] ?? ''));
+        order_set_price($ref, max(0, (int)round((float)$raw * 100)));
+    } else {
+        order_update_status($ref, trim($_POST['status'] ?? 'neu'), trim($_POST['payment_status'] ?? 'offen'));
+    }
     redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&saved=1');
 }
 
 $adminTitle = 'Bestellung ' . $ref;
 include __DIR__ . '/partials/admin-layout-top.php';
-$currency = setting_get('currency') ?: 'CHF';
-$addr     = is_array($order['address']) ? $order['address'] : ['raw' => $order['address']];
+$currency  = setting_get('currency') ?: 'CHF';
+$addr      = is_array($order['address']) ? $order['address'] : ['raw' => $order['address']];
+$isRequest = order_is_request($order);
 ?>
 <div class="admin-head-row" style="margin-bottom:1.4rem">
-  <h1>Bestellung <?= h($ref) ?></h1>
+  <h1>Bestellung <?= h($ref) ?> <?php if ($isRequest): ?><span class="tag tag-new" style="vertical-align:middle">Produktanfrage</span><?php endif; ?></h1>
   <a href="<?= url('/admin/bestellungen.php') ?>" class="btn btn-ghost">← Zurück</a>
 </div>
 <?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
@@ -41,22 +47,42 @@ $addr     = is_array($order['address']) ? $order['address'] : ['raw' => $order['
     </div>
   </div>
 
-  <h2 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;opacity:.5;margin-bottom:.5rem">Artikel</h2>
+  <h2 style="font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;opacity:.5;margin-bottom:.5rem"><?= $isRequest ? 'Anfrage' : 'Artikel' ?></h2>
   <table class="data-table" style="margin-bottom:1.5rem">
-    <thead><tr><th>Produkt</th><th>Variante</th><th>Menge</th><th>Preis</th></tr></thead>
+    <thead><tr><th></th><th>Produkt</th><th>Variante</th><th>Menge</th><th>Preis</th></tr></thead>
     <tbody>
       <?php foreach ($order['items'] as $item): ?>
       <tr>
+        <td style="width:64px">
+          <?php if (!empty($item['image'])): ?>
+            <a href="<?= h($item['image']) ?>" target="_blank" rel="noopener"><img src="<?= h($item['image']) ?>" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.1)"></a>
+          <?php else: ?>—<?php endif; ?>
+        </td>
         <td><?= h($item['name']) ?></td>
-        <td><?= h($item['size'] ?? '—') ?></td>
+        <td><?= h($item['size'] ?: '—') ?></td>
         <td><?= (int)$item['qty'] ?></td>
-        <td><?= format_price((int)$item['lineCents'], $currency) ?></td>
+        <td><?= (int)$item['lineCents'] > 0 ? format_price((int)$item['lineCents'], $currency) : '—' ?></td>
       </tr>
       <?php endforeach; ?>
     </tbody>
   </table>
+
+  <?php if ($isRequest): ?>
+  <div class="admin-section" style="margin-bottom:1.5rem;border-color:rgba(99,102,241,.3)">
+    <h2 style="margin-top:0">Preis festlegen</h2>
+    <p class="muted" style="font-size:.84rem;margin-top:-.5rem">Sobald du den Preis setzt, sieht ihn der Kunde im Profil unter „Meine Bestellungen".</p>
+    <form method="post" style="display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap">
+      <input type="hidden" name="action" value="set_price">
+      <label class="field" style="max-width:200px"><span>Gesamtpreis (<?= h($currency) ?>)</span>
+        <input type="text" inputmode="decimal" name="total" value="<?= (int)$order['total_cents'] > 0 ? number_format($order['total_cents'] / 100, 2, '.', '') : '' ?>" placeholder="z.B. 129.00">
+      </label>
+      <button class="btn btn-primary" type="submit">Preis speichern</button>
+    </form>
+  </div>
+  <?php endif; ?>
+
   <p><strong>Versand:</strong> <?= format_price((int)$order['shipping_cents'], $currency) ?></p>
-  <p><strong>Gesamt:</strong> <?= format_price((int)$order['total_cents'], $currency) ?></p>
+  <p><strong>Gesamt:</strong> <?= (int)$order['total_cents'] > 0 ? format_price((int)$order['total_cents'], $currency) : '<span class="muted">noch offen</span>' ?></p>
   <p><strong>Zahlung:</strong> <span class="tag <?= payment_status_class($order['payment_status']) ?>"><?= h(payment_status_label($order['payment_status'])) ?></span></p>
 
   <form method="post" style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">

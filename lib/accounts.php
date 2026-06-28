@@ -17,7 +17,32 @@ function account_by_id(int $id): ?array {
 
 /** Alle registrierten Kundenkonten (neueste zuerst). */
 function accounts_list(): array {
-    return db()->query('SELECT id, email, name, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
+    return db()->query('SELECT id, email, name, access_code, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
+}
+
+/** Konto anhand seines persönlichen Zugangscodes (für den Sicherheitsmodus). */
+function account_by_code(string $code): ?array {
+    $code = trim($code);
+    if ($code === '') return null;
+    $stmt = db()->prepare("SELECT * FROM accounts WHERE access_code = ? AND access_code <> ''");
+    $stmt->execute([$code]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+/** Persönlichen Zugangscode eines Kontos setzen (leer = entfernen). */
+function account_set_code(int $id, string $code): void {
+    db()->prepare('UPDATE accounts SET access_code = ? WHERE id = ?')->execute([trim($code), $id]);
+}
+
+/** Einen kurzen, eindeutigen Zugangscode erzeugen. */
+function account_generate_code(): string {
+    $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    do {
+        $code = '';
+        for ($i = 0; $i < 6; $i++) $code .= $chars[random_int(0, strlen($chars) - 1)];
+    } while (account_by_code($code));
+    return $code;
 }
 
 function accounts_count(): int {

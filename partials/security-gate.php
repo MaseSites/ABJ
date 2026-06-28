@@ -8,9 +8,10 @@
 $gateError = false;
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['beleg'])) {
     $code = trim((string)$_POST['beleg']);
-    $real = (string)(setting_get('access_code') ?? '');
-    if ($real !== '' && hash_equals($real, $code)) {
-        ip_allow_add(client_ip());
+    // Jeder Code gehört zu genau einem Konto: richtiger Code = Login als dieses Konto.
+    $acc = $code !== '' ? account_by_code($code) : null;
+    if ($acc) {
+        customer_login((int)$acc['id'], $acc['email'], $acc['name'] ?? '');
         if (!headers_sent()) header('Location: ' . base_path() . '/');
         echo 'OK';
         exit;

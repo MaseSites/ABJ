@@ -6,7 +6,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     if ($action === 'save_mode') {
         setting_set('security_mode', !empty($_POST['security_mode']) ? '1' : '0');
-        setting_set('access_code', trim($_POST['access_code'] ?? ''));
+    } elseif ($action === 'set_account_code') {
+        account_set_code((int)($_POST['account_id'] ?? 0), trim($_POST['code'] ?? ''));
+    } elseif ($action === 'gen_account_code') {
+        account_set_code((int)($_POST['account_id'] ?? 0), account_generate_code());
     } elseif ($action === 'allow_my_ip') {
         ip_allow_add(client_ip());
     } elseif ($action === 'allow_add_ip') {
@@ -28,7 +31,7 @@ $adminTitle = 'Sicherheit';
 include __DIR__ . '/partials/admin-layout-top.php';
 
 $mode    = setting_get('security_mode') === '1';
-$code    = setting_get('access_code') ?: '';
+$accounts = accounts_list();
 $myIp    = client_ip();
 $allowed = ip_allow_list();
 $blocked = ip_blocks_list();
@@ -50,9 +53,10 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
 <div class="admin-section">
   <h2>Sicherheitsmodus</h2>
   <p style="font-size:.84rem;color:#8a8a95;margin:0 0 1rem">
-    Ist der Modus <strong>an</strong>, sehen nicht freigeschaltete Besucher statt des Shops eine neutrale Tarnseite
-    („Belegassistent"). Wer dort im Feld <strong>„Belegnummer"</strong> den Zugangscode eingibt, schaltet seine IP frei und
-    gelangt auf den echten Shop. Der Admin-Bereich ist nie betroffen.
+    Ist der Modus <strong>an</strong>, sehen Besucher statt des Shops eine neutrale Tarnseite („Belegassistent").
+    Nur wer dort im Feld <strong>„Belegnummer"</strong> seinen <strong>persönlichen Zugangscode</strong> eingibt, wird
+    automatisch in sein Konto eingeloggt und gelangt auf den echten Shop. Jeder Code gehört zu genau einem Kunden.
+    Der Admin-Bereich ist nie betroffen.
   </p>
   <form method="post">
     <input type="hidden" name="action" value="save_mode">
@@ -60,15 +64,44 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
       <input type="checkbox" name="security_mode" value="1" <?= $mode ? 'checked' : '' ?>>
       <div>
         <strong>Sicherheitsmodus aktivieren</strong>
-        <small>Standard: aus. Erst deine IP freischalten, dann aktivieren.</small>
+        <small>Standard: aus. Vergib unten Zugangscodes an Kunden (oder schalte deine IP frei), bevor du aktivierst.</small>
       </div>
     </label>
-    <label class="field" style="max-width:340px"><span>Zugangscode</span>
-      <input type="text" name="access_code" value="<?= h($code) ?>" autocomplete="off" placeholder="z.B. ein geheimes Wort oder eine Zahl">
-      <small style="color:#8a8a95;font-size:.75rem">Diesen Code auf der Tarnseite ins Feld „Belegnummer" eingeben.</small>
-    </label>
-    <button class="btn btn-primary" type="submit" style="margin-top:1rem">Speichern</button>
+    <button class="btn btn-primary" type="submit">Speichern</button>
   </form>
+</div>
+
+<!-- Zugangscodes pro Kunde -->
+<div class="admin-section">
+  <h2>Zugangscodes (pro Kunde)</h2>
+  <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">Jeder Kunde bekommt einen eigenen Code. Damit loggt er sich über die Tarnseite direkt ein. Nur dieser eine Kunde kann den Code nutzen.</p>
+  <?php if (empty($accounts)): ?>
+    <p class="muted">Noch keine Kundenkonten vorhanden.</p>
+  <?php else: ?>
+  <div class="table-card"><table class="data-table">
+    <thead><tr><th>Kunde</th><th>E-Mail</th><th>Zugangscode</th><th></th></tr></thead>
+    <tbody>
+      <?php foreach ($accounts as $a): ?>
+      <tr>
+        <td><strong><?= h($a['name'] ?: '—') ?></strong></td>
+        <td class="muted"><?= h($a['email']) ?></td>
+        <td>
+          <form method="post" style="display:flex;gap:.4rem;align-items:center">
+            <input type="hidden" name="action" value="set_account_code">
+            <input type="hidden" name="account_id" value="<?= (int)$a['id'] ?>">
+            <input type="text" name="code" value="<?= h($a['access_code'] ?? '') ?>" placeholder="leer = kein Zugang" style="max-width:150px;font-variant-numeric:tabular-nums;letter-spacing:.08em">
+            <button class="btn btn-ghost btn-sm" type="submit">Speichern</button>
+          </form>
+        </td>
+        <td class="cell-actions">
+          <form method="post"><input type="hidden" name="action" value="gen_account_code"><input type="hidden" name="account_id" value="<?= (int)$a['id'] ?>">
+            <button class="btn btn-sm" type="submit">Code generieren</button></form>
+        </td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table></div>
+  <?php endif; ?>
 </div>
 
 <!-- Freigeschaltete IPs -->

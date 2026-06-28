@@ -189,7 +189,7 @@ function db_init(PDO $pdo): void {
     } catch (\Throwable $e) {}
 
     $acc_cols = array_column($pdo->query("PRAGMA table_info(accounts)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    foreach (['phone' => "TEXT DEFAULT ''", 'address' => "TEXT DEFAULT '{}'"] as $col => $def) {
+    foreach (['phone' => "TEXT DEFAULT ''", 'address' => "TEXT DEFAULT '{}'", 'access_code' => "TEXT DEFAULT ''"] as $col => $def) {
         if (!in_array($col, $acc_cols)) {
             try { $pdo->exec("ALTER TABLE accounts ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }

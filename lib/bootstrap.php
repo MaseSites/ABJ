@@ -64,8 +64,10 @@ if (PHP_SAPI !== 'cli' && strpos($__reqPath, '/admin') !== 0) {
     }
     visit_log();
 
-    // Sicherheitsmodus: nicht freigeschaltete IPs sehen eine neutrale Tarnseite.
-    if (setting_get('security_mode') === '1' && !ip_is_allowed(client_ip())) {
+    // Sicherheitsmodus: Zugang nur für eingeloggte Kunden (per persönlichem
+    // Zugangscode) oder ausdrücklich freigeschaltete IPs. Alle anderen sehen
+    // eine neutrale Tarnseite.
+    if (setting_get('security_mode') === '1' && !is_customer() && !ip_is_allowed(client_ip())) {
         require __DIR__ . '/../partials/security-gate.php';
         exit;
     }

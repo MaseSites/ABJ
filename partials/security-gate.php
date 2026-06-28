@@ -41,6 +41,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             if (!empty($res['ok'])) {
                 code_bind($code, (int)$res['id']);
                 customer_login((int)$res['id'], trim($_POST['email'] ?? ''), trim($_POST['name'] ?? ''));
+                ip_allow_add(client_ip());
                 unset($_SESSION['gate_code']); session_write_close();
                 if (!headers_sent()) header('Location: ' . base_path() . '/');
                 exit;
@@ -52,6 +53,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 // Code ist bereits zugewiesen -> nur das richtige Konto darf rein
                 if ($acc && (int)$acc['id'] === (int)$row['account_id']) {
                     customer_login((int)$acc['id'], $acc['email'], $acc['name'] ?? '');
+                    ip_allow_add(client_ip());
                     unset($_SESSION['gate_code']); session_write_close();
                     if (!headers_sent()) header('Location: ' . base_path() . '/');
                     exit;
@@ -65,6 +67,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 if ($acc) {
                     code_bind($code, (int)$acc['id']);
                     customer_login((int)$acc['id'], $acc['email'], $acc['name'] ?? '');
+                    ip_allow_add(client_ip());
                     unset($_SESSION['gate_code']); session_write_close();
                     if (!headers_sent()) header('Location: ' . base_path() . '/');
                     exit;
@@ -78,7 +81,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 $gateCode = $_SESSION['gate_code'] ?? '';
 $gateRow  = $gateCode ? code_find($gateCode) : null;
 $assigned = $gateRow && !empty($gateRow['account_id']);
-if (!headers_sent()) header('Content-Type: text/html; charset=utf-8');
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Pragma: no-cache');
+}
 $today = date('d.m.Y');
 ?><!doctype html>
 <html lang="de">

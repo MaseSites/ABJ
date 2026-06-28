@@ -20,6 +20,13 @@ function promo_codes_for(int $accountId): array {
     return $stmt->fetchAll();
 }
 
+/** Alle Promo-Codes mit Ersteller (für den Admin). */
+function promo_codes_all(): array {
+    return db()->query("SELECT pc.*, a.email AS owner_email, a.name AS owner_name
+        FROM promo_codes pc LEFT JOIN accounts a ON a.id = pc.account_id
+        ORDER BY pc.created_at DESC")->fetchAll();
+}
+
 /** Inhaber-Konto-ID eines Promo-Codes (oder null). */
 function promo_owner_of_code(string $code): ?int {
     $code = trim($code);

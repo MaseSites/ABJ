@@ -32,6 +32,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 
 $mode    = setting_get('security_mode') === '1';
 $codes   = codes_list();
+$promoAll = promo_codes_all();
 $myIp    = client_ip();
 $allowed = ip_allow_list();
 $blocked = ip_blocks_list();
@@ -103,6 +104,28 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
           <form method="post" onsubmit="return confirm('Code <?= h($cd['code']) ?> löschen?')"><input type="hidden" name="action" value="del_code"><input type="hidden" name="code" value="<?= h($cd['code']) ?>">
             <button class="btn btn-ghost btn-sm" type="submit">Löschen</button></form>
         </td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table></div>
+  <?php endif; ?>
+</div>
+
+<!-- Promo-Codes (von Kunden erstellt) -->
+<div class="admin-section">
+  <h2>Promo-Codes <span class="muted" style="font-weight:400;font-size:.9rem">(von Kunden erstellt)</span></h2>
+  <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">Empfehlungscodes, die Kunden in ihrem Profil generiert haben.</p>
+  <?php if (empty($promoAll)): ?>
+    <p class="muted">Noch keine Promo-Codes.</p>
+  <?php else: ?>
+  <div class="table-card"><table class="data-table">
+    <thead><tr><th>Promo-Code</th><th>Erstellt von</th><th>Erstellt</th></tr></thead>
+    <tbody>
+      <?php foreach ($promoAll as $pc): ?>
+      <tr>
+        <td><strong style="font-variant-numeric:tabular-nums;letter-spacing:.12em;font-size:1rem"><?= h($pc['code']) ?></strong></td>
+        <td><?= h($pc['owner_name'] ?: '—') ?> <span class="muted"><?= h($pc['owner_email'] ?: ('#' . $pc['account_id'])) ?></span></td>
+        <td class="muted"><?= h(substr($pc['created_at'], 0, 16)) ?></td>
       </tr>
       <?php endforeach; ?>
     </tbody>

@@ -6,10 +6,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     if ($action === 'save_mode') {
         setting_set('security_mode', !empty($_POST['security_mode']) ? '1' : '0');
-    } elseif ($action === 'set_account_code') {
-        account_set_code((int)($_POST['account_id'] ?? 0), trim($_POST['code'] ?? ''));
-    } elseif ($action === 'gen_account_code') {
-        account_set_code((int)($_POST['account_id'] ?? 0), account_generate_code());
+    } elseif ($action === 'gen_code') {
+        code_generate();
+    } elseif ($action === 'del_code') {
+        code_delete(trim($_POST['code'] ?? ''));
     } elseif ($action === 'allow_my_ip') {
         ip_allow_add(client_ip());
     } elseif ($action === 'allow_add_ip') {
@@ -31,7 +31,7 @@ $adminTitle = 'Sicherheit';
 include __DIR__ . '/partials/admin-layout-top.php';
 
 $mode    = setting_get('security_mode') === '1';
-$accounts = accounts_list();
+$codes   = codes_list();
 $myIp    = client_ip();
 $allowed = ip_allow_list();
 $blocked = ip_blocks_list();
@@ -71,31 +71,37 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
   </form>
 </div>
 
-<!-- Zugangscodes pro Kunde -->
+<!-- Zugangscodes (Pool) -->
 <div class="admin-section">
-  <h2>Zugangscodes (pro Kunde)</h2>
-  <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">Jeder Kunde bekommt einen eigenen Code. Damit loggt er sich über die Tarnseite direkt ein. Nur dieser eine Kunde kann den Code nutzen.</p>
-  <?php if (empty($accounts)): ?>
-    <p class="muted">Noch keine Kundenkonten vorhanden.</p>
+  <div class="admin-head-row" style="margin-bottom:1rem">
+    <h2 style="margin:0">Zugangscodes</h2>
+    <form method="post"><input type="hidden" name="action" value="gen_code"><button class="btn btn-primary btn-sm" type="submit">+ Code generieren</button></form>
+  </div>
+  <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">
+    Generiere Codes und gib sie weiter. Ein Code ist <strong>einmal verwendbar</strong>: Beim ersten Eintippen auf der
+    Tarnseite muss sich die Person anmelden/registrieren — danach gehört der Code <strong>fest zu diesem Konto</strong>.
+    Tippt jemand den Code erneut ein und meldet sich falsch an, wird seine IP automatisch gesperrt.
+  </p>
+  <?php if (empty($codes)): ?>
+    <p class="muted">Noch keine Codes. Klicke auf „Code generieren".</p>
   <?php else: ?>
   <div class="table-card"><table class="data-table">
-    <thead><tr><th>Kunde</th><th>E-Mail</th><th>Zugangscode</th><th></th></tr></thead>
+    <thead><tr><th>Code</th><th>Status</th><th>Erstellt</th><th></th></tr></thead>
     <tbody>
-      <?php foreach ($accounts as $a): ?>
+      <?php foreach ($codes as $cd): ?>
       <tr>
-        <td><strong><?= h($a['name'] ?: '—') ?></strong></td>
-        <td class="muted"><?= h($a['email']) ?></td>
+        <td><strong style="font-variant-numeric:tabular-nums;letter-spacing:.12em;font-size:1rem"><?= h($cd['code']) ?></strong></td>
         <td>
-          <form method="post" style="display:flex;gap:.4rem;align-items:center">
-            <input type="hidden" name="action" value="set_account_code">
-            <input type="hidden" name="account_id" value="<?= (int)$a['id'] ?>">
-            <input type="text" name="code" value="<?= h($a['access_code'] ?? '') ?>" placeholder="leer = kein Zugang" style="max-width:150px;font-variant-numeric:tabular-nums;letter-spacing:.08em">
-            <button class="btn btn-ghost btn-sm" type="submit">Speichern</button>
-          </form>
+          <?php if (!empty($cd['account_id'])): ?>
+            <span class="tag tag-ok">zugewiesen</span> <span class="muted"><?= h($cd['account_email'] ?: ('#' . $cd['account_id'])) ?></span>
+          <?php else: ?>
+            <span class="tag tag-warn">frei</span>
+          <?php endif; ?>
         </td>
+        <td class="muted"><?= h(substr($cd['created_at'], 0, 16)) ?></td>
         <td class="cell-actions">
-          <form method="post"><input type="hidden" name="action" value="gen_account_code"><input type="hidden" name="account_id" value="<?= (int)$a['id'] ?>">
-            <button class="btn btn-sm" type="submit">Code generieren</button></form>
+          <form method="post" onsubmit="return confirm('Code <?= h($cd['code']) ?> löschen?')"><input type="hidden" name="action" value="del_code"><input type="hidden" name="code" value="<?= h($cd['code']) ?>">
+            <button class="btn btn-ghost btn-sm" type="submit">Löschen</button></form>
         </td>
       </tr>
       <?php endforeach; ?>

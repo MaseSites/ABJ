@@ -152,6 +152,13 @@ function db_init(PDO $pdo): void {
             ip TEXT UNIQUE NOT NULL,
             created_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS access_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT UNIQUE NOT NULL,
+            account_id INTEGER,
+            created_at TEXT DEFAULT (datetime('now')),
+            used_at TEXT DEFAULT ''
+        );
     ");
     try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_visits_ip ON visits(ip)"); } catch (\Throwable $e) {}
     try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_visits_created ON visits(created_at)"); } catch (\Throwable $e) {}

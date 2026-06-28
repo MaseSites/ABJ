@@ -1,23 +1,83 @@
 <?php
 /**
- * Tarnseite für den Sicherheitsmodus. Sieht aus wie ein internes Beleg-/
- * Notiztool und hat nichts mit dem Shop zu tun. Wer im Feld "Belegnummer"
- * den im Admin gesetzten Zugangscode eingibt, dessen IP wird freigeschaltet
- * und er gelangt auf die echte Seite.
+ * Tarnseite + 2-Stufen-Zugang für den Sicherheitsmodus.
+ *
+ * Stufe 1: Besucher gibt im Feld "Belegnummer" einen Zugangscode ein.
+ *          - Code unbekannt -> Fehlermeldung (bleibt getarnt).
+ *          - Code gefunden   -> weiter zu Stufe 2.
+ * Stufe 2: Anmeldung/Registrierung.
+ *          - Code noch frei -> Konto erstellen oder anmelden; Code wird an
+ *            dieses Konto gebunden (einmalig).
+ *          - Code bereits gebunden -> man MUSS sich mit genau diesem Konto
+ *            anmelden. Falsche Anmeldung -> IP wird sofort gesperrt.
  */
-$gateError = false;
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['beleg'])) {
-    $code = trim((string)$_POST['beleg']);
-    // Jeder Code gehört zu genau einem Konto: richtiger Code = Login als dieses Konto.
-    $acc = $code !== '' ? account_by_code($code) : null;
-    if ($acc) {
-        customer_login((int)$acc['id'], $acc['email'], $acc['name'] ?? '');
-        if (!headers_sent()) header('Location: ' . base_path() . '/');
-        echo 'OK';
-        exit;
+session_start_once();
+
+$gateError = '';
+$blocked   = false;
+
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    if (isset($_POST['beleg'])) {
+        // Stufe 1
+        $code = trim((string)$_POST['beleg']);
+        $row  = code_find($code);
+        if (!$row) {
+            $gateError = 'Kein Beleg mit dieser Nummer gefunden.';
+        } else {
+            $_SESSION['gate_code'] = $code;
+            session_write_close();
+            if (!headers_sent()) header('Location: ' . base_path() . '/');
+            exit;
+        }
+    } elseif (isset($_POST['gate_action'])) {
+        // Stufe 2
+        $code = $_SESSION['gate_code'] ?? '';
+        $row  = $code ? code_find($code) : null;
+        if (!$row) {
+            unset($_SESSION['gate_code']);
+            $gateError = 'Bitte gib die Belegnummer erneut ein.';
+        } elseif ($_POST['gate_action'] === 'register' && empty($row['account_id'])) {
+            $res = account_create(trim($_POST['email'] ?? ''), $_POST['password'] ?? '', trim($_POST['name'] ?? ''));
+            if (!empty($res['ok'])) {
+                code_bind($code, (int)$res['id']);
+                customer_login((int)$res['id'], trim($_POST['email'] ?? ''), trim($_POST['name'] ?? ''));
+                unset($_SESSION['gate_code']); session_write_close();
+                if (!headers_sent()) header('Location: ' . base_path() . '/');
+                exit;
+            }
+            $gateError = $res['error'] ?? 'Registrierung fehlgeschlagen.';
+        } elseif ($_POST['gate_action'] === 'login') {
+            $acc = account_verify_login(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
+            if (!empty($row['account_id'])) {
+                // Code ist bereits zugewiesen -> nur das richtige Konto darf rein
+                if ($acc && (int)$acc['id'] === (int)$row['account_id']) {
+                    customer_login((int)$acc['id'], $acc['email'], $acc['name'] ?? '');
+                    unset($_SESSION['gate_code']); session_write_close();
+                    if (!headers_sent()) header('Location: ' . base_path() . '/');
+                    exit;
+                }
+                // Falsche Anmeldung -> sofort sperren
+                ip_block(client_ip(), 'Falsche Anmeldung am Zugangscode ' . $code);
+                unset($_SESSION['gate_code']); session_write_close();
+                $blocked = true;
+            } else {
+                // Code noch frei -> an dieses Konto binden
+                if ($acc) {
+                    code_bind($code, (int)$acc['id']);
+                    customer_login((int)$acc['id'], $acc['email'], $acc['name'] ?? '');
+                    unset($_SESSION['gate_code']); session_write_close();
+                    if (!headers_sent()) header('Location: ' . base_path() . '/');
+                    exit;
+                }
+                $gateError = 'E-Mail oder Passwort ist falsch.';
+            }
+        }
     }
-    $gateError = true;
 }
+
+$gateCode = $_SESSION['gate_code'] ?? '';
+$gateRow  = $gateCode ? code_find($gateCode) : null;
+$assigned = $gateRow && !empty($gateRow['account_id']);
 if (!headers_sent()) header('Content-Type: text/html; charset=utf-8');
 $today = date('d.m.Y');
 ?><!doctype html>
@@ -37,14 +97,17 @@ $today = date('d.m.Y');
   .top h1 { font-size:1.02rem; margin:0; font-weight:700; }
   .top small { color:var(--mut); margin-left:auto; font-size:.82rem; }
   .wrap { max-width:980px; margin:1.6rem auto; padding:0 1.4rem; display:grid; grid-template-columns:1.6fr 1fr; gap:1.4rem; }
+  .wrap.single { grid-template-columns:1fr; max-width:460px; }
   .card { background:#fff; border:1px solid var(--bd); border-radius:12px; padding:1.3rem 1.4rem; }
   .card h2 { font-size:.95rem; margin:0 0 .9rem; }
-  label { display:block; font-size:.8rem; color:var(--mut); font-weight:600; margin-bottom:.35rem; }
-  textarea, input[type=text] { width:100%; border:1px solid var(--bd); border-radius:8px; padding:.7rem .85rem; font:inherit; color:#1f2430; background:#fff; outline:none; }
+  label { display:block; font-size:.8rem; color:var(--mut); font-weight:600; margin-bottom:.35rem; margin-top:.7rem; }
+  label:first-of-type { margin-top:0; }
+  textarea, input { width:100%; border:1px solid var(--bd); border-radius:8px; padding:.7rem .85rem; font:inherit; color:#1f2430; background:#fff; outline:none; }
   textarea { min-height:150px; resize:vertical; }
   input:focus, textarea:focus { border-color:var(--pri); box-shadow:0 0 0 3px rgba(47,95,224,.12); }
   .btn { display:inline-flex; align-items:center; gap:.4rem; background:var(--pri); color:#fff; border:none; border-radius:8px; padding:.62rem 1.1rem; font:inherit; font-weight:600; cursor:pointer; }
   .btn:hover { background:#234fc4; }
+  .btn-block { width:100%; justify-content:center; margin-top:1rem; }
   .btn-soft { background:#eef1f6; color:#3a4252; }
   .btn-soft:hover { background:#e2e7ef; }
   .row { display:flex; gap:.6rem; align-items:flex-end; }
@@ -56,6 +119,7 @@ $today = date('d.m.Y');
   .list li:last-child { border-bottom:none; }
   .tag { font-size:.72rem; padding:.1rem .5rem; border-radius:999px; background:#eef4ff; color:#2f5fe0; }
   .tag.open { background:#fff5e6; color:#b06f00; }
+  .toggle-link { background:none; border:none; color:var(--pri); cursor:pointer; font:inherit; font-size:.84rem; padding:0; margin-top:.9rem; }
   .foot { max-width:980px; margin:0 auto 2rem; padding:0 1.4rem; color:#9aa1ad; font-size:.78rem; }
   @media (max-width:760px){ .wrap{ grid-template-columns:1fr; } }
 </style>
@@ -67,6 +131,70 @@ $today = date('d.m.Y');
     <small>Interne Belegerfassung · <?= h($today) ?></small>
   </div></div>
 
+<?php if ($blocked): ?>
+  <div class="wrap single">
+    <div class="card">
+      <h2>Beleg gesperrt</h2>
+      <p class="muted">Dieser Vorgang wurde aus Sicherheitsgründen gesperrt.</p>
+    </div>
+  </div>
+
+<?php elseif ($gateRow): ?>
+  <!-- Stufe 2: Anmeldung / Registrierung -->
+  <div class="wrap single">
+    <div class="card">
+      <?php if ($assigned): ?>
+        <h2>Beleg bestätigen</h2>
+        <p class="muted" style="margin-top:0">Bitte melde dich mit deinem Konto an, um den Beleg zu öffnen.</p>
+        <form method="post" action="">
+          <input type="hidden" name="gate_action" value="login">
+          <label>E-Mail</label>
+          <input type="email" name="email" required autocomplete="email" autofocus>
+          <label>Passwort</label>
+          <input type="password" name="password" required autocomplete="current-password">
+          <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
+          <button class="btn btn-block" type="submit">Anmelden</button>
+        </form>
+      <?php else: ?>
+        <h2>Beleg freigeben</h2>
+        <p class="muted" style="margin-top:0">Erstelle ein Konto, um den Beleg zu öffnen. Der Beleg wird deinem Konto zugeordnet.</p>
+        <form method="post" action="" data-form="register">
+          <input type="hidden" name="gate_action" value="register">
+          <label>Name</label>
+          <input type="text" name="name" autocomplete="name">
+          <label>E-Mail</label>
+          <input type="email" name="email" required autocomplete="email">
+          <label>Passwort <span class="muted" style="font-weight:400">(min. 8 Zeichen)</span></label>
+          <input type="password" name="password" required minlength="8" autocomplete="new-password">
+          <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
+          <button class="btn btn-block" type="submit">Konto erstellen &amp; öffnen</button>
+        </form>
+        <form method="post" action="" data-form="login" hidden>
+          <input type="hidden" name="gate_action" value="login">
+          <label>E-Mail</label>
+          <input type="email" name="email" required autocomplete="email">
+          <label>Passwort</label>
+          <input type="password" name="password" required autocomplete="current-password">
+          <button class="btn btn-block" type="submit">Anmelden</button>
+        </form>
+        <button type="button" class="toggle-link" data-toggle>Bereits ein Konto? Anmelden</button>
+      <?php endif; ?>
+    </div>
+  </div>
+  <script>
+    (function(){
+      var t=document.querySelector('[data-toggle]'); if(!t) return;
+      var reg=document.querySelector('[data-form="register"]'), log=document.querySelector('[data-form="login"]');
+      t.addEventListener('click',function(){
+        var showLogin=reg.hidden===false;
+        reg.hidden=showLogin; log.hidden=!showLogin;
+        t.textContent=showLogin?'Neu hier? Konto erstellen':'Bereits ein Konto? Anmelden';
+      });
+    })();
+  </script>
+
+<?php else: ?>
+  <!-- Stufe 1: Code / Belegnummer -->
   <div class="wrap">
     <div class="card">
       <h2>Notiz / Belegtext</h2>
@@ -75,16 +203,15 @@ $today = date('d.m.Y');
         <textarea id="notiz" name="notiz" placeholder="Belegtext, Notiz oder Buchungsvermerk eingeben…"><?= h($_POST['notiz'] ?? '') ?></textarea>
         <div class="row" style="margin-top:1rem">
           <div class="grow">
-            <label for="beleg">Belegnummer prüfen</label>
+            <label for="beleg" style="margin-top:0">Belegnummer prüfen</label>
             <input type="text" id="beleg" name="beleg" autocomplete="off" placeholder="z.B. RE-2026-0001">
           </div>
           <button class="btn" type="submit">Prüfen</button>
         </div>
-        <?php if ($gateError): ?><div class="err">Kein Beleg mit dieser Nummer gefunden.</div><?php endif; ?>
+        <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
         <p class="muted" style="margin:.9rem 0 0">Hinweis: Notizen werden lokal zwischengespeichert und sind nicht öffentlich.</p>
       </form>
     </div>
-
     <div class="card">
       <h2>Zuletzt bearbeitet</h2>
       <ul class="list">
@@ -96,6 +223,7 @@ $today = date('d.m.Y');
       <button class="btn btn-soft" type="button" style="margin-top:1rem;width:100%" onclick="this.textContent='Synchronisiert ✓'">Synchronisieren</button>
     </div>
   </div>
+<?php endif; ?>
 
   <div class="foot">© <?= date('Y') ?> Belegassistent · v2.4 — internes Werkzeug</div>
 </body>

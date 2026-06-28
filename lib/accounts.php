@@ -20,29 +20,41 @@ function accounts_list(): array {
     return db()->query('SELECT id, email, name, access_code, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
 }
 
-/** Konto anhand seines persönlichen Zugangscodes (für den Sicherheitsmodus). */
-function account_by_code(string $code): ?array {
+// ---- Zugangscodes (Pool; einmalig, beim ersten Login an ein Konto gebunden) ----
+function code_find(string $code): ?array {
     $code = trim($code);
     if ($code === '') return null;
-    $stmt = db()->prepare("SELECT * FROM accounts WHERE access_code = ? AND access_code <> ''");
+    $stmt = db()->prepare("SELECT * FROM access_codes WHERE code = ?");
     $stmt->execute([$code]);
     $row = $stmt->fetch();
     return $row ?: null;
 }
 
-/** Persönlichen Zugangscode eines Kontos setzen (leer = entfernen). */
-function account_set_code(int $id, string $code): void {
-    db()->prepare('UPDATE accounts SET access_code = ? WHERE id = ?')->execute([trim($code), $id]);
-}
-
-/** Einen kurzen, eindeutigen Zugangscode erzeugen. */
-function account_generate_code(): string {
+/** Neuen, freien Zugangscode erzeugen und speichern. Gibt den Code zurück. */
+function code_generate(): string {
     $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     do {
         $code = '';
         for ($i = 0; $i < 6; $i++) $code .= $chars[random_int(0, strlen($chars) - 1)];
-    } while (account_by_code($code));
+    } while (code_find($code));
+    db()->prepare("INSERT INTO access_codes (code) VALUES (?)")->execute([$code]);
     return $code;
+}
+
+/** Freien Code an ein Konto binden (nur wenn noch frei). */
+function code_bind(string $code, int $accountId): void {
+    db()->prepare("UPDATE access_codes SET account_id = ?, used_at = datetime('now') WHERE code = ? AND account_id IS NULL")
+       ->execute([$accountId, trim($code)]);
+}
+
+function code_delete(string $code): void {
+    db()->prepare("DELETE FROM access_codes WHERE code = ?")->execute([trim($code)]);
+}
+
+function codes_list(): array {
+    return db()->query("SELECT ac.*, a.email AS account_email, a.name AS account_name
+        FROM access_codes ac LEFT JOIN accounts a ON a.id = ac.account_id
+        ORDER BY ac.created_at DESC")->fetchAll();
 }
 
 function accounts_count(): int {

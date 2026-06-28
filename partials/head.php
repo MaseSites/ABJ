@@ -17,7 +17,7 @@ $pageTitle = isset($pageTitle) ? $pageTitle . ' – ' . $shopName : $shopName . 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap">
-  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=23">
+  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=24">
   <style>
   <?php
   $accent  = setting_get('accent')  ?: '#B89C67';

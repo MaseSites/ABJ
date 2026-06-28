@@ -404,7 +404,12 @@
         const hits = items.filter((p) => (p.name + ' ' + p.category + ' ' + (p.tags || '')).toLowerCase().includes(q)).slice(0, 6);
         searchResults.innerHTML = hits.length
           ? hits.map((p) => '<a class="search-hit" href="' + p.url + '"><img src="' + (p.image || fallbackImg(p.name)) + '" alt=""><span><strong>' + esc(p.name) + '</strong><small>' + esc(p.category) + ' · ' + p.priceText + '</small></span></a>').join('')
-          : '<div class="search-none"><p class="muted">Nichts gefunden für „' + esc(q) + '".</p><a class="btn btn-primary btn-sm" href="' + BASE_PATH + '/anfrage.php">Produkt anfragen &rarr;</a></div>';
+          : '<div class="search-none">'
+            + '<div class="search-none-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M11 8v3M11 14h.01"/></svg></div>'
+            + '<p class="search-none-title">Nichts gefunden für „' + esc(q) + '"</p>'
+            + '<p class="search-none-sub">Kein Problem — sag uns, was du suchst, und wir schauen, ob wir es besorgen können.</p>'
+            + '<a class="btn btn-primary btn-block search-none-btn" href="' + BASE_PATH + '/anfrage.php"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Produkt anfragen</a>'
+            + '</div>';
       });
     });
   }

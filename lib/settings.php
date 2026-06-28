@@ -11,6 +11,9 @@ $SETTINGS_DEFAULTS = [
     'contact_email'   => 'kontakt@example.com',
     'announcement'    => 'Authentizität garantiert  ·  Versicherter Versand in der EU  ·  Käuferschutz',
     'gate_password_hash' => '',
+    // Sicherheitsmodus (Tarnseite + Zugangscode); standardmässig AUS
+    'security_mode' => '0',
+    'access_code'   => '',
     'accent'                  => '#B89C67',
     'accent_2'                => '#B89C67',
     'accent_3'                => '#CDB27E',

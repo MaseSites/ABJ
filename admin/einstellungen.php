@@ -2,7 +2,21 @@
 require_once __DIR__ . '/../lib/bootstrap.php';
 require_admin();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// IP-Freischaltung (separat, damit die Haupteinstellungen nicht ueberschrieben werden)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'allow_my_ip') {
+    ip_allow_add(client_ip());
+    redirect('/admin/einstellungen.php?saved=1');
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'allow_add_ip') {
+    ip_allow_add(trim($_POST['ip'] ?? ''));
+    redirect('/admin/einstellungen.php?saved=1');
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'remove_allow_ip') {
+    ip_allow_remove(trim($_POST['ip'] ?? ''));
+    redirect('/admin/einstellungen.php?saved=1');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST['action'])) {
     $fields = [
         'shop_name','tagline','currency','hero_title','hero_subtitle','contact_email','announcement',
         'members_count','ratings_count','sale_ends_at','hero_image','accent','accent_2','accent_3',
@@ -27,6 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach (['hero_image', 'instagram_url', 'tiktok_url'] as $urlKey) {
         if (!empty($data[$urlKey])) $data[$urlKey] = secure_url($data[$urlKey]);
     }
+
+    // Sicherheitsmodus (Checkbox) + Zugangscode
+    $data['security_mode'] = !empty($_POST['security_mode']) ? '1' : '0';
+    $data['access_code']   = trim($_POST['access_code'] ?? '');
 
     if (!empty($_POST['new_password'])) {
         $hash = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
@@ -118,12 +136,67 @@ $s = settings_all();
     </p>
   </div>
 
-  <div class="admin-section">
+  <div class="admin-section" id="sicherheit">
     <h2>Sicherheit</h2>
     <label class="field"><span>Neues Admin-Passwort (leer = unverändert)</span><input type="password" name="new_password" autocomplete="new-password"></label>
+
+    <hr class="form-divider">
+
+    <label class="switch-row" style="margin-bottom:1rem">
+      <input type="checkbox" name="security_mode" value="1" <?= ($s['security_mode'] ?? '0') === '1' ? 'checked' : '' ?>>
+      <div>
+        <strong>Sicherheitsmodus</strong>
+        <small>An: Nicht freigeschaltete IP-Adressen sehen statt des Shops eine neutrale Tarnseite. Mit dem Zugangscode (im Feld „Belegnummer") wird die IP freigeschaltet. Standard: aus.</small>
+      </div>
+    </label>
+    <label class="field"><span>Zugangscode</span>
+      <input type="text" name="access_code" value="<?= h($s['access_code'] ?? '') ?>" autocomplete="off" placeholder="z.B. ein geheimes Wort/Zahl">
+      <small style="color:#8a8a95;font-size:.75rem">Diesen Code gibst du auf der Tarnseite ins Feld „Belegnummer" ein, um deine IP freizuschalten.</small>
+    </label>
   </div>
 
   <button class="btn btn-primary" type="submit">Alle Einstellungen speichern</button>
 </form>
+
+<!-- IP-Freischaltung (separat) -->
+<?php $allowed = ip_allow_list(); $myIp = client_ip(); ?>
+<div class="admin-section">
+  <h2>Freigeschaltete IP-Adressen</h2>
+  <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">Diese IPs sehen den echten Shop, auch wenn der Sicherheitsmodus an ist. <strong>Schalte deine eigene IP frei</strong>, bevor du den Modus aktivierst.</p>
+
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem">
+    <form method="post">
+      <input type="hidden" name="action" value="allow_my_ip">
+      <button class="btn btn-primary btn-sm" type="submit">Meine IP freischalten (<?= h($myIp) ?>)</button>
+    </form>
+    <form method="post" style="display:flex;gap:.5rem;align-items:flex-end">
+      <input type="hidden" name="action" value="allow_add_ip">
+      <label class="field" style="max-width:200px;margin:0"><span>IP manuell freischalten</span><input type="text" name="ip" placeholder="z.B. 203.0.113.5"></label>
+      <button class="btn btn-sm" type="submit">Hinzufügen</button>
+    </form>
+  </div>
+
+  <?php if (empty($allowed)): ?>
+    <p class="muted">Noch keine freigeschalteten IPs.</p>
+  <?php else: ?>
+  <div class="table-card">
+  <table class="data-table">
+    <thead><tr><th>Freigeschaltete IP</th><th>Seit</th><th></th></tr></thead>
+    <tbody>
+      <?php foreach ($allowed as $a): ?>
+      <tr>
+        <td><strong style="font-variant-numeric:tabular-nums"><?= h($a['ip']) ?></strong><?= $a['ip'] === $myIp ? ' <span class="tag tag-ok">du</span>' : '' ?></td>
+        <td class="muted"><?= h(substr($a['created_at'], 0, 16)) ?></td>
+        <td class="cell-actions">
+          <form method="post"><input type="hidden" name="action" value="remove_allow_ip"><input type="hidden" name="ip" value="<?= h($a['ip']) ?>">
+            <button class="btn btn-ghost btn-sm" type="submit">Entfernen</button></form>
+        </td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+  </div>
+  <?php endif; ?>
+</div>
 
 <?php include __DIR__ . '/partials/admin-layout-bottom.php'; ?>

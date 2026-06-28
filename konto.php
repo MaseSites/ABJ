@@ -188,7 +188,7 @@ function ko_render_order(array $o, string $currency): void {
       <!-- Übersicht -->
       <section class="acc-panel<?= $activeTab === 'overview' ? ' active' : '' ?>" data-panel="overview">
         <div class="acc-panel-head">
-          <h1>Hallo<?= $firstName ? ', ' . h($firstName) : '' ?> 👋</h1>
+          <h1>Hallo<?= $firstName ? ', ' . h($firstName) : '' ?></h1>
           <p class="muted">Schön, dass du da bist. Hier hast du alles im Blick.</p>
         </div>
         <div class="acc-stats">

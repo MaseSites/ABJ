@@ -53,7 +53,7 @@ db(); // initialise connection & tables
 // IP-Sperre (nur Shop-Bereich; Admin bleibt erreichbar, damit man entsperren kann)
 // und Besucher-Log.
 $__reqPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-if (strpos($__reqPath, '/admin') !== 0) {
+if (PHP_SAPI !== 'cli' && strpos($__reqPath, '/admin') !== 0) {
     if (ip_is_blocked(client_ip())) {
         if (!headers_sent()) { http_response_code(403); header('Content-Type: text/html; charset=utf-8'); }
         echo '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Zugriff gesperrt</title></head>'
@@ -63,4 +63,10 @@ if (strpos($__reqPath, '/admin') !== 0) {
         exit;
     }
     visit_log();
+
+    // Sicherheitsmodus: nicht freigeschaltete IPs sehen eine neutrale Tarnseite.
+    if (setting_get('security_mode') === '1' && !ip_is_allowed(client_ip())) {
+        require __DIR__ . '/../partials/security-gate.php';
+        exit;
+    }
 }

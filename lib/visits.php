@@ -57,6 +57,32 @@ function ip_blocks_list(): array {
     catch (\Throwable $e) { return []; }
 }
 
+// ---- Sicherheitsmodus: IP-Freischaltung (Allowlist) ----
+function ip_is_allowed(string $ip): bool {
+    if ($ip === '') return false;
+    try {
+        $stmt = db()->prepare("SELECT 1 FROM ip_allow WHERE ip = ?");
+        $stmt->execute([$ip]);
+        return (bool)$stmt->fetch();
+    } catch (\Throwable $e) { return false; }
+}
+
+function ip_allow_add(string $ip): bool {
+    $ip = trim($ip);
+    if (!filter_var($ip, FILTER_VALIDATE_IP)) return false;
+    try { db()->prepare("INSERT OR IGNORE INTO ip_allow (ip) VALUES (?)")->execute([$ip]); return true; }
+    catch (\Throwable $e) { return false; }
+}
+
+function ip_allow_remove(string $ip): void {
+    try { db()->prepare("DELETE FROM ip_allow WHERE ip = ?")->execute([trim($ip)]); } catch (\Throwable $e) {}
+}
+
+function ip_allow_list(): array {
+    try { return db()->query("SELECT * FROM ip_allow ORDER BY created_at DESC")->fetchAll(); }
+    catch (\Throwable $e) { return []; }
+}
+
 /** Letzte Seitenaufrufe (einzeln). */
 function visits_recent(int $limit = 60): array {
     try {

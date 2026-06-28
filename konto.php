@@ -70,12 +70,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reord
     redirect('/warenkorb.php');
 }
 
+// ── Promo: Code generieren / Prämie einlösen ──
+$promoFlash = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'promo_gen') {
+    promo_code_generate((int)$cust['id']);
+    redirect('/konto.php?tab=promo&pg=1');
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'promo_redeem') {
+    $res = promo_redeem((int)$cust['id'], $_POST['reward'] ?? '');
+    if (!empty($res['ok'])) {
+        session_start_once(); $_SESSION['promo_flash'] = 'Eingelöst! Dein Code: ' . $res['code']; session_write_close();
+        redirect('/konto.php?tab=promo&pr=1');
+    }
+    $activeTab = 'promo'; $promoFlash = $res['error'] ?? 'Einlösen fehlgeschlagen.';
+}
+session_start_once();
+if (!empty($_SESSION['promo_flash'])) { $promoFlash = $_SESSION['promo_flash']; unset($_SESSION['promo_flash']); }
+session_write_close();
+
 // Daten neu laden (nach evtl. Profiländerung)
 $account    = account_by_id((int)$cust['id']);
 $savedAddr  = account_address($account);
 $orders     = orders_by_email($cust['email']);
 $totalSpent = array_sum(array_map(fn($o) => $o['payment_status'] === 'bezahlt' ? (int)$o['total_cents'] : 0, $orders));
 $openPay    = array_sum(array_map(fn($o) => $o['payment_status'] !== 'bezahlt' && $o['status'] !== 'storniert' ? (int)$o['total_cents'] : 0, $orders));
+
+// Promo-Daten
+$promoPoints   = promo_points((int)$cust['id']);
+$promoCodes    = promo_codes_for((int)$cust['id']);
+$promoStats    = promo_referral_stats((int)$cust['id']);
+$promoRewards  = promo_rewards();
+$promoRedeemed = promo_redemptions_for((int)$cust['id']);
+$siteBase = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
 
 $firstName = trim(explode(' ', $cust['name'] ?? '')[0] ?? '');
 $initials  = mb_strtoupper(mb_substr($cust['name'] ?: $cust['email'], 0, 1));
@@ -165,6 +191,10 @@ function ko_render_order(array $o, string $currency): void {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h12l-1 13H7zM9 7a3 3 0 0 1 6 0"/></svg>
           Bestellungen <?php if ($orders): ?><span class="acc-nav-count"><?= count($orders) ?></span><?php endif; ?>
         </button>
+        <button type="button" class="acc-nav-item<?= $activeTab === 'promo' ? ' active' : '' ?>" data-tab-btn="promo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+          Promo Code <span class="acc-nav-count"><?= $promoPoints ?></span>
+        </button>
         <button type="button" class="acc-nav-item<?= $activeTab === 'profile' ? ' active' : '' ?>" data-tab-btn="profile">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
           Profil &amp; Adresse
@@ -243,6 +273,78 @@ function ko_render_order(array $o, string $currency): void {
           <div class="acc-orders">
             <?php foreach ($orders as $o) ko_render_order($o, $currency); ?>
           </div>
+        <?php endif; ?>
+      </section>
+
+      <!-- Promo Code -->
+      <section class="acc-panel<?= $activeTab === 'promo' ? ' active' : '' ?>" data-panel="promo">
+        <div class="acc-panel-head">
+          <h1>Promo Code</h1>
+          <p class="muted">Teile deinen Code mit Freunden. Für <strong>jede Bestellung</strong>, die jemand macht, der sich mit deinem Code registriert hat, bekommst du Punkte — und löst sie im Promo Shop ein.</p>
+        </div>
+
+        <?php if ($promoFlash): ?><div class="alert alert-<?= str_starts_with($promoFlash, 'Eingelöst') ? 'ok' : 'error' ?>" style="margin-bottom:1.2rem"><?= h($promoFlash) ?></div><?php endif; ?>
+
+        <div class="promo-top">
+          <div class="promo-points-card">
+            <span class="promo-points-num"><?= $promoPoints ?></span>
+            <span class="promo-points-label">Promo Punkte</span>
+          </div>
+          <div class="promo-stats">
+            <div class="acc-stat"><strong><?= (int)$promoStats['referrals'] ?></strong><span>Geworbene Kunden</span></div>
+            <div class="acc-stat"><strong><?= (int)$promoStats['orders'] ?></strong><span>Ihre Bestellungen</span></div>
+            <div class="acc-stat"><strong>+<?= (int)(setting_get('promo_points_per_order') ?: 10) ?></strong><span>Punkte / Bestellung</span></div>
+          </div>
+        </div>
+
+        <div class="acc-card" style="margin-top:1.4rem">
+          <div class="acc-section-head" style="margin-bottom:.8rem">
+            <h3 style="margin:0">Deine Codes</h3>
+            <form method="post" action="<?= url('/konto.php') ?>"><input type="hidden" name="action" value="promo_gen"><button class="btn btn-line btn-sm" type="submit">+ Code generieren</button></form>
+          </div>
+          <?php if (empty($promoCodes)): ?>
+            <p class="muted" style="margin:0">Du hast noch keinen Code. Generiere einen und teile ihn!</p>
+          <?php else: ?>
+            <div class="promo-codes">
+              <?php foreach ($promoCodes as $pc): $shareUrl = $siteBase . url('/registrieren.php?promo=' . urlencode($pc['code'])); ?>
+              <div class="promo-code-row">
+                <span class="promo-code-val" data-copy="<?= h($pc['code']) ?>"><?= h($pc['code']) ?></span>
+                <button type="button" class="btn btn-ghost btn-sm" data-copy-btn="<?= h($shareUrl) ?>">Link kopieren</button>
+              </div>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+        </div>
+
+        <h2 style="font-size:1.15rem;margin:2rem 0 1rem">Promo Shop</h2>
+        <div class="promo-shop">
+          <?php foreach ($promoRewards as $key => $r): $can = $promoPoints >= $r['cost']; ?>
+          <div class="promo-reward<?= $can ? '' : ' is-locked' ?>">
+            <div class="promo-reward-top">
+              <span class="promo-reward-label"><?= h($r['label']) ?></span>
+              <span class="promo-reward-cost"><?= (int)$r['cost'] ?> Pkt.</span>
+            </div>
+            <p class="promo-reward-desc"><?= h($r['desc']) ?></p>
+            <form method="post" action="<?= url('/konto.php') ?>" onsubmit="return confirm('<?= (int)$r['cost'] ?> Punkte für „<?= h($r['label']) ?>" einlösen?')">
+              <input type="hidden" name="action" value="promo_redeem">
+              <input type="hidden" name="reward" value="<?= h($key) ?>">
+              <button class="btn btn-primary btn-sm btn-block" type="submit"<?= $can ? '' : ' disabled' ?>><?= $can ? 'Einlösen' : 'Zu wenig Punkte' ?></button>
+            </form>
+          </div>
+          <?php endforeach; ?>
+        </div>
+
+        <?php if (!empty($promoRedeemed)): ?>
+        <h2 style="font-size:1.15rem;margin:2rem 0 1rem">Deine Gutscheine</h2>
+        <div class="table-card-light">
+          <?php foreach ($promoRedeemed as $rd): ?>
+          <div class="promo-voucher">
+            <div><strong><?= h($rd['reward']) ?></strong><span class="muted" style="margin-left:.6rem;font-size:.82rem"><?= h(substr($rd['created_at'],0,10)) ?></span></div>
+            <code class="promo-voucher-code"><?= h($rd['code']) ?></code>
+          </div>
+          <?php endforeach; ?>
+          <p class="muted" style="font-size:.8rem;margin:.6rem 0 0">Diese Codes gibst du beim Checkout im Feld „Rabattcode" ein.</p>
+        </div>
         <?php endif; ?>
       </section>
 
@@ -335,6 +437,19 @@ function ko_render_order(array $o, string $currency): void {
   }
   root.querySelectorAll('[data-tab-btn]').forEach(function (b) {
     b.addEventListener('click', function () { activate(b.getAttribute('data-tab-btn')); });
+  });
+  // Promo: Code/Link kopieren
+  function copy(text, btn, label) {
+    var done = function () { var t = btn.textContent; btn.textContent = label || 'Kopiert ✓'; setTimeout(function(){ btn.textContent = t; }, 1500); };
+    if (navigator.clipboard) { navigator.clipboard.writeText(text).then(done, done); }
+    else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); done(); }
+  }
+  root.querySelectorAll('[data-copy-btn]').forEach(function (b) {
+    b.addEventListener('click', function () { copy(b.getAttribute('data-copy-btn'), b, 'Link kopiert ✓'); });
+  });
+  root.querySelectorAll('[data-copy]').forEach(function (el) {
+    el.style.cursor = 'pointer'; el.title = 'Klicken zum Kopieren';
+    el.addEventListener('click', function () { copy(el.getAttribute('data-copy'), el, el.getAttribute('data-copy')); });
   });
 })();
 </script>

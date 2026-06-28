@@ -159,6 +159,20 @@ function db_init(PDO $pdo): void {
             created_at TEXT DEFAULT (datetime('now')),
             used_at TEXT DEFAULT ''
         );
+        CREATE TABLE IF NOT EXISTS promo_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL,
+            code TEXT UNIQUE NOT NULL,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS promo_redemptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL,
+            reward TEXT DEFAULT '',
+            code TEXT DEFAULT '',
+            cost INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
     ");
     try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_visits_ip ON visits(ip)"); } catch (\Throwable $e) {}
     try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_visits_created ON visits(created_at)"); } catch (\Throwable $e) {}
@@ -196,7 +210,8 @@ function db_init(PDO $pdo): void {
     } catch (\Throwable $e) {}
 
     $acc_cols = array_column($pdo->query("PRAGMA table_info(accounts)")->fetchAll(PDO::FETCH_ASSOC), 'name');
-    foreach (['phone' => "TEXT DEFAULT ''", 'address' => "TEXT DEFAULT '{}'", 'access_code' => "TEXT DEFAULT ''"] as $col => $def) {
+    foreach (['phone' => "TEXT DEFAULT ''", 'address' => "TEXT DEFAULT '{}'", 'access_code' => "TEXT DEFAULT ''",
+              'referred_by' => 'INTEGER', 'promo_points' => 'INTEGER DEFAULT 0'] as $col => $def) {
         if (!in_array($col, $acc_cols)) {
             try { $pdo->exec("ALTER TABLE accounts ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }

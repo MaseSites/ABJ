@@ -123,6 +123,8 @@ $orderData = [
 $reference = order_create($orderData + ['payment_method' => '']);
 inv_deduct_stock($lineItems);
 if ($discountCode) discount_redeem($discountCode);
+// Promo-Punkte: hat ein geworbener Kunde bestellt, bekommt der Werber Punkte.
+if (is_customer()) promo_award_for_buyer((int)current_customer()['id']);
 cart_set([]);
 last_order_set($reference);
 json_response(['ok' => true, 'redirect' => url('/bestellung.php?ref=' . urlencode($reference))]);

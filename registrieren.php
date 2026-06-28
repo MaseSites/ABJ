@@ -13,8 +13,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $prefill  = ['name' => $name, 'email' => $email];
 
+    $promo = trim($_POST['promo'] ?? '');
     $res = account_create($email, $password, $name);
     if ($res['ok']) {
+        // Promo-/Empfehlungscode verknüpfen (optional)
+        if ($promo !== '') {
+            $owner = promo_owner_of_code($promo);
+            if ($owner) account_set_referrer((int)$res['id'], $owner);
+        }
         customer_login($res['id'], $email, $name);
         redirect($weiter && $weiter[0] === '/' ? $weiter : '/konto.php');
     }
@@ -45,6 +51,9 @@ include __DIR__ . '/partials/header.php';
       </label>
       <label class="field"><span>Passwort * <small class="muted">(min. 8 Zeichen)</small></span>
         <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="••••••••">
+      </label>
+      <label class="field"><span>Promo-Code <small class="muted">(optional)</small></span>
+        <input type="text" name="promo" value="<?= h($_GET['promo'] ?? '') ?>" maxlength="20" autocomplete="off" placeholder="Code eines Freundes" style="letter-spacing:.06em">
       </label>
       <button class="btn btn-primary btn-block" type="submit">Konto erstellen</button>
     </form>

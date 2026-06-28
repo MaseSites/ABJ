@@ -95,6 +95,13 @@ function account_verify_login(string $email, string $password): ?array {
     return null;
 }
 
+/** Setzt, von wem dieses Konto geworben wurde (Promo-Programm). */
+function account_set_referrer(int $id, int $referrerId): void {
+    if ($referrerId <= 0 || $referrerId === $id) return;
+    db()->prepare('UPDATE accounts SET referred_by = ? WHERE id = ? AND referred_by IS NULL')
+       ->execute([$referrerId, $id]);
+}
+
 function account_update_password(int $id, string $newPassword): bool {
     if (mb_strlen($newPassword) < 8) return false;
     db()->prepare('UPDATE accounts SET password_hash = ? WHERE id = ?')

@@ -30,6 +30,12 @@ $SETTINGS_DEFAULTS = [
     // Finanzen (manuell pflegbar)
     'finance_account_cents'  => '0',
     'finance_invested_cents' => '0',
+    // Preisrechner
+    'calc_usd_chf'     => '0.81',
+    'calc_flat'        => '1.5',
+    'calc_ship_per_kg' => '25',
+    'calc_vk_factor'   => '1.8',
+    'calc_min_factor'  => '1.55',
 ];
 
 function setting_get(string $key): ?string {

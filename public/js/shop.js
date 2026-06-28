@@ -404,7 +404,7 @@
         const hits = items.filter((p) => (p.name + ' ' + p.category + ' ' + (p.tags || '')).toLowerCase().includes(q)).slice(0, 6);
         searchResults.innerHTML = hits.length
           ? hits.map((p) => '<a class="search-hit" href="' + p.url + '"><img src="' + (p.image || fallbackImg(p.name)) + '" alt=""><span><strong>' + esc(p.name) + '</strong><small>' + esc(p.category) + ' · ' + p.priceText + '</small></span></a>').join('')
-          : '<p class="muted search-none">Keine Treffer. <a href="' + BASE_PATH + '/shop?q=' + encodeURIComponent(q) + '">Im Shop suchen</a></p>';
+          : '<div class="search-none"><p class="muted">Nichts gefunden für „' + esc(q) + '".</p><a class="btn btn-primary btn-sm" href="' + BASE_PATH + '/anfrage.php">Produkt anfragen &rarr;</a></div>';
       });
     });
   }

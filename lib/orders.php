@@ -36,20 +36,23 @@ function order_by_ref(string $ref): ?array {
 }
 
 /**
- * Setzt den Gesamtpreis einer Bestellung (z.B. nach einer Produktanfrage).
- * Passt zusätzlich den Zeilenpreis an, wenn die Bestellung nur eine Position hat.
+ * Setzt Produktpreis + Versand einer Bestellung (z.B. nach einer Produktanfrage).
+ * Gesamt = Produktpreis + Versand. Bei genau einer Position wird deren
+ * Zeilenpreis auf den Produktpreis gesetzt.
  */
-function order_set_price(string $ref, int $totalCents): bool {
+function order_set_price(string $ref, int $productCents, int $shippingCents = 0): bool {
     $order = order_by_ref($ref);
     if (!$order) return false;
+    $productCents  = max(0, $productCents);
+    $shippingCents = max(0, $shippingCents);
     $items = $order['items'];
     if (count($items) === 1) {
-        $items[0]['unitCents'] = $totalCents;
-        $items[0]['lineCents'] = $totalCents;
+        $items[0]['unitCents'] = $productCents;
+        $items[0]['lineCents'] = $productCents;
         $items[0]['qty']       = (int)($items[0]['qty'] ?? 1) ?: 1;
     }
-    $stmt = db()->prepare("UPDATE orders SET total_cents=?, items=?, updated_at=datetime('now') WHERE reference=?");
-    $stmt->execute([max(0, $totalCents), json_encode($items), $ref]);
+    $stmt = db()->prepare("UPDATE orders SET total_cents=?, shipping_cents=?, items=?, updated_at=datetime('now') WHERE reference=?");
+    $stmt->execute([$productCents + $shippingCents, $shippingCents, json_encode($items), $ref]);
     return $stmt->rowCount() > 0;
 }
 

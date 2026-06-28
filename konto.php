@@ -113,9 +113,9 @@ function ko_render_order(array $o, string $currency): void {
         <span class="acc-order-date"><?= h(substr($o['created_at'], 0, 10)) ?></span>
       </div>
       <div class="acc-order-tags">
-        <?php if ($isReq): ?>
-          <span class="tag tag-anfrage">Anfrage</span>
-          <?php if (!$hasPrice): ?><span class="tag tag-pending">In Prüfung</span><?php endif; ?>
+        <?php if ($isReq): ?><span class="tag tag-anfrage">Anfrage</span><?php endif; ?>
+        <?php if ($isReq && !$hasPrice): ?>
+          <span class="tag tag-pending">In Prüfung</span>
         <?php else: ?>
           <span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span>
         <?php endif; ?>

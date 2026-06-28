@@ -8,8 +8,9 @@ try { order_mark_seen($ref); } catch (Throwable $e) { /* column may not exist ye
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (($_POST['action'] ?? '') === 'set_price') {
-        $raw = str_replace(',', '.', trim($_POST['total'] ?? ''));
-        order_set_price($ref, max(0, (int)round((float)$raw * 100)));
+        $prod = (int)round((float)str_replace(',', '.', trim($_POST['total'] ?? '')) * 100);
+        $ship = (int)round((float)str_replace(',', '.', trim($_POST['shipping'] ?? '')) * 100);
+        order_set_price($ref, max(0, $prod), max(0, $ship));
     } else {
         order_update_status($ref, trim($_POST['status'] ?? 'neu'), trim($_POST['payment_status'] ?? 'offen'));
     }
@@ -71,10 +72,18 @@ $isRequest = order_is_request($order);
   <div class="admin-section" style="margin-bottom:1.5rem;border-color:rgba(99,102,241,.3)">
     <h2 style="margin-top:0">Preis festlegen</h2>
     <p class="muted" style="font-size:.84rem;margin-top:-.5rem">Sobald du den Preis setzt, sieht ihn der Kunde im Profil unter „Meine Bestellungen".</p>
+    <?php
+      $curProduct = 0;
+      foreach ($order['items'] as $it) $curProduct += (int)($it['lineCents'] ?? 0);
+      $defaultShip = (int)$order['shipping_cents'] > 0 ? (int)$order['shipping_cents'] : (int)(setting_get('shipping_ch_cents') ?: 590);
+    ?>
     <form method="post" style="display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap">
       <input type="hidden" name="action" value="set_price">
-      <label class="field" style="max-width:200px"><span>Gesamtpreis (<?= h($currency) ?>)</span>
-        <input type="text" inputmode="decimal" name="total" value="<?= (int)$order['total_cents'] > 0 ? number_format($order['total_cents'] / 100, 2, '.', '') : '' ?>" placeholder="z.B. 129.00">
+      <label class="field" style="max-width:160px"><span>Produktpreis (<?= h($currency) ?>)</span>
+        <input type="text" inputmode="decimal" name="total" value="<?= $curProduct > 0 ? number_format($curProduct / 100, 2, '.', '') : '' ?>" placeholder="z.B. 129.00">
+      </label>
+      <label class="field" style="max-width:160px"><span>Versand (<?= h($currency) ?>)</span>
+        <input type="text" inputmode="decimal" name="shipping" value="<?= number_format($defaultShip / 100, 2, '.', '') ?>" placeholder="z.B. 5.90">
       </label>
       <button class="btn btn-primary" type="submit">Preis speichern</button>
     </form>

@@ -24,8 +24,8 @@ try {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=20">
-  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=20">
+  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=21">
+  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=21">
 </head>
 <body>
 <div class="admin-shell">
@@ -163,5 +163,16 @@ try {
     </div>
   </aside>
 
+  <div class="admin-overlay" data-admin-overlay></div>
+
   <div class="admin-content">
+    <header class="admin-topbar">
+      <button class="admin-burger" data-admin-burger aria-label="Menü öffnen" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <a class="admin-topbar-brand" href="<?= url('/admin/index.php') ?>">
+        <strong><?= h(setting_get('shop_name') ?: 'ABJ') ?></strong>
+        <span><?= h($adminTitle ?? 'Admin') ?></span>
+      </a>
+    </header>
     <main class="admin-main">

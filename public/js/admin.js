@@ -575,6 +575,22 @@
     });
   }
 
+  // Mobile-Sidebar (Off-Canvas-Drawer)
+  function initSidebarDrawer() {
+    const shell = $('.admin-shell');
+    const burger = $('[data-admin-burger]');
+    const overlay = $('[data-admin-overlay]');
+    if (!shell || !burger) return;
+    function open() { shell.classList.add('nav-open'); document.body.classList.add('admin-nav-locked'); burger.setAttribute('aria-expanded', 'true'); }
+    function close() { shell.classList.remove('nav-open'); document.body.classList.remove('admin-nav-locked'); burger.setAttribute('aria-expanded', 'false'); }
+    function toggle() { shell.classList.contains('nav-open') ? close() : open(); }
+    burger.addEventListener('click', toggle);
+    if (overlay) overlay.addEventListener('click', close);
+    // Beim Tippen auf einen Navigationslink schließen
+    $$('.admin-sidebar a').forEach((a) => a.addEventListener('click', close));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  }
+
   initProductForm();
   initProductDelete();
   initProductFilter();
@@ -582,4 +598,5 @@
   initConfirmForms();
   initMarkSeen();
   initStockSteppers();
+  initSidebarDrawer();
 })();

@@ -134,7 +134,22 @@ function db_init(PDO $pdo): void {
             address TEXT DEFAULT '{}',
             created_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS visits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip TEXT DEFAULT '',
+            path TEXT DEFAULT '',
+            user_agent TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS ip_blocks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip TEXT UNIQUE NOT NULL,
+            note TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
     ");
+    try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_visits_ip ON visits(ip)"); } catch (\Throwable $e) {}
+    try { $pdo->exec("CREATE INDEX IF NOT EXISTS idx_visits_created ON visits(created_at)"); } catch (\Throwable $e) {}
     // Migrate: add columns that may be missing in older DB versions
     $inv_cols = array_column($pdo->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     $inv_add = [

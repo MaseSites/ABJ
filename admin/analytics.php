@@ -2,6 +2,14 @@
 require_once __DIR__ . '/../lib/bootstrap.php';
 require_admin();
 
+// IP sperren / entsperren
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $act = $_POST['action'] ?? '';
+    if ($act === 'block_ip')   ip_block(trim($_POST['ip'] ?? ''), trim($_POST['note'] ?? ''));
+    if ($act === 'unblock_ip') ip_unblock(trim($_POST['ip'] ?? ''));
+    redirect('/admin/analytics.php?tab=besucher');
+}
+
 $adminTitle = 'Analytics';
 include __DIR__ . '/partials/admin-layout-top.php';
 
@@ -304,6 +312,123 @@ $maxWd  = max(1, ...array_values($weekday));
       </div>
       <?php endforeach; ?>
     </div>
+  <?php endif; ?>
+</div>
+
+<!-- ===================== Besucher & IP-Adressen ===================== -->
+<?php
+$ipSummary    = visits_ip_summary(80);
+$recentVisits = visits_recent(60);
+$blocked      = ip_blocks_list();
+$blockedSet   = [];
+foreach ($blocked as $b) $blockedSet[$b['ip']] = true;
+$myIp         = client_ip();
+
+function vis_when(string $ts): string {
+    $t = strtotime($ts . ' UTC');
+    if (!$t) return $ts;
+    $diff = time() - $t;
+    if ($diff < 60)    return 'gerade eben';
+    if ($diff < 3600)  return floor($diff / 60) . ' Min.';
+    if ($diff < 86400) return floor($diff / 3600) . ' Std.';
+    return date('d.m. H:i', $t);
+}
+?>
+
+<div class="admin-head-row" style="margin:2.4rem 0 1.1rem"><h2 style="margin:0">Besucher &amp; IP-Adressen</h2></div>
+
+<div class="stat-grid stat-grid-4" style="margin-bottom:1.2rem">
+  <div class="stat-card"><span class="stat-num"><?= count($ipSummary) ?></span><span class="stat-label">Eindeutige IPs (Log)</span></div>
+  <div class="stat-card"><span class="stat-num"><?= (int)db()->query("SELECT COUNT(*) n FROM visits WHERE created_at >= datetime('now','-1 day')")->fetch()['n'] ?></span><span class="stat-label">Aufrufe · 24 h</span></div>
+  <div class="stat-card"><span class="stat-num"><?= count($blocked) ?></span><span class="stat-label">Gesperrte IPs</span></div>
+  <div class="stat-card"><span class="stat-num" style="font-size:1rem;word-break:break-all"><?= h($myIp) ?></span><span class="stat-label">Deine IP</span></div>
+</div>
+
+<!-- Manuell sperren + Sperrliste -->
+<div class="admin-section">
+  <h2>IP sperren</h2>
+  <form method="post" style="display:flex;gap:.7rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1rem">
+    <input type="hidden" name="action" value="block_ip">
+    <label class="field" style="max-width:200px"><span>IP-Adresse</span><input type="text" name="ip" placeholder="z.B. 203.0.113.5" required></label>
+    <label class="field" style="max-width:240px"><span>Notiz <small class="muted">(optional)</small></span><input type="text" name="note" placeholder="z.B. Spam"></label>
+    <button class="btn btn-danger" type="submit">Sperren</button>
+  </form>
+  <?php if (empty($blocked)): ?>
+    <p class="muted">Keine gesperrten IP-Adressen.</p>
+  <?php else: ?>
+  <div class="table-card">
+  <table class="data-table">
+    <thead><tr><th>Gesperrte IP</th><th>Notiz</th><th>Seit</th><th></th></tr></thead>
+    <tbody>
+      <?php foreach ($blocked as $b): ?>
+      <tr>
+        <td><strong style="font-variant-numeric:tabular-nums"><?= h($b['ip']) ?></strong></td>
+        <td class="muted"><?= h($b['note'] ?: '–') ?></td>
+        <td class="muted"><?= h(substr($b['created_at'], 0, 16)) ?></td>
+        <td class="cell-actions">
+          <form method="post"><input type="hidden" name="action" value="unblock_ip"><input type="hidden" name="ip" value="<?= h($b['ip']) ?>">
+            <button class="btn btn-ghost btn-sm" type="submit">Entsperren</button></form>
+        </td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+  </div>
+  <?php endif; ?>
+</div>
+
+<!-- IP-Übersicht (zusammengefasst) -->
+<div class="admin-section">
+  <h2>Besucher nach IP</h2>
+  <?php if (empty($ipSummary)): ?>
+    <p class="muted">Noch keine erfassten Besuche.</p>
+  <?php else: ?>
+  <input type="search" class="admin-search" data-table-filter placeholder="IP filtern…" aria-label="IP filtern">
+  <div class="table-card">
+  <table class="data-table" data-filter-table>
+    <thead><tr><th>IP-Adresse</th><th>Aufrufe</th><th>Zuletzt</th><th>Letzte Seite</th><th></th></tr></thead>
+    <tbody>
+      <?php foreach ($ipSummary as $v): $isB = isset($blockedSet[$v['ip']]); ?>
+      <tr>
+        <td><strong style="font-variant-numeric:tabular-nums"><?= h($v['ip']) ?></strong><?= $v['ip'] === $myIp ? ' <span class="tag tag-new">du</span>' : '' ?></td>
+        <td><?= (int)$v['hits'] ?></td>
+        <td class="muted"><?= h(vis_when($v['last_seen'])) ?></td>
+        <td class="muted" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= h($v['last_path']) ?></td>
+        <td class="cell-actions">
+          <?php if ($isB): ?>
+            <form method="post"><input type="hidden" name="action" value="unblock_ip"><input type="hidden" name="ip" value="<?= h($v['ip']) ?>"><button class="btn btn-ghost btn-sm" type="submit">Entsperren</button></form>
+          <?php else: ?>
+            <form method="post" onsubmit="return confirm('IP <?= h($v['ip']) ?> sperren?')"><input type="hidden" name="action" value="block_ip"><input type="hidden" name="ip" value="<?= h($v['ip']) ?>"><button class="btn btn-danger btn-sm" type="submit">Sperren</button></form>
+          <?php endif; ?>
+        </td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+  </div>
+  <?php endif; ?>
+</div>
+
+<!-- Letzte Seitenaufrufe -->
+<div class="admin-section">
+  <h2>Letzte Seitenaufrufe</h2>
+  <?php if (empty($recentVisits)): ?>
+    <p class="muted">Noch keine Seitenaufrufe erfasst.</p>
+  <?php else: ?>
+  <div class="table-card">
+  <table class="data-table">
+    <thead><tr><th>Zeit</th><th>IP</th><th>Seite</th></tr></thead>
+    <tbody>
+      <?php foreach ($recentVisits as $v): ?>
+      <tr>
+        <td class="muted" style="white-space:nowrap"><?= h(vis_when($v['created_at'])) ?></td>
+        <td style="font-variant-numeric:tabular-nums"><?= h($v['ip']) ?></td>
+        <td><?= h($v['path']) ?></td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+  </div>
   <?php endif; ?>
 </div>
 

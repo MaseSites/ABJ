@@ -36,6 +36,7 @@ require_once __DIR__ . '/discounts.php';
 require_once __DIR__ . '/reviews.php';
 require_once __DIR__ . '/shipping.php';
 require_once __DIR__ . '/accounts.php';
+require_once __DIR__ . '/visits.php';
 
 // HTTPS / Mixed-Content-Schutz: weist den Browser an, jede unsichere
 // http://-Subressource (Bilder, Skripte, Styles, Fonts, fetch) automatisch
@@ -48,3 +49,18 @@ if (!headers_sent()) {
 }
 
 db(); // initialise connection & tables
+
+// IP-Sperre (nur Shop-Bereich; Admin bleibt erreichbar, damit man entsperren kann)
+// und Besucher-Log.
+$__reqPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+if (strpos($__reqPath, '/admin') !== 0) {
+    if (ip_is_blocked(client_ip())) {
+        if (!headers_sent()) { http_response_code(403); header('Content-Type: text/html; charset=utf-8'); }
+        echo '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Zugriff gesperrt</title></head>'
+           . '<body style="font-family:system-ui,sans-serif;background:#0d0d12;color:#e8e8ee;display:grid;place-items:center;min-height:100vh;margin:0">'
+           . '<div style="text-align:center;padding:2rem"><h1 style="margin:0 0 .5rem">Zugriff gesperrt</h1>'
+           . '<p style="color:#9a9aa5">Deine IP-Adresse wurde für diese Seite gesperrt.</p></div></body></html>';
+        exit;
+    }
+    visit_log();
+}

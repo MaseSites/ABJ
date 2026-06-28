@@ -20,41 +20,31 @@ function accounts_list(): array {
     return db()->query('SELECT id, email, name, access_code, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
 }
 
-// ---- Zugangscodes (Pool; einmalig, beim ersten Login an ein Konto gebunden) ----
+// ---- Zugangs-/Promo-Codes: EIN System (Tabelle promo_codes) ----
+// account_id = 0  -> vom Admin erstellter Code (kein Werber)
+// account_id > 0  -> Promo-Code eines Kunden (Werber bekommt Punkte)
 function code_find(string $code): ?array {
     $code = trim($code);
     if ($code === '') return null;
-    $stmt = db()->prepare("SELECT * FROM access_codes WHERE code = ?");
+    $stmt = db()->prepare("SELECT * FROM promo_codes WHERE upper(code) = upper(?)");
     $stmt->execute([$code]);
     $row = $stmt->fetch();
     return $row ?: null;
 }
 
-/** Neuen, freien Zugangscode erzeugen und speichern. Gibt den Code zurück. */
+/** Vom Admin erstellten Code (ohne Werber) erzeugen. */
 function code_generate(): string {
     $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     do {
         $code = '';
         for ($i = 0; $i < 6; $i++) $code .= $chars[random_int(0, strlen($chars) - 1)];
     } while (code_find($code));
-    db()->prepare("INSERT INTO access_codes (code) VALUES (?)")->execute([$code]);
+    db()->prepare("INSERT INTO promo_codes (account_id, code) VALUES (0, ?)")->execute([$code]);
     return $code;
 }
 
-/** Freien Code an ein Konto binden (nur wenn noch frei). */
-function code_bind(string $code, int $accountId): void {
-    db()->prepare("UPDATE access_codes SET account_id = ?, used_at = datetime('now') WHERE code = ? AND account_id IS NULL")
-       ->execute([$accountId, trim($code)]);
-}
-
 function code_delete(string $code): void {
-    db()->prepare("DELETE FROM access_codes WHERE code = ?")->execute([trim($code)]);
-}
-
-function codes_list(): array {
-    return db()->query("SELECT ac.*, a.email AS account_email, a.name AS account_name
-        FROM access_codes ac LEFT JOIN accounts a ON a.id = ac.account_id
-        ORDER BY ac.created_at DESC")->fetchAll();
+    db()->prepare("DELETE FROM promo_codes WHERE upper(code) = upper(?)")->execute([trim($code)]);
 }
 
 function accounts_count(): int {

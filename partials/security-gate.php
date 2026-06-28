@@ -2,33 +2,27 @@
 /**
  * Tarnseite + 2-Stufen-Zugang für den Sicherheitsmodus.
  *
- * Stufe 1: Besucher gibt im Feld "Belegnummer" einen Zugangscode ein.
- *          - Code unbekannt -> Fehlermeldung (bleibt getarnt).
- *          - Code gefunden   -> weiter zu Stufe 2.
- * Stufe 2: Anmeldung/Registrierung.
- *          - Code noch frei -> Konto erstellen oder anmelden; Code wird an
- *            dieses Konto gebunden (einmalig).
- *          - Code bereits gebunden -> man MUSS sich mit genau diesem Konto
- *            anmelden. Falsche Anmeldung -> IP wird sofort gesperrt.
+ * Stufe 1: Besucher gibt im Feld "Belegnummer" einen Code ein (ein Promo-/
+ *          Zugangscode). Unbekannt -> Fehler (bleibt getarnt).
+ * Stufe 2: Registrieren oder Anmelden. Danach wird die IP freigeschaltet und
+ *          man gelangt auf den echten Shop. Wer sich mit dem Code eines Kunden
+ *          NEU registriert, wird dessen Empfehlung (der Kunde bekommt Punkte).
  */
 session_start_once();
 
 $gateError = '';
-$blocked   = false;
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (isset($_POST['beleg'])) {
         // Stufe 1
         $code = trim((string)$_POST['beleg']);
-        $row  = code_find($code);
-        if (!$row) {
-            $gateError = 'Kein Beleg mit dieser Nummer gefunden.';
-        } else {
+        if (code_find($code)) {
             $_SESSION['gate_code'] = $code;
             session_write_close();
             if (!headers_sent()) header('Location: ' . base_path() . '/');
             exit;
         }
+        $gateError = 'Kein Beleg mit dieser Nummer gefunden.';
     } elseif (isset($_POST['gate_action'])) {
         // Stufe 2
         $code = $_SESSION['gate_code'] ?? '';
@@ -36,10 +30,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         if (!$row) {
             unset($_SESSION['gate_code']);
             $gateError = 'Bitte gib die Belegnummer erneut ein.';
-        } elseif ($_POST['gate_action'] === 'register' && empty($row['account_id'])) {
+        } elseif ($_POST['gate_action'] === 'register') {
             $res = account_create(trim($_POST['email'] ?? ''), $_POST['password'] ?? '', trim($_POST['name'] ?? ''));
             if (!empty($res['ok'])) {
-                code_bind($code, (int)$res['id']);
+                $owner = (int)($row['account_id'] ?? 0);
+                if ($owner > 0) account_set_referrer((int)$res['id'], $owner);
                 customer_login((int)$res['id'], trim($_POST['email'] ?? ''), trim($_POST['name'] ?? ''));
                 ip_allow_add(client_ip());
                 unset($_SESSION['gate_code']); session_write_close();
@@ -49,38 +44,20 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $gateError = $res['error'] ?? 'Registrierung fehlgeschlagen.';
         } elseif ($_POST['gate_action'] === 'login') {
             $acc = account_verify_login(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
-            if (!empty($row['account_id'])) {
-                // Code ist bereits zugewiesen -> nur das richtige Konto darf rein
-                if ($acc && (int)$acc['id'] === (int)$row['account_id']) {
-                    customer_login((int)$acc['id'], $acc['email'], $acc['name'] ?? '');
-                    ip_allow_add(client_ip());
-                    unset($_SESSION['gate_code']); session_write_close();
-                    if (!headers_sent()) header('Location: ' . base_path() . '/');
-                    exit;
-                }
-                // Falsche Anmeldung -> sofort sperren
-                ip_block(client_ip(), 'Falsche Anmeldung am Zugangscode ' . $code);
+            if ($acc) {
+                customer_login((int)$acc['id'], $acc['email'], $acc['name'] ?? '');
+                ip_allow_add(client_ip());
                 unset($_SESSION['gate_code']); session_write_close();
-                $blocked = true;
-            } else {
-                // Code noch frei -> an dieses Konto binden
-                if ($acc) {
-                    code_bind($code, (int)$acc['id']);
-                    customer_login((int)$acc['id'], $acc['email'], $acc['name'] ?? '');
-                    ip_allow_add(client_ip());
-                    unset($_SESSION['gate_code']); session_write_close();
-                    if (!headers_sent()) header('Location: ' . base_path() . '/');
-                    exit;
-                }
-                $gateError = 'E-Mail oder Passwort ist falsch.';
+                if (!headers_sent()) header('Location: ' . base_path() . '/');
+                exit;
             }
+            $gateError = 'E-Mail oder Passwort ist falsch.';
         }
     }
 }
 
 $gateCode = $_SESSION['gate_code'] ?? '';
 $gateRow  = $gateCode ? code_find($gateCode) : null;
-$assigned = $gateRow && !empty($gateRow['account_id']);
 if (!headers_sent()) {
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: no-store, no-cache, must-revalidate');
@@ -138,54 +115,32 @@ $today = date('d.m.Y');
     <small>Interne Belegerfassung · <?= h($today) ?></small>
   </div></div>
 
-<?php if ($blocked): ?>
+<?php if ($gateRow): ?>
+  <!-- Stufe 2: Registrieren / Anmelden -->
   <div class="wrap single">
     <div class="card">
-      <h2>Beleg gesperrt</h2>
-      <p class="muted">Dieser Vorgang wurde aus Sicherheitsgründen gesperrt.</p>
-    </div>
-  </div>
-
-<?php elseif ($gateRow): ?>
-  <!-- Stufe 2: Anmeldung / Registrierung -->
-  <div class="wrap single">
-    <div class="card">
-      <?php if ($assigned): ?>
-        <h2>Beleg bestätigen</h2>
-        <p class="muted" style="margin-top:0">Bitte melde dich mit deinem Konto an, um den Beleg zu öffnen.</p>
-        <form method="post" action="">
-          <input type="hidden" name="gate_action" value="login">
-          <label>E-Mail</label>
-          <input type="email" name="email" required autocomplete="email" autofocus>
-          <label>Passwort</label>
-          <input type="password" name="password" required autocomplete="current-password">
-          <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
-          <button class="btn btn-block" type="submit">Anmelden</button>
-        </form>
-      <?php else: ?>
-        <h2>Beleg freigeben</h2>
-        <p class="muted" style="margin-top:0">Erstelle ein Konto, um den Beleg zu öffnen. Der Beleg wird deinem Konto zugeordnet.</p>
-        <form method="post" action="" data-form="register">
-          <input type="hidden" name="gate_action" value="register">
-          <label>Name</label>
-          <input type="text" name="name" autocomplete="name">
-          <label>E-Mail</label>
-          <input type="email" name="email" required autocomplete="email">
-          <label>Passwort <span class="muted" style="font-weight:400">(min. 8 Zeichen)</span></label>
-          <input type="password" name="password" required minlength="8" autocomplete="new-password">
-          <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
-          <button class="btn btn-block" type="submit">Konto erstellen &amp; öffnen</button>
-        </form>
-        <form method="post" action="" data-form="login" hidden>
-          <input type="hidden" name="gate_action" value="login">
-          <label>E-Mail</label>
-          <input type="email" name="email" required autocomplete="email">
-          <label>Passwort</label>
-          <input type="password" name="password" required autocomplete="current-password">
-          <button class="btn btn-block" type="submit">Anmelden</button>
-        </form>
-        <button type="button" class="toggle-link" data-toggle>Bereits ein Konto? Anmelden</button>
-      <?php endif; ?>
+      <h2>Beleg freigeben</h2>
+      <p class="muted" style="margin-top:0">Erstelle ein Konto, um den Beleg zu öffnen — oder melde dich an, falls du schon eines hast.</p>
+      <form method="post" action="" data-form="register">
+        <input type="hidden" name="gate_action" value="register">
+        <label>Name</label>
+        <input type="text" name="name" autocomplete="name">
+        <label>E-Mail</label>
+        <input type="email" name="email" required autocomplete="email">
+        <label>Passwort <span class="muted" style="font-weight:400">(min. 8 Zeichen)</span></label>
+        <input type="password" name="password" required minlength="8" autocomplete="new-password">
+        <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
+        <button class="btn btn-block" type="submit">Konto erstellen &amp; öffnen</button>
+      </form>
+      <form method="post" action="" data-form="login" hidden>
+        <input type="hidden" name="gate_action" value="login">
+        <label>E-Mail</label>
+        <input type="email" name="email" required autocomplete="email">
+        <label>Passwort</label>
+        <input type="password" name="password" required autocomplete="current-password">
+        <button class="btn btn-block" type="submit">Anmelden</button>
+      </form>
+      <button type="button" class="toggle-link" data-toggle>Bereits ein Konto? Anmelden</button>
     </div>
   </div>
   <script>

@@ -31,8 +31,7 @@ $adminTitle = 'Sicherheit';
 include __DIR__ . '/partials/admin-layout-top.php';
 
 $mode    = setting_get('security_mode') === '1';
-$codes   = codes_list();
-$promoAll = promo_codes_all();
+$codes   = promo_codes_all();
 $myIp    = client_ip();
 $allowed = ip_allow_list();
 $blocked = ip_blocks_list();
@@ -79,24 +78,24 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
     <form method="post"><input type="hidden" name="action" value="gen_code"><button class="btn btn-primary btn-sm" type="submit">+ Code generieren</button></form>
   </div>
   <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">
-    Generiere Codes und gib sie weiter. Ein Code ist <strong>einmal verwendbar</strong>: Beim ersten Eintippen auf der
-    Tarnseite muss sich die Person anmelden/registrieren — danach gehört der Code <strong>fest zu diesem Konto</strong>.
-    Tippt jemand den Code erneut ein und meldet sich falsch an, wird seine IP automatisch gesperrt.
+    Ein Code bringt jemanden in den Shop (Sicherheitsmodus). Codes können <strong>du selbst</strong> generieren
+    oder <strong>Kunden in ihrem Profil</strong> (Promo-Code). Wer sich mit dem Code eines Kunden neu registriert,
+    wird dessen Empfehlung — der Kunde bekommt dann Promo-Punkte.
   </p>
   <?php if (empty($codes)): ?>
-    <p class="muted">Noch keine Codes. Klicke auf „Code generieren".</p>
+    <p class="muted">Noch keine Codes. Klicke auf „Code generieren" — oder Kunden generieren eigene.</p>
   <?php else: ?>
   <div class="table-card"><table class="data-table">
-    <thead><tr><th>Code</th><th>Status</th><th>Erstellt</th><th></th></tr></thead>
+    <thead><tr><th>Code</th><th>Erstellt von</th><th>Erstellt</th><th></th></tr></thead>
     <tbody>
-      <?php foreach ($codes as $cd): ?>
+      <?php foreach ($codes as $cd): $owner = (int)($cd['account_id'] ?? 0); ?>
       <tr>
         <td><strong style="font-variant-numeric:tabular-nums;letter-spacing:.12em;font-size:1rem"><?= h($cd['code']) ?></strong></td>
         <td>
-          <?php if (!empty($cd['account_id'])): ?>
-            <span class="tag tag-ok">zugewiesen</span> <span class="muted"><?= h($cd['account_email'] ?: ('#' . $cd['account_id'])) ?></span>
+          <?php if ($owner > 0): ?>
+            <span class="tag tag-ok">Kunde</span> <?= h($cd['owner_name'] ?: '') ?> <span class="muted"><?= h($cd['owner_email'] ?: ('#' . $owner)) ?></span>
           <?php else: ?>
-            <span class="tag tag-warn">frei</span>
+            <span class="tag">Admin</span>
           <?php endif; ?>
         </td>
         <td class="muted"><?= h(substr($cd['created_at'], 0, 16)) ?></td>
@@ -104,28 +103,6 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
           <form method="post" onsubmit="return confirm('Code <?= h($cd['code']) ?> löschen?')"><input type="hidden" name="action" value="del_code"><input type="hidden" name="code" value="<?= h($cd['code']) ?>">
             <button class="btn btn-ghost btn-sm" type="submit">Löschen</button></form>
         </td>
-      </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table></div>
-  <?php endif; ?>
-</div>
-
-<!-- Promo-Codes (von Kunden erstellt) -->
-<div class="admin-section">
-  <h2>Promo-Codes <span class="muted" style="font-weight:400;font-size:.9rem">(von Kunden erstellt)</span></h2>
-  <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">Empfehlungscodes, die Kunden in ihrem Profil generiert haben.</p>
-  <?php if (empty($promoAll)): ?>
-    <p class="muted">Noch keine Promo-Codes.</p>
-  <?php else: ?>
-  <div class="table-card"><table class="data-table">
-    <thead><tr><th>Promo-Code</th><th>Erstellt von</th><th>Erstellt</th></tr></thead>
-    <tbody>
-      <?php foreach ($promoAll as $pc): ?>
-      <tr>
-        <td><strong style="font-variant-numeric:tabular-nums;letter-spacing:.12em;font-size:1rem"><?= h($pc['code']) ?></strong></td>
-        <td><?= h($pc['owner_name'] ?: '—') ?> <span class="muted"><?= h($pc['owner_email'] ?: ('#' . $pc['account_id'])) ?></span></td>
-        <td class="muted"><?= h(substr($pc['created_at'], 0, 16)) ?></td>
       </tr>
       <?php endforeach; ?>
     </tbody>

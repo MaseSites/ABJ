@@ -30,6 +30,36 @@ function visit_log(): void {
     } catch (\Throwable $e) { /* Logging darf die Seite nie blockieren */ }
 }
 
+// ──────────────── Login-Bremse (Brute-Force-Schutz) ────────────────
+
+/** Sind für diesen Bereich/diese IP noch Login-Versuche erlaubt? */
+function login_throttle_allowed(string $scope, int $maxAttempts = 10, int $windowMinutes = 15): bool {
+    try {
+        $stmt = db()->prepare("SELECT COUNT(*) AS n FROM login_throttle
+                               WHERE scope = ? AND ip = ? AND created_at > datetime('now', ?)");
+        $stmt->execute([$scope, client_ip(), '-' . max(1, $windowMinutes) . ' minutes']);
+        return (int)($stmt->fetch()['n'] ?? 0) < $maxAttempts;
+    } catch (\Throwable $e) {
+        return true; // im Fehlerfall niemanden aussperren
+    }
+}
+
+/** Verbucht einen fehlgeschlagenen Login-Versuch. */
+function login_throttle_hit(string $scope): void {
+    try {
+        db()->prepare("INSERT INTO login_throttle (scope, ip) VALUES (?, ?)")->execute([$scope, client_ip()]);
+        if (mt_rand(1, 50) === 1) {
+            db()->exec("DELETE FROM login_throttle WHERE created_at < datetime('now', '-1 day')");
+        }
+    } catch (\Throwable $e) {}
+}
+
+/** Setzt die Versuche nach erfolgreichem Login zurück. */
+function login_throttle_clear(string $scope): void {
+    try { db()->prepare("DELETE FROM login_throttle WHERE scope = ? AND ip = ?")->execute([$scope, client_ip()]); }
+    catch (\Throwable $e) {}
+}
+
 // ──────────────── Auto-Sperre verdächtiger Scanner ────────────────
 
 /**

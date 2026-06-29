@@ -1,6 +1,21 @@
 <?php
 define('DB_PATH', __DIR__ . '/../data/shop.db');
 
+/**
+ * Liefert das Seed-Admin-Passwort: zuerst aus der Umgebungsvariable/.env
+ * ($envKey). Ist keine gesetzt, wird ein starkes Zufallspasswort erzeugt und
+ * EINMALIG in data/INITIAL-ADMIN-PASSWORD.txt abgelegt (nicht öffentlich,
+ * nicht in Git). So steht nie ein Passwort im Quellcode.
+ */
+function _abj_seed_admin_pw(string $envKey, string $label): string {
+    $pw = function_exists('env_get') ? (string)env_get($envKey) : (string)getenv($envKey);
+    if ($pw !== '') return $pw;
+    $pw = bin2hex(random_bytes(9)); // 18 Hex-Zeichen
+    @file_put_contents(__DIR__ . '/../data/INITIAL-ADMIN-PASSWORD.txt',
+        '[' . date('Y-m-d H:i:s') . "] {$label} ({$envKey}): {$pw}\n", FILE_APPEND);
+    return $pw;
+}
+
 function db(): PDO {
     static $pdo = null;
     if ($pdo === null) {
@@ -204,6 +219,12 @@ function db_init(PDO $pdo): void {
             used_at TEXT DEFAULT '',
             created_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS login_throttle (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scope TEXT NOT NULL DEFAULT '',
+            ip TEXT NOT NULL DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
         CREATE TABLE IF NOT EXISTS promo_redemptions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             account_id INTEGER NOT NULL,
@@ -371,7 +392,7 @@ function db_init(PDO $pdo): void {
     $cnt = (int)$pdo->query("SELECT COUNT(*) AS n FROM users")->fetch()['n'];
     if ($cnt === 0) {
         $pdo->prepare("INSERT INTO users (username, password_hash, role) VALUES ('admin_user_root', ?, 'root')")
-            ->execute([password_hash('Rem&mP3*uJYYT@', PASSWORD_DEFAULT)]);
+            ->execute([password_hash(_abj_seed_admin_pw('ADMIN_ROOT_PASSWORD', 'Root-Admin'), PASSWORD_DEFAULT)]);
     }
 
     // Admin-Zugänge sicherstellen: alten admin/abj entfernen, Root + beschränktes
@@ -390,8 +411,8 @@ function db_init(PDO $pdo): void {
                     $pdo->prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")->execute([$username, $hash, $role]);
                 }
             };
-            $setUser('admin_user_root', 'Rem&mP3*uJYYT@', 'root');
-            $setUser('admin_user_lookup', 'YESrVj9V&@KotN', 'lookup');
+            $setUser('admin_user_root', _abj_seed_admin_pw('ADMIN_ROOT_PASSWORD', 'Root-Admin'), 'root');
+            $setUser('admin_user_lookup', _abj_seed_admin_pw('ADMIN_LOOKUP_PASSWORD', 'Lookup-Admin'), 'lookup');
             $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_accounts_v4', '1')");
         }
     } catch (\Throwable $e) {}

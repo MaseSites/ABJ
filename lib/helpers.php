@@ -1,4 +1,36 @@
 <?php
+/**
+ * Liest eine Umgebungsvariable – zuerst aus echten Env-Variablen (getenv),
+ * dann aus einer optionalen .env-Datei im Projektordner. So lassen sich
+ * Geheimnisse (z.B. Admin-Passwort) ausserhalb des Codes/Git ablegen.
+ */
+function env_get(string $key, ?string $default = null): ?string {
+    static $loaded = false;
+    static $vars = [];
+    if (!$loaded) {
+        $loaded = true;
+        $file = __DIR__ . '/../.env';
+        if (is_file($file)) {
+            foreach (file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+                $line = trim($line);
+                if ($line === '' || $line[0] === '#') continue;
+                $eq = strpos($line, '=');
+                if ($eq === false) continue;
+                $k = trim(substr($line, 0, $eq));
+                $v = trim(substr($line, $eq + 1));
+                if (strlen($v) >= 2 && ($v[0] === '"' || $v[0] === "'") && substr($v, -1) === $v[0]) {
+                    $v = substr($v, 1, -1);
+                }
+                if ($k !== '') $vars[$k] = $v;
+            }
+        }
+    }
+    $val = getenv($key);
+    if ($val !== false && $val !== '') return $val;
+    if (isset($vars[$key]) && $vars[$key] !== '') return $vars[$key];
+    return $default;
+}
+
 function format_price(int $cents, string $currency = 'CHF'): string {
     if ($currency === 'CHF') {
         $val = number_format($cents / 100, 2, '.', "'");

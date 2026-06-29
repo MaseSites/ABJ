@@ -99,6 +99,33 @@ function account_create(string $email, string $password, string $name): array {
     return ['ok' => true, 'id' => $id];
 }
 
+/**
+ * Setzt das Admin-Passwort aus einer Umgebungsvariable/.env durch, FALLS gesetzt.
+ * So ist das Passwort ausserhalb des Codes ablegbar. Aus Performancegründen wird
+ * höchstens einmal pro Stunde geprüft (bcrypt ist teuer). Ist die Variable leer,
+ * passiert nichts – die bestehende Anmeldung bleibt unverändert.
+ */
+function admin_apply_env_password(string $username, string $envKey): void {
+    $pw = (string)(function_exists('env_get') ? env_get($envKey) : getenv($envKey));
+    if ($pw === '') return;
+    $ckKey = 'admin_envpw_check_' . $username;
+    if (time() - (int)(setting_get($ckKey) ?: 0) < 3600) return; // max. 1x/Stunde
+    setting_set($ckKey, (string)time());
+    try {
+        $s = db()->prepare("SELECT id, password_hash FROM users WHERE username = ?");
+        $s->execute([$username]);
+        $row = $s->fetch();
+        if ($row && password_verify($pw, $row['password_hash'])) return; // schon aktuell
+        $hash = password_hash($pw, PASSWORD_DEFAULT);
+        if ($row) {
+            db()->prepare("UPDATE users SET password_hash = ? WHERE username = ?")->execute([$hash, $username]);
+        } else {
+            $role = $username === 'admin_user_lookup' ? 'lookup' : 'root';
+            db()->prepare("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")->execute([$username, $hash, $role]);
+        }
+    } catch (\Throwable $e) { /* nie die Seite blockieren */ }
+}
+
 function account_verify_login(string $email, string $password): ?array {
     $acc = account_by_email($email);
     if ($acc && password_verify($password, $acc['password_hash'])) return $acc;

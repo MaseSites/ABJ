@@ -14,6 +14,17 @@ function order_create(array $data): string {
         $data['payment_method'] ?? '',
         $data['discount_code'] ?? '', (int)($data['discount_cents'] ?? 0),
     ]);
+    $acc = account_by_email($data['email'] ?? '');
+    if ($acc) {
+        account_message_create([
+            'account_id' => (int)$acc['id'],
+            'order_reference' => $reference,
+            'sender_role' => 'system',
+            'subject' => 'Bestellung eingegangen',
+            'body' => 'Deine Bestellung ' . $reference . ' wurde erfolgreich erfasst.',
+            'is_read' => 0,
+        ]);
+    }
     return $reference;
 }
 
@@ -174,6 +185,17 @@ function order_merge(string $targetRef, string $sourceRef): bool {
         'is_system' => 1,
         'is_read' => 0,
     ]);
+    $acc = account_by_email($target['email'] ?? '');
+    if ($acc) {
+        account_message_create([
+            'account_id' => (int)$acc['id'],
+            'order_reference' => $target['reference'],
+            'sender_role' => 'system',
+            'subject' => 'Bestellungen zusammengeführt',
+            'body' => 'Die Bestellungen ' . $target['reference'] . ' und ' . $source['reference'] . ' wurden zusammengeführt.',
+            'is_read' => 0,
+        ]);
+    }
     return true;
 }
 

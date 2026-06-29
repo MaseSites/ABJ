@@ -88,7 +88,15 @@ function account_create(string $email, string $password, string $name): array {
     $hash = password_hash($password, PASSWORD_DEFAULT);
     db()->prepare('INSERT INTO accounts (email, password_hash, name) VALUES (?, ?, ?)')
        ->execute([$email, $hash, mb_substr($name, 0, 120)]);
-    return ['ok' => true, 'id' => (int)db()->lastInsertId()];
+    $id = (int)db()->lastInsertId();
+    account_message_create([
+        'account_id' => $id,
+        'sender_role' => 'system',
+        'subject' => 'Willkommen',
+        'body' => 'Dein Konto wurde erfolgreich erstellt.',
+        'is_read' => 0,
+    ]);
+    return ['ok' => true, 'id' => $id];
 }
 
 function account_verify_login(string $email, string $password): ?array {
@@ -129,6 +137,15 @@ function customer_login(int $id, string $email, string $name): void {
     session_start_once();
     try { session_regenerate_id(true); } catch (\Throwable $e) {}
     $_SESSION['customer'] = ['id' => $id, 'email' => $email, 'name' => $name];
+    try {
+        account_message_create([
+            'account_id' => $id,
+            'sender_role' => 'system',
+            'subject' => 'Anmeldung',
+            'body' => 'Du hast dich erfolgreich angemeldet.',
+            'is_read' => 0,
+        ]);
+    } catch (\Throwable $e) {}
     session_write_close();
 }
 

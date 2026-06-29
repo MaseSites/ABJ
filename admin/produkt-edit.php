@@ -216,7 +216,7 @@ $currency   = setting_get('currency') ?: 'CHF';
     <div class="form-step">
       <div class="existing-images" id="existing-images"></div>
       <p class="img-hint muted">Das erste Bild ist das Hauptbild. Reihenfolge mit den Pfeilen ändern, × entfernt ein Bild.</p>
-      <div class="image-input-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="image-input-grid">
         <label class="field">
           <span>Bilder hochladen <small class="muted">(JPG, PNG, WEBP – max. 5 MB)</small></span>
           <input type="file" name="images" accept="image/*" multiple data-file-input>

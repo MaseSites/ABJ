@@ -104,12 +104,12 @@ include __DIR__ . '/partials/admin-layout-top.php';
           <a href="<?= url('/admin/bestellung.php?ref=' . urlencode($o['reference'])) ?>"><?= h($o['reference']) ?></a>
         </div>
       </td>
-      <td><?= h($o['customer_name']) ?></td>
-      <td><?= h(substr($o['created_at'], 0, 16)) ?></td>
-      <td><?= format_price((int)$o['total_cents'], $currency) ?></td>
-      <td><span class="tag"><?= h($o['status']) ?></span></td>
-      <td><span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span></td>
-      <td style="white-space:nowrap;display:flex;gap:.4rem;align-items:center">
+      <td data-label="Kunde"><?= h($o['customer_name']) ?></td>
+      <td data-label="Datum"><?= h(substr($o['created_at'], 0, 16)) ?></td>
+      <td data-label="Summe"><?= format_price((int)$o['total_cents'], $currency) ?></td>
+      <td data-label="Status"><span class="tag"><?= h($o['status']) ?></span></td>
+      <td data-label="Zahlung"><span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span></td>
+      <td class="cell-actions">
         <form method="post" action="<?= url('/admin/bestellungen.php') ?>">
           <input type="hidden" name="action" value="set_payment">
           <input type="hidden" name="ref" value="<?= h($o['reference']) ?>">

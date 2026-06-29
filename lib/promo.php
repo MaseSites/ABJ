@@ -86,12 +86,14 @@ function promo_award_for_buyer(int $buyerAccountId, int $orderTotalCents): void 
  * Gratis Versand ist die günstige Einstiegsprämie.
  */
 function promo_rewards(): array {
+    // 6 Prämien -> füllt das Raster symmetrisch (3x2 bzw. 2x3). Aufsteigend nach Kosten.
     return [
-        'ship'   => ['label' => 'Gratis Versand',    'short' => 'Gratis Versand', 'cost' => 50,   'type' => 'free_shipping', 'value' => 0,     'desc' => 'Versandkostenfrei bei deiner nächsten Bestellung.'],
-        'chf10'  => ['label' => 'CHF 10 Gutschein',  'short' => 'CHF 10',         'cost' => 100,  'type' => 'fixed',         'value' => 1000,  'desc' => 'CHF 10 Rabatt auf eine Bestellung.'],
-        'chf25'  => ['label' => 'CHF 25 Gutschein',  'short' => 'CHF 25',         'cost' => 250,  'type' => 'fixed',         'value' => 2500,  'desc' => 'CHF 25 Rabatt auf eine Bestellung.'],
-        'chf50'  => ['label' => 'CHF 50 Gutschein',  'short' => 'CHF 50',         'cost' => 500,  'type' => 'fixed',         'value' => 5000,  'desc' => 'CHF 50 Rabatt auf eine Bestellung.'],
-        'chf100' => ['label' => 'CHF 100 Gutschein', 'short' => 'CHF 100',        'cost' => 1000, 'type' => 'fixed',         'value' => 10000, 'desc' => 'CHF 100 Rabatt auf eine Bestellung.'],
+        'ship'  => ['label' => 'Gratis Versand',   'short' => 'Gratis Versand', 'cost' => 50,  'type' => 'free_shipping', 'value' => 0,    'desc' => 'Versandkostenfrei bei deiner nächsten Bestellung.'],
+        'chf10' => ['label' => 'CHF 10 Gutschein', 'short' => 'CHF 10',         'cost' => 100, 'type' => 'fixed',         'value' => 1000, 'desc' => 'CHF 10 Rabatt auf eine Bestellung.'],
+        'p10'   => ['label' => '10% Rabatt',       'short' => '10%',            'cost' => 120, 'type' => 'percent',       'value' => 10,   'desc' => '10% Rabatt auf eine Bestellung.'],
+        'p20'   => ['label' => '20% Rabatt',       'short' => '20%',            'cost' => 240, 'type' => 'percent',       'value' => 20,   'desc' => '20% Rabatt auf eine Bestellung.'],
+        'chf25' => ['label' => 'CHF 25 Gutschein', 'short' => 'CHF 25',         'cost' => 250, 'type' => 'fixed',         'value' => 2500, 'desc' => 'CHF 25 Rabatt auf eine Bestellung.'],
+        'chf50' => ['label' => 'CHF 50 Gutschein', 'short' => 'CHF 50',         'cost' => 500, 'type' => 'fixed',         'value' => 5000, 'desc' => 'CHF 50 Rabatt auf eine Bestellung.'],
     ];
 }
 

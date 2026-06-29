@@ -44,8 +44,8 @@ $activeCount = count(array_filter($products, fn($p) => $p['is_active']));
           </div>
         </div>
       </td>
-      <td class="muted"><?= h($p['category']) ?></td>
-      <td>
+      <td class="muted" data-label="Kategorie"><?= h($p['category']) ?></td>
+      <td data-label="Preis">
         <?php if ($p['sale_price_cents']): ?>
           <strong style="color:#e0e2ea"><?= format_price((int)$p['sale_price_cents'], $currency) ?></strong>
           <span class="muted" style="text-decoration:line-through;font-size:.8rem"><?= format_price((int)$p['price_cents'], $currency) ?></span>
@@ -53,8 +53,8 @@ $activeCount = count(array_filter($products, fn($p) => $p['is_active']));
           <strong style="color:#e0e2ea"><?= format_price((int)$p['price_cents'], $currency) ?></strong>
         <?php endif; ?>
       </td>
-      <td><span class="tag <?= $stock <= 0 ? 'tag-off' : ($stock <= 5 ? 'tag-warn' : 'tag-ok') ?>"><?= $stock ?> Stk.</span></td>
-      <td><span class="tag <?= $p['is_active'] ? 'tag-ok' : 'tag-off' ?>"><?= $p['is_active'] ? 'Aktiv' : 'Inaktiv' ?></span></td>
+      <td data-label="Bestand"><span class="tag <?= $stock <= 0 ? 'tag-off' : ($stock <= 5 ? 'tag-warn' : 'tag-ok') ?>"><?= $stock ?> Stk.</span></td>
+      <td data-label="Status"><span class="tag <?= $p['is_active'] ? 'tag-ok' : 'tag-off' ?>"><?= $p['is_active'] ? 'Aktiv' : 'Inaktiv' ?></span></td>
       <td class="cell-actions">
         <a href="<?= url('/admin/produkt/' . $p['id']) ?>" class="btn btn-ghost btn-sm">Bearbeiten</a>
         <button class="btn btn-danger btn-sm" data-delete-product="<?= $p['id'] ?>" data-name="<?= h($p['name']) ?>">Löschen</button>

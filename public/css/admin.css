@@ -888,6 +888,39 @@ input[type="checkbox"] { width: auto; accent-color: #7e8bb8; }
   .stat-num { font-size: 1.5rem; }
 }
 
+/* ---------- Tabellen als gestapelte Karten (kein Abschneiden mehr) ---------- */
+@media (max-width: 640px) {
+  .table-card { overflow: visible; }
+  .table-card .data-table,
+  .table-card .data-table tbody,
+  .table-card .data-table tr,
+  .table-card .data-table td { display: block; width: 100%; }
+  .table-card .data-table thead { display: none; }
+  .table-card .data-table tr {
+    padding: .95rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .table-card .data-table tr:last-child { border-bottom: none; }
+  .table-card .data-table td {
+    padding: .3rem 0; border: none;
+    display: flex; align-items: center; gap: .8rem;
+    color: #c8ccd8;
+  }
+  .table-card .data-table td[data-label]::before {
+    content: attr(data-label);
+    flex: none; min-width: 88px;
+    color: #6b6f82; font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  /* Aktionen (Bearbeiten/Löschen …) immer voll erreichbar & breit */
+  .table-card .data-table td.cell-actions {
+    flex-wrap: wrap; gap: .5rem; margin-top: .7rem; justify-content: stretch;
+  }
+  .table-card .data-table td.cell-actions > * { flex: 1 1 auto; margin: 0; }
+  .table-card .data-table td.cell-actions .btn { width: 100%; text-align: center; }
+  .table-card .data-table tr:hover td { background: none; }
+}
+
 /* ---------- Mobile-Topbar + Overlay (Off-Canvas-Drawer) ---------- */
 .admin-topbar { display: none; }
 .admin-overlay { display: none; }

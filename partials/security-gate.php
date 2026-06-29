@@ -14,9 +14,9 @@ $gateError = '';
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (isset($_POST['beleg'])) {
-        // Stufe 1
+        // Stufe 1 – Code muss existieren UND noch frei sein (einmal verwendbar)
         $code = trim((string)$_POST['beleg']);
-        if (code_find($code)) {
+        if (code_is_usable(code_find($code))) {
             $_SESSION['gate_code'] = $code;
             session_write_close();
             if (!headers_sent()) header('Location: ' . base_path() . '/');
@@ -27,12 +27,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         // Stufe 2
         $code = $_SESSION['gate_code'] ?? '';
         $row  = $code ? code_find($code) : null;
-        if (!$row) {
+        if (!code_is_usable($row)) {
             unset($_SESSION['gate_code']);
-            $gateError = 'Bitte gib die Belegnummer erneut ein.';
+            $gateError = 'Dieser Beleg ist nicht mehr gültig. Bitte gib eine neue Nummer ein.';
         } elseif ($_POST['gate_action'] === 'register') {
             $res = account_create(trim($_POST['email'] ?? ''), $_POST['password'] ?? '', trim($_POST['name'] ?? ''));
             if (!empty($res['ok'])) {
+                // Code einlösen (einmalig) + Werber zuordnen
+                code_mark_used($code, (int)$res['id']);
                 $owner = (int)($row['account_id'] ?? 0);
                 if ($owner > 0) account_set_referrer((int)$res['id'], $owner);
                 customer_login((int)$res['id'], trim($_POST['email'] ?? ''), trim($_POST['name'] ?? ''));
@@ -58,6 +60,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
 $gateCode = $_SESSION['gate_code'] ?? '';
 $gateRow  = $gateCode ? code_find($gateCode) : null;
+if (!code_is_usable($gateRow)) { $gateRow = null; unset($_SESSION['gate_code']); }
 if (!headers_sent()) {
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: no-store, no-cache, must-revalidate');

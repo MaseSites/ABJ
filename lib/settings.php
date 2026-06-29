@@ -14,8 +14,8 @@ $SETTINGS_DEFAULTS = [
     // Sicherheitsmodus (Tarnseite + Zugangscode); standardmässig AUS
     'security_mode' => '0',
     'access_code'   => '',
-    // Promo-/Empfehlungsprogramm: Punkte pro Bestellung eines geworbenen Kunden
-    'promo_points_per_order' => '10',
+    // Promo-/Empfehlungsprogramm: Punkte je 100 CHF Bestellwert eines geworbenen Kunden
+    'promo_points_per_100' => '10',
     'accent'                  => '#B89C67',
     'accent_2'                => '#B89C67',
     'accent_3'                => '#CDB27E',

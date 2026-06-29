@@ -163,6 +163,8 @@ function db_init(PDO $pdo): void {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             account_id INTEGER NOT NULL,
             code TEXT UNIQUE NOT NULL,
+            used_by INTEGER,
+            used_at TEXT DEFAULT '',
             created_at TEXT DEFAULT (datetime('now'))
         );
         CREATE TABLE IF NOT EXISTS promo_redemptions (
@@ -214,6 +216,13 @@ function db_init(PDO $pdo): void {
               'referred_by' => 'INTEGER', 'promo_points' => 'INTEGER DEFAULT 0'] as $col => $def) {
         if (!in_array($col, $acc_cols)) {
             try { $pdo->exec("ALTER TABLE accounts ADD COLUMN $col $def"); } catch (\Throwable $e) {}
+        }
+    }
+
+    $pc_cols = array_column($pdo->query("PRAGMA table_info(promo_codes)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    foreach (['used_by' => 'INTEGER', 'used_at' => "TEXT DEFAULT ''"] as $col => $def) {
+        if (!in_array($col, $pc_cols)) {
+            try { $pdo->exec("ALTER TABLE promo_codes ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
     }
 

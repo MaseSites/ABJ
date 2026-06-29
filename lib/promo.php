@@ -13,17 +13,22 @@ function promo_add_points(int $accountId, int $delta): void {
        ->execute([$delta, $accountId]);
 }
 
-/** Eigene Promo-Codes eines Kontos. */
+/** Eigene Promo-Codes eines Kontos – inkl. „eingelöst von" (Name/E-Mail). */
 function promo_codes_for(int $accountId): array {
-    $stmt = db()->prepare('SELECT * FROM promo_codes WHERE account_id = ? ORDER BY created_at DESC');
+    $stmt = db()->prepare("SELECT pc.*, u.email AS used_email, u.name AS used_name
+        FROM promo_codes pc LEFT JOIN accounts u ON u.id = pc.used_by
+        WHERE pc.account_id = ? ORDER BY pc.created_at DESC");
     $stmt->execute([$accountId]);
     return $stmt->fetchAll();
 }
 
-/** Alle Promo-Codes mit Ersteller (für den Admin). */
+/** Alle Promo-Codes mit Ersteller + Einlöser (für den Admin). */
 function promo_codes_all(): array {
-    return db()->query("SELECT pc.*, a.email AS owner_email, a.name AS owner_name
-        FROM promo_codes pc LEFT JOIN accounts a ON a.id = pc.account_id
+    return db()->query("SELECT pc.*, a.email AS owner_email, a.name AS owner_name,
+            u.email AS used_email, u.name AS used_name
+        FROM promo_codes pc
+        LEFT JOIN accounts a ON a.id = pc.account_id
+        LEFT JOIN accounts u ON u.id = pc.used_by
         ORDER BY pc.created_at DESC")->fetchAll();
 }
 
@@ -55,24 +60,35 @@ function promo_referral_stats(int $accountId): array {
     return ['referrals' => $refCount, 'orders' => $orderCount];
 }
 
-/** Punkte gutschreiben, wenn ein geworbener Kunde bestellt. */
-function promo_award_for_buyer(int $buyerAccountId): void {
+/** Punkte je 100 CHF Bestellwert (einstellbar). */
+function promo_points_per_100(): int {
+    return max(0, (int)(setting_get('promo_points_per_100') ?: 10));
+}
+
+/**
+ * Punkte gutschreiben, wenn ein geworbener Kunde bestellt.
+ * Punkte richten sich nach dem Bestellwert: pro 100 CHF gibt es N Punkte.
+ */
+function promo_award_for_buyer(int $buyerAccountId, int $orderTotalCents): void {
     $stmt = db()->prepare('SELECT referred_by FROM accounts WHERE id = ?');
     $stmt->execute([$buyerAccountId]);
     $row = $stmt->fetch();
     $referrer = (int)($row['referred_by'] ?? 0);
-    if ($referrer > 0 && $referrer !== $buyerAccountId) {
-        $pts = (int)(setting_get('promo_points_per_order') ?: 10);
-        if ($pts > 0) promo_add_points($referrer, $pts);
-    }
+    if ($referrer <= 0 || $referrer === $buyerAccountId || $orderTotalCents <= 0) return;
+    $pts = (int)floor(($orderTotalCents / 10000) * promo_points_per_100());
+    if ($pts > 0) promo_add_points($referrer, $pts);
 }
 
 /** Verfügbare Prämien im Promo-Shop. */
 function promo_rewards(): array {
     return [
-        'ship' => ['label' => 'Gratis Versand', 'cost' => 50,  'type' => 'free_shipping', 'value' => 0,  'desc' => 'Gutschein für kostenlosen Versand bei einer Bestellung.'],
-        'p10'  => ['label' => '10% Rabatt',     'cost' => 80,  'type' => 'percent',       'value' => 10, 'desc' => '10% Rabattcode für eine Bestellung.'],
-        'p20'  => ['label' => '20% Rabatt',     'cost' => 150, 'type' => 'percent',       'value' => 20, 'desc' => '20% Rabattcode für eine Bestellung.'],
+        'ship'  => ['label' => 'Gratis Versand',  'cost' => 50,  'type' => 'free_shipping', 'value' => 0,    'desc' => 'Eine Bestellung versandkostenfrei.', 'icon' => '🚚'],
+        'p5'    => ['label' => '5% Rabatt',        'cost' => 40,  'type' => 'percent',       'value' => 5,    'desc' => '5% auf eine Bestellung.',           'icon' => '%'],
+        'p10'   => ['label' => '10% Rabatt',       'cost' => 80,  'type' => 'percent',       'value' => 10,   'desc' => '10% auf eine Bestellung.',          'icon' => '%'],
+        'p15'   => ['label' => '15% Rabatt',       'cost' => 120, 'type' => 'percent',       'value' => 15,   'desc' => '15% auf eine Bestellung.',          'icon' => '%'],
+        'p20'   => ['label' => '20% Rabatt',       'cost' => 160, 'type' => 'percent',       'value' => 20,   'desc' => '20% auf eine Bestellung.',          'icon' => '%'],
+        'chf10' => ['label' => 'CHF 10 Gutschein', 'cost' => 100, 'type' => 'fixed',        'value' => 1000, 'desc' => 'CHF 10 Rabatt auf eine Bestellung.', 'icon' => '💰'],
+        'chf25' => ['label' => 'CHF 25 Gutschein', 'cost' => 230, 'type' => 'fixed',        'value' => 2500, 'desc' => 'CHF 25 Rabatt auf eine Bestellung.', 'icon' => '💰'],
     ];
 }
 

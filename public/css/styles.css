@@ -1807,26 +1807,47 @@ body.no-scroll { overflow: hidden; }
 
 /* Promo Code Tab */
 .promo-top { display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: stretch; }
-.promo-points-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.2rem 1.6rem; border-radius: var(--radius); background: linear-gradient(135deg, var(--gold), var(--accent-3)); color: #14110a; min-width: 130px; }
-.promo-points-num { font-size: 2.4rem; font-weight: 800; line-height: 1; }
-.promo-points-label { font-size: .74rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-top: .25rem; }
+.promo-points-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.2rem 1.6rem; border-radius: var(--radius); background: linear-gradient(135deg, var(--gold), var(--accent-3)); color: #14110a; min-width: 130px; box-shadow: 0 6px 22px rgba(184,156,103,.22); }
+.promo-points-num { font-size: 2.6rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.promo-points-label { font-size: .74rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-top: .3rem; }
 .promo-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .9rem; }
+.promo-card { padding: 1.2rem 1.3rem; }
 .promo-codes { display: flex; flex-direction: column; gap: .6rem; }
-.promo-code-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem .9rem; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); background: rgba(184,156,103,.05); }
-.promo-code-val { font-weight: 800; letter-spacing: .14em; font-size: 1.05rem; color: var(--accent-3); }
-.promo-shop { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .9rem; }
-.promo-reward { display: flex; flex-direction: column; gap: .5rem; padding: 1.1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--elev); }
-.promo-reward.is-locked { opacity: .6; }
-.promo-reward-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
-.promo-reward-label { font-weight: 700; }
-.promo-reward-cost { font-size: .78rem; font-weight: 700; color: var(--accent-3); background: rgba(184,156,103,.12); padding: .2em .6em; border-radius: 999px; white-space: nowrap; }
-.promo-reward-desc { margin: 0; font-size: .84rem; color: var(--ink-soft); flex: 1; }
-.promo-reward .btn-block { width: 100%; }
+.promo-code-row { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .75rem .9rem; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); background: rgba(184,156,103,.05); }
+.promo-code-row.is-used { border-style: solid; background: rgba(127,127,127,.06); opacity: .85; }
+.promo-code-main { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.promo-code-val { font-weight: 800; letter-spacing: .14em; font-size: 1.1rem; color: var(--accent-3); }
+.promo-code-row.is-used .promo-code-val { color: var(--ink-soft); text-decoration: line-through; }
+.promo-code-status { font-size: .74rem; font-weight: 600; }
+.promo-code-status.free { color: #4a8f5b; }
+.promo-code-status.used { color: var(--ink-soft); }
+.promo-code-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+.promo-code-check { font-size: 1.2rem; color: #4a8f5b; flex-shrink: 0; }
+.promo-shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .8rem; }
+.promo-reward { display: flex; flex-direction: column; gap: .45rem; padding: 1.1rem 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--elev); transition: border-color .15s, transform .15s; }
+.promo-reward:not(.is-locked):hover { border-color: var(--accent-3); transform: translateY(-2px); }
+.promo-reward.is-locked { opacity: .55; }
+.promo-reward-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: rgba(184,156,103,.12); font-size: 1.15rem; }
+.promo-reward-label { font-weight: 700; font-size: .98rem; }
+.promo-reward-desc { margin: 0; font-size: .82rem; color: var(--ink-soft); flex: 1; }
+.promo-reward-foot { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .3rem; }
+.promo-reward-cost { font-size: .8rem; font-weight: 800; color: var(--accent-3); background: rgba(184,156,103,.12); padding: .25em .65em; border-radius: 999px; white-space: nowrap; }
 .table-card-light { border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.2rem; }
 .promo-voucher { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .55rem 0; border-bottom: 1px solid var(--line); }
 .promo-voucher:last-of-type { border-bottom: none; }
 .promo-voucher-code { font-weight: 800; letter-spacing: .1em; color: var(--accent-3); background: rgba(184,156,103,.1); padding: .25em .7em; border-radius: 6px; }
-@media (max-width: 560px) { .promo-top { grid-template-columns: 1fr; } .promo-stats { grid-template-columns: repeat(3, 1fr); gap: .5rem; } }
+@media (max-width: 620px) {
+  .promo-top { grid-template-columns: 1fr; }
+  .promo-points-card { flex-direction: row; gap: .6rem; padding: 1rem 1.2rem; min-width: 0; }
+  .promo-points-num { font-size: 2rem; }
+  .promo-points-label { margin-top: 0; }
+  .promo-stats { gap: .5rem; }
+  .promo-shop { grid-template-columns: repeat(2, 1fr); }
+  .promo-code-row { flex-wrap: wrap; }
+  .promo-code-actions { width: 100%; }
+  .promo-code-actions .btn { flex: 1; }
+}
+@media (max-width: 380px) { .promo-shop { grid-template-columns: 1fr; } }
 .acc-card h3 { margin: 0; font-size: 1rem; }
 .acc-card input:disabled { opacity: .55; cursor: not-allowed; }
 

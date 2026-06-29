@@ -47,6 +47,18 @@ function code_delete(string $code): void {
     db()->prepare("DELETE FROM promo_codes WHERE upper(code) = upper(?)")->execute([trim($code)]);
 }
 
+/** Ist der Code noch frei (einmal verwendbar, noch nicht eingelöst)? */
+function code_is_usable(?array $row): bool {
+    return $row !== null && empty($row['used_by']);
+}
+
+/** Markiert einen Code als verwendet (durch Konto $userId). Nur falls noch frei. */
+function code_mark_used(string $code, int $userId): void {
+    db()->prepare("UPDATE promo_codes SET used_by = ?, used_at = datetime('now')
+                   WHERE upper(code) = upper(?) AND used_by IS NULL")
+       ->execute([$userId, trim($code)]);
+}
+
 function accounts_count(): int {
     return (int)db()->query('SELECT COUNT(*) AS n FROM accounts')->fetch()['n'];
 }

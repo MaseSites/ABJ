@@ -54,8 +54,8 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
   <h2>Sicherheitsmodus</h2>
   <p style="font-size:.84rem;color:#8a8a95;margin:0 0 1rem">
     Ist der Modus <strong>an</strong>, sehen Besucher statt des Shops eine neutrale Tarnseite („Belegassistent").
-    Nur wer dort im Feld <strong>„Belegnummer"</strong> seinen <strong>persönlichen Zugangscode</strong> eingibt, wird
-    automatisch in sein Konto eingeloggt und gelangt auf den echten Shop. Jeder Code gehört zu genau einem Kunden.
+    Nur wer dort im Feld <strong>„Belegnummer"</strong> einen gültigen <strong>Zugangscode</strong> eingibt, kann sich
+    registrieren/anmelden und gelangt auf den echten Shop. Jeder Code ist <strong>einmal verwendbar</strong>.
     Der Admin-Bereich ist nie betroffen.
   </p>
   <form method="post">
@@ -78,24 +78,31 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
     <form method="post"><input type="hidden" name="action" value="gen_code"><button class="btn btn-primary btn-sm" type="submit">+ Code generieren</button></form>
   </div>
   <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">
-    Ein Code bringt jemanden in den Shop (Sicherheitsmodus). Codes können <strong>du selbst</strong> generieren
-    oder <strong>Kunden in ihrem Profil</strong> (Promo-Code). Wer sich mit dem Code eines Kunden neu registriert,
-    wird dessen Empfehlung — der Kunde bekommt dann Promo-Punkte.
+    Ein Code bringt eine Person in den Shop (Sicherheitsmodus) und ist <strong>einmal verwendbar</strong>.
+    Codes erstellst <strong>du selbst</strong> oder <strong>Kunden in ihrem Profil</strong> (Promo-Code). Wer sich mit
+    dem Code eines Kunden neu registriert, wird dessen Empfehlung — der Kunde bekommt dann Promo-Punkte pro Bestellung.
   </p>
   <?php if (empty($codes)): ?>
     <p class="muted">Noch keine Codes. Klicke auf „Code generieren" — oder Kunden generieren eigene.</p>
   <?php else: ?>
   <div class="table-card"><table class="data-table">
-    <thead><tr><th>Code</th><th>Erstellt von</th><th>Erstellt</th><th></th></tr></thead>
+    <thead><tr><th>Code</th><th>Erstellt von</th><th>Status</th><th>Erstellt</th><th></th></tr></thead>
     <tbody>
-      <?php foreach ($codes as $cd): $owner = (int)($cd['account_id'] ?? 0); ?>
-      <tr>
+      <?php foreach ($codes as $cd): $owner = (int)($cd['account_id'] ?? 0); $used = !empty($cd['used_by']); ?>
+      <tr<?= $used ? ' style="opacity:.7"' : '' ?>>
         <td><strong style="font-variant-numeric:tabular-nums;letter-spacing:.12em;font-size:1rem"><?= h($cd['code']) ?></strong></td>
         <td>
           <?php if ($owner > 0): ?>
             <span class="tag tag-ok">Kunde</span> <?= h($cd['owner_name'] ?: '') ?> <span class="muted"><?= h($cd['owner_email'] ?: ('#' . $owner)) ?></span>
           <?php else: ?>
             <span class="tag">Admin</span>
+          <?php endif; ?>
+        </td>
+        <td>
+          <?php if ($used): ?>
+            <span class="tag">verwendet</span> <span class="muted"><?= h(($cd['used_name'] ?? '') ?: ($cd['used_email'] ?? '')) ?></span>
+          <?php else: ?>
+            <span class="tag tag-ok">frei</span>
           <?php endif; ?>
         </td>
         <td class="muted"><?= h(substr($cd['created_at'], 0, 16)) ?></td>

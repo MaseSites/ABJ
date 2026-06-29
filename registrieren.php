@@ -16,8 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $promo = trim($_POST['promo'] ?? '');
     $res = account_create($email, $password, $name);
     if ($res['ok']) {
-        // Promo-/Empfehlungscode verknüpfen (optional)
-        if ($promo !== '') {
+        // Promo-/Empfehlungscode verknüpfen (optional, einmalig verwendbar)
+        if ($promo !== '' && code_is_usable(code_find($promo))) {
+            code_mark_used($promo, (int)$res['id']);
             $owner = promo_owner_of_code($promo);
             if ($owner) account_set_referrer((int)$res['id'], $owner);
         }

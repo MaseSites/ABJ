@@ -101,6 +101,7 @@ $promoCodes    = promo_codes_for((int)$cust['id']);
 $promoStats    = promo_referral_stats((int)$cust['id']);
 $promoRewards  = promo_rewards();
 $promoRedeemed = promo_redemptions_for((int)$cust['id']);
+$promoPer100   = promo_points_per_100();
 $siteBase = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
 
 $firstName = trim(explode(' ', $cust['name'] ?? '')[0] ?? '');
@@ -280,7 +281,7 @@ function ko_render_order(array $o, string $currency): void {
       <section class="acc-panel<?= $activeTab === 'promo' ? ' active' : '' ?>" data-panel="promo">
         <div class="acc-panel-head">
           <h1>Promo Code</h1>
-          <p class="muted">Teile deinen Code mit Freunden. Für <strong>jede Bestellung</strong>, die jemand macht, der sich mit deinem Code registriert hat, bekommst du Punkte — und löst sie im Promo Shop ein.</p>
+          <p class="muted">Gib einem Freund einen Code. Sobald er sich damit registriert, ist der Code <strong>aufgebraucht</strong> — für den nächsten Freund generierst du einfach einen neuen. Für <strong>jede Bestellung</strong> deiner geworbenen Freunde bekommst du Punkte: <strong><?= (int)$promoPer100 ?> Punkte je 100&nbsp;CHF</strong> Bestellwert. Punkte löst du unten im Promo Shop ein.</p>
         </div>
 
         <?php if ($promoFlash): ?><div class="alert alert-<?= str_starts_with($promoFlash, 'Eingelöst') ? 'ok' : 'error' ?>" style="margin-bottom:1.2rem"><?= h($promoFlash) ?></div><?php endif; ?>
@@ -291,25 +292,42 @@ function ko_render_order(array $o, string $currency): void {
             <span class="promo-points-label">Promo Punkte</span>
           </div>
           <div class="promo-stats">
-            <div class="acc-stat"><strong><?= (int)$promoStats['referrals'] ?></strong><span>Geworbene Kunden</span></div>
+            <div class="acc-stat"><strong><?= (int)$promoStats['referrals'] ?></strong><span>Geworbene Freunde</span></div>
             <div class="acc-stat"><strong><?= (int)$promoStats['orders'] ?></strong><span>Ihre Bestellungen</span></div>
-            <div class="acc-stat"><strong>+<?= (int)(setting_get('promo_points_per_order') ?: 10) ?></strong><span>Punkte / Bestellung</span></div>
+            <div class="acc-stat"><strong><?= (int)$promoPer100 ?></strong><span>Punkte / 100 CHF</span></div>
           </div>
         </div>
 
-        <div class="acc-card" style="margin-top:1.4rem">
-          <div class="acc-section-head" style="margin-bottom:.8rem">
+        <div class="acc-card promo-card" style="margin-top:1.4rem">
+          <div class="acc-section-head" style="margin-bottom:.9rem">
             <h3 style="margin:0">Deine Codes</h3>
-            <form method="post" action="<?= url('/konto.php') ?>"><input type="hidden" name="action" value="promo_gen"><button class="btn btn-line btn-sm" type="submit">+ Code generieren</button></form>
+            <form method="post" action="<?= url('/konto.php') ?>"><input type="hidden" name="action" value="promo_gen"><button class="btn btn-primary btn-sm" type="submit">+ Neuen Code</button></form>
           </div>
           <?php if (empty($promoCodes)): ?>
-            <p class="muted" style="margin:0">Du hast noch keinen Code. Generiere einen und teile ihn!</p>
+            <p class="muted" style="margin:0">Du hast noch keinen Code. Generiere einen und teile ihn mit einem Freund!</p>
           <?php else: ?>
             <div class="promo-codes">
-              <?php foreach ($promoCodes as $pc): $shareUrl = $siteBase . url('/registrieren.php?promo=' . urlencode($pc['code'])); ?>
-              <div class="promo-code-row">
-                <span class="promo-code-val" data-copy="<?= h($pc['code']) ?>"><?= h($pc['code']) ?></span>
-                <button type="button" class="btn btn-ghost btn-sm" data-copy-btn="<?= h($shareUrl) ?>">Link kopieren</button>
+              <?php foreach ($promoCodes as $pc):
+                $used = !empty($pc['used_by']);
+                $who  = trim((string)($pc['used_name'] ?? '')) ?: ($pc['used_email'] ?? '');
+                $shareUrl = $siteBase . url('/registrieren.php?promo=' . urlencode($pc['code'])); ?>
+              <div class="promo-code-row<?= $used ? ' is-used' : '' ?>">
+                <div class="promo-code-main">
+                  <span class="promo-code-val"<?= $used ? '' : ' data-copy="' . h($pc['code']) . '"' ?>><?= h($pc['code']) ?></span>
+                  <?php if ($used): ?>
+                    <span class="promo-code-status used">Eingelöst<?= $who ? ' von ' . h($who) : '' ?></span>
+                  <?php else: ?>
+                    <span class="promo-code-status free">Frei · einmal verwendbar</span>
+                  <?php endif; ?>
+                </div>
+                <?php if ($used): ?>
+                  <span class="promo-code-check" aria-hidden="true">✓</span>
+                <?php else: ?>
+                  <div class="promo-code-actions">
+                    <button type="button" class="btn btn-ghost btn-sm" data-copy-btn="<?= h($pc['code']) ?>">Code</button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-copy-btn="<?= h($shareUrl) ?>">Link</button>
+                  </div>
+                <?php endif; ?>
               </div>
               <?php endforeach; ?>
             </div>
@@ -320,16 +338,17 @@ function ko_render_order(array $o, string $currency): void {
         <div class="promo-shop">
           <?php foreach ($promoRewards as $key => $r): $can = $promoPoints >= $r['cost']; ?>
           <div class="promo-reward<?= $can ? '' : ' is-locked' ?>">
-            <div class="promo-reward-top">
-              <span class="promo-reward-label"><?= h($r['label']) ?></span>
-              <span class="promo-reward-cost"><?= (int)$r['cost'] ?> Pkt.</span>
-            </div>
+            <div class="promo-reward-icon"><?= h($r['icon'] ?? '★') ?></div>
+            <span class="promo-reward-label"><?= h($r['label']) ?></span>
             <p class="promo-reward-desc"><?= h($r['desc']) ?></p>
-            <form method="post" action="<?= url('/konto.php') ?>" onsubmit="return confirm('<?= (int)$r['cost'] ?> Punkte für „<?= h($r['label']) ?>" einlösen?')">
-              <input type="hidden" name="action" value="promo_redeem">
-              <input type="hidden" name="reward" value="<?= h($key) ?>">
-              <button class="btn btn-primary btn-sm btn-block" type="submit"<?= $can ? '' : ' disabled' ?>><?= $can ? 'Einlösen' : 'Zu wenig Punkte' ?></button>
-            </form>
+            <div class="promo-reward-foot">
+              <span class="promo-reward-cost"><?= (int)$r['cost'] ?> Pkt.</span>
+              <form method="post" action="<?= url('/konto.php') ?>" onsubmit="return confirm('<?= (int)$r['cost'] ?> Punkte für „<?= h($r['label']) ?>" einlösen?')">
+                <input type="hidden" name="action" value="promo_redeem">
+                <input type="hidden" name="reward" value="<?= h($key) ?>">
+                <button class="btn btn-primary btn-sm" type="submit"<?= $can ? '' : ' disabled' ?>><?= $can ? 'Einlösen' : 'Zu wenig' ?></button>
+              </form>
+            </div>
           </div>
           <?php endforeach; ?>
         </div>
@@ -340,7 +359,7 @@ function ko_render_order(array $o, string $currency): void {
           <?php foreach ($promoRedeemed as $rd): ?>
           <div class="promo-voucher">
             <div><strong><?= h($rd['reward']) ?></strong><span class="muted" style="margin-left:.6rem;font-size:.82rem"><?= h(substr($rd['created_at'],0,10)) ?></span></div>
-            <code class="promo-voucher-code"><?= h($rd['code']) ?></code>
+            <code class="promo-voucher-code" data-copy="<?= h($rd['code']) ?>"><?= h($rd['code']) ?></code>
           </div>
           <?php endforeach; ?>
           <p class="muted" style="font-size:.8rem;margin:.6rem 0 0">Diese Codes gibst du beim Checkout im Feld „Rabattcode" ein.</p>

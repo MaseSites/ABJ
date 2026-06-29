@@ -64,8 +64,8 @@ include __DIR__ . '/partials/header.php';
           <h1 class="hero-title">Premium Style<br>zum <em>besten Preis.</em></h1>
           <p class="hero-sub"><?= h($heroSubtitle) ?></p>
           <div class="hero-actions">
-            <a href="<?= url('/shop.php?sale=1') ?>" class="btn btn-gold">Zum Sale</a>
-            <a href="<?= url('/shop.php') ?>" class="btn btn-line">Alle Produkte</a>
+            <a href="<?= url('/shop.php?sale=1') ?>" class="btn btn-gold-line">Zum Sale</a>
+            <a href="<?= url('/shop.php') ?>" class="btn btn-gold">Alle Produkte</a>
           </div>
           <div class="hero-rating">
             <span class="stars" aria-hidden="true">★★★★★</span>

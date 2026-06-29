@@ -58,12 +58,14 @@ include __DIR__ . '/partials/header.php';
   <?php endif; ?>
 
   <div class="shop-toolbar">
-    <div class="chip-row">
-      <a class="chip<?= (!$category && !$sale) ? ' active' : '' ?>" href="<?= url('/shop.php' . shop_qs(['category' => null, 'sale' => null, 'page' => null])) ?>">Alle</a>
-      <a class="chip<?= $sale ? ' active' : '' ?>" href="<?= url('/shop.php' . shop_qs(['sale' => 1, 'category' => null])) ?>">Sale&nbsp;%</a>
-      <?php foreach ($categories as $c): ?>
-        <a class="chip<?= $category === $c ? ' active' : '' ?>" href="<?= url('/shop.php' . shop_qs(['category' => $c, 'sale' => null])) ?>"><?= h($c) ?></a>
-      <?php endforeach; ?>
+    <div class="shop-filter">
+      <label class="sort-label" for="cat">Kategorie</label>
+      <select id="cat" class="shop-select" onchange="if(this.value)window.location.href=this.value">
+        <option value="<?= h(url('/shop.php' . shop_qs(['category' => null, 'sale' => null, 'page' => null]))) ?>"<?= !$category ? ' selected' : '' ?>>Alle Kategorien</option>
+        <?php foreach ($categories as $c): ?>
+          <option value="<?= h(url('/shop.php' . shop_qs(['category' => $c, 'sale' => null, 'page' => null]))) ?>"<?= $category === $c ? ' selected' : '' ?>><?= h($c) ?></option>
+        <?php endforeach; ?>
+      </select>
     </div>
     <form class="sort-form" method="get" action="<?= url('/shop.php') ?>">
       <?php if ($q): ?><input type="hidden" name="q" value="<?= h($q) ?>"><?php endif; ?>

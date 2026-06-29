@@ -27,7 +27,6 @@ $announcement = setting_get('announcement') ?: '';
     <nav class="main-nav" aria-label="Hauptnavigation">
       <a href="<?= url('/') ?>"                  <?= $currentPath === '/'                  ? 'class="active"' : '' ?>>Start</a>
       <a href="<?= url('/shop.php') ?>"          <?= str_starts_with($currentPath, '/shop') ? 'class="active"' : '' ?>>Shop</a>
-      <a href="<?= url('/shop.php?sale=1') ?>" class="nav-sale<?= ($currentPath === '/shop' && !empty($_GET['sale'])) ? ' active' : '' ?>">Sale</a>
       <a href="<?= url('/kontakt.php') ?>"       <?= $currentPath === '/kontakt'           ? 'class="active"' : '' ?>>Kontakt</a>
     </nav>
 
@@ -78,7 +77,6 @@ $announcement = setting_get('announcement') ?: '';
 <div class="mobile-menu" data-mobile-menu hidden>
   <a href="<?= url('/') ?>">Start</a>
   <a href="<?= url('/shop.php') ?>">Shop</a>
-  <a href="<?= url('/shop.php?sale=1') ?>">Sale</a>
   <a href="<?= url('/kontakt.php') ?>">Kontakt</a>
   <a href="<?= url('/wunschliste.php') ?>">Wunschliste</a>
   <?php if (is_customer()): ?>

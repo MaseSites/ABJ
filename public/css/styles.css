@@ -163,6 +163,12 @@ h1, h2, h3, h4 {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 14px -6px rgba(184,156,103,.5);
 }
 .btn-gold:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-gold-line {
+  background: transparent;
+  border-color: var(--accent-3);
+  color: var(--accent-3);
+}
+.btn-gold-line:hover { background: rgba(184,156,103,.1); border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
 .btn-line {
   background: rgba(255,255,255,.03);
   border-color: var(--line-strong);
@@ -1548,10 +1554,10 @@ body.no-scroll { overflow: hidden; }
 
 /* Shop toolbar */
 .shop-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.6rem; }
-.sort-form { display: flex; align-items: center; gap: .5rem; }
+.sort-form, .shop-filter { display: flex; align-items: center; gap: .5rem; }
 .sort-label { font-size: .76rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
-.sort-form select { padding: .5em 2em .5em .9em; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--elev); color: var(--ink); font: inherit; cursor: pointer; color-scheme: dark; font-size: .85rem; }
-.sort-form select:focus { outline: none; border-color: rgba(255,255,255,.3); }
+.sort-form select, .shop-select { padding: .5em 2em .5em .9em; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--elev); color: var(--ink); font: inherit; cursor: pointer; color-scheme: dark; font-size: .85rem; }
+.sort-form select:focus, .shop-select:focus { outline: none; border-color: rgba(255,255,255,.3); }
 .result-info { margin-bottom: 1.2rem; }
 .result-info a { color: var(--accent-3); }
 

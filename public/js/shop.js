@@ -674,4 +674,29 @@
     const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='750'><rect width='600' height='750' fill='%2316161a'/><text x='300' y='430' font-size='300' font-weight='800' fill='%23a5b4fc' text-anchor='middle' font-family='Arial'>" + n + "</text></svg>";
     return 'data:image/svg+xml,' + encodeURIComponent(svg).replace(/%23/g, '#');
   }
+
+  /* ---------------- Horizontale Scroller mit Pfeilen ---------------- */
+  $$('[data-rail]').forEach((rail) => {
+    const track = $('[data-rail-track]', rail);
+    const prev  = $('[data-rail-prev]', rail);
+    const next  = $('[data-rail-next]', rail);
+    if (!track) return;
+
+    function step() {
+      const card = track.querySelector('.collection-card, *');
+      const cardW = card ? card.getBoundingClientRect().width : track.clientWidth * 0.8;
+      return Math.max(cardW + 16, track.clientWidth * 0.8);
+    }
+    function update() {
+      const max = track.scrollWidth - track.clientWidth - 2;
+      const overflow = track.scrollWidth > track.clientWidth + 4;
+      if (prev) prev.hidden = !overflow || track.scrollLeft <= 2;
+      if (next) next.hidden = !overflow || track.scrollLeft >= max;
+    }
+    if (prev) prev.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
+    if (next) next.addEventListener('click', () => track.scrollBy({ left:  step(), behavior: 'smooth' }));
+    track.addEventListener('scroll', () => window.requestAnimationFrame(update), { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  });
 })();

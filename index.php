@@ -128,14 +128,22 @@ include __DIR__ . '/partials/header.php';
       <h2 class="section-title">Nach Kategorie shoppen</h2>
       <a class="link-arrow" href="<?= url('/shop.php') ?>">Alle ansehen <span aria-hidden="true">&rarr;</span></a>
     </div>
-    <div class="collection-grid">
-      <?php foreach ($catTiles as $tile): ?>
-      <a class="collection-card" href="<?= url('/shop.php?category=' . urlencode($tile['name'])) ?>">
-        <?php if ($tile['image']): ?><img src="<?= h($tile['image']) ?>" alt="" loading="lazy"><?php endif; ?>
-        <span class="collection-name"><?= h($tile['name']) ?></span>
-        <span class="collection-go"><?= (int)$tile['count'] ?> Artikel <span aria-hidden="true">&rarr;</span></span>
-      </a>
-      <?php endforeach; ?>
+    <div class="collection-rail" data-rail>
+      <button class="rail-btn rail-prev" type="button" data-rail-prev aria-label="Zurück" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="collection-track" data-rail-track>
+        <?php foreach ($catTiles as $tile): ?>
+        <a class="collection-card" href="<?= url('/shop.php?category=' . urlencode($tile['name'])) ?>">
+          <?php if ($tile['image']): ?><img src="<?= h($tile['image']) ?>" alt="" loading="lazy"><?php endif; ?>
+          <span class="collection-name"><?= h($tile['name']) ?></span>
+          <span class="collection-go"><?= (int)$tile['count'] ?> Artikel <span aria-hidden="true">&rarr;</span></span>
+        </a>
+        <?php endforeach; ?>
+      </div>
+      <button class="rail-btn rail-next" type="button" data-rail-next aria-label="Weiter" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
     </div>
   </section>
   <?php endif; ?>

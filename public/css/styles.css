@@ -519,11 +519,49 @@ h1, h2, h3, h4 {
 /* ================================================================
    KATEGORIE-KACHELN
    ================================================================ */
-.collection-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+/* Horizontaler Kategorie-Scroller (Pfeile auf Desktop, Wischen am Handy) */
+.collection-rail { position: relative; }
+.collection-track {
+  display: flex;
   gap: .9rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: .2rem .1rem .5rem;
+  margin: -.2rem -.1rem 0;
 }
+.collection-track::-webkit-scrollbar { display: none; }
+.collection-rail .collection-card {
+  flex: 0 0 auto;
+  width: clamp(220px, 31%, 320px);
+  scroll-snap-align: start;
+}
+.rail-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  background: rgba(18,18,22,.82);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  transition: background .18s, opacity .18s, transform .18s;
+}
+.rail-btn svg { width: 20px; height: 20px; }
+.rail-btn:hover { background: var(--accent); border-color: var(--accent); }
+.rail-prev { left: -10px; }
+.rail-next { right: -10px; }
+.rail-btn[hidden] { display: none; }
 .collection-card {
   position: relative;
   aspect-ratio: 4/3;
@@ -1728,9 +1766,10 @@ body.no-scroll { overflow: hidden; }
   .cart-summary { flex-direction: column; align-items: stretch; }
   .cart-summary .btn { width: 100%; }
   .cart-total { margin-left: 0; justify-content: space-between; width: 100%; }
-  .collection-grid { grid-template-columns: 1fr 1fr; }
-  .collection-card { aspect-ratio: 1/1; padding: .9rem 1rem; }
-  .collection-name { font-size: .95rem; }
+  .rail-btn { display: none; } /* am Handy per Wischen scrollen */
+  .collection-rail .collection-card { width: 72vw; max-width: 280px; }
+  .collection-card { aspect-ratio: 4/3; padding: .9rem 1rem; }
+  .collection-name { font-size: 1rem; }
   .hero-cd-card { padding: 1rem 1.1rem 1.1rem; }
   .pagination { flex-wrap: wrap; }
   .drawer-panel { width: 100%; }

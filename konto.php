@@ -78,6 +78,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     redirect('/konto.php?tab=inbox&deleted=1');
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'decline_offer') {
+    $messageId = (int)($_POST['message_id'] ?? 0);
+    $reason    = trim($_POST['reason'] ?? '');
+    $offer     = $messageId > 0 ? account_message_by_id((int)$cust['id'], $messageId) : null;
+    if ($offer) {
+        $ref = trim((string)($offer['order_reference'] ?? ''));
+        message_create([
+            'name'    => $cust['name'] ?: 'Kunde',
+            'email'   => $cust['email'] ?? '',
+            'subject' => 'Angebot abgelehnt' . ($ref !== '' ? ' (' . $ref . ')' : ''),
+            'message' => 'Der Kunde hat das Angebot zu seiner Produktanfrage abgelehnt.'
+                . "\n\nBetreff: " . ($offer['subject'] ?: 'Anfrage')
+                . "\n\nBegründung:\n" . ($reason !== '' ? $reason : '(Keine Begründung angegeben.)'),
+        ]);
+        account_message_delete((int)$cust['id'], $messageId);
+    }
+    redirect('/konto.php?tab=inbox&declined=1');
+}
+
 // ── Promo: Code generieren / Prämie einlösen ──
 $promoFlash = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'promo_gen') {
@@ -310,6 +329,7 @@ function ko_render_order(array $o, string $currency): void {
           <p class="muted">Alle Nachrichten zu deinem Konto und deinen Bestellungen an einem Ort.</p>
         </div>
         <?php if (!empty($_GET['deleted'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Nachricht gelöscht.</div><?php endif; ?>
+        <?php if (!empty($_GET['declined'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Danke für deine Rückmeldung – wir haben sie erhalten.</div><?php endif; ?>
         <?php if (empty($inbox)): ?>
           <div class="cart-empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="52" height="52"><path d="M21 15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6h18v9z"/><path d="M3 8l9 6 9-6"/></svg>
@@ -332,10 +352,11 @@ function ko_render_order(array $o, string $currency): void {
                 <div class="acc-order-items">
                   <span class="acc-order-item" style="white-space:pre-line"><?= h($msg['body']) ?></span>
                 </div>
+                <?php $isOffer = !empty($msg['message_type']) && $msg['message_type'] === 'request_offer'; ?>
                 <div class="acc-order-actions" style="margin-top:.8rem">
-                  <?php if (!empty($msg['message_type']) && $msg['message_type'] === 'request_offer'): ?>
+                  <?php if ($isOffer): ?>
                     <?php if (!empty($msg['action_url'])): ?><a class="btn btn-primary btn-sm" href="<?= h($msg['action_url']) ?>"><?= h($msg['action_label'] ?: 'Dem Warenkorb hinzufügen') ?></a><?php endif; ?>
-                    <?php if (!empty($msg['decline_url'])): ?><a class="btn btn-danger btn-sm" href="<?= h($msg['decline_url']) ?>"><?= h($msg['decline_label'] ?: 'Kein Interesse') ?></a><?php endif; ?>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="var f=document.getElementById('decline-<?= (int)$msg['id'] ?>');f.style.display=f.style.display==='block'?'none':'block';"><?= h($msg['decline_label'] ?: 'Kein Interesse') ?></button>
                   <?php endif; ?>
                   <form method="post" action="<?= url('/konto.php') ?>" onsubmit="return confirm('Nachricht wirklich löschen?')" style="margin:0">
                     <input type="hidden" name="action" value="delete_inbox_message">
@@ -343,6 +364,14 @@ function ko_render_order(array $o, string $currency): void {
                     <button class="btn btn-ghost btn-sm" type="submit">Löschen</button>
                   </form>
                 </div>
+                <?php if ($isOffer): ?>
+                <form method="post" action="<?= url('/konto.php') ?>" id="decline-<?= (int)$msg['id'] ?>" style="display:none;margin-top:.8rem">
+                  <input type="hidden" name="action" value="decline_offer">
+                  <input type="hidden" name="message_id" value="<?= (int)$msg['id'] ?>">
+                  <label class="field" style="margin:0"><span>Warum kein Interesse? (optional)</span><textarea name="reason" rows="3" placeholder="Deine kurze Begründung hilft uns weiter."></textarea></label>
+                  <button class="btn btn-danger btn-sm" type="submit" style="margin-top:.5rem">Ablehnung absenden</button>
+                </form>
+                <?php endif; ?>
               </article>
             <?php endforeach; ?>
           </div>

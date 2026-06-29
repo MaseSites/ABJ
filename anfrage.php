@@ -49,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         account_message_create([
             'account_id' => (int)$cust['id'],
             'sender_role' => 'system',
-            'subject' => 'Produktanfrage erhalten',
-            'body' => 'Deine Anfrage wurde gespeichert. Wir prüfen sie und melden uns in deiner Inbox.',
+            'subject' => 'Wir haben deine Anfrage erhalten',
+            'body' => 'Danke für deine Produktanfrage! Wir schauen sie uns genau an und melden uns so schnell wie möglich hier in deinem Posteingang. 😊',
             'is_read' => 0,
         ]);
         redirect('/konto.php?tab=inbox&request=' . $requestId);

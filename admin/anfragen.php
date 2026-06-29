@@ -19,8 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             account_message_create([
                 'account_id' => (int)$req['account_id'],
                 'sender_role' => 'system',
-                'subject' => 'Anfrage angenommen',
-                'body' => trim(($note !== '' ? $note . "\n\n" : '') . 'Preis: ' . number_format($price / 100, 2, '.', '') . ' CHF'),
+                'subject' => 'Gute Nachricht zu deiner Anfrage 🎉',
+                'body' => trim('Wir können deine Anfrage erfüllen!' . ($note !== '' ? "\n\n" . $note : '') . "\n\nPreis: " . number_format($price / 100, 2, '.', '') . ' CHF.' . "\n\nKlicke unten, um das Produkt direkt in deinen Warenkorb zu legen."),
                 'is_read' => 0,
                 'message_type' => 'request_offer',
                 'action_url' => url('/shop.php'),
@@ -33,8 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             account_message_create([
                 'account_id' => (int)$req['account_id'],
                 'sender_role' => 'system',
-                'subject' => 'Anfrage abgelehnt',
-                'body' => $note !== '' ? $note : 'Leider können wir diese Anfrage nicht annehmen.',
+                'subject' => 'Rückmeldung zu deiner Anfrage',
+                'body' => $note !== '' ? $note : 'Leider können wir diese Anfrage diesmal nicht erfüllen. Danke für dein Verständnis – schau gerne wieder bei uns vorbei!',
                 'is_read' => 0,
             ]);
         }

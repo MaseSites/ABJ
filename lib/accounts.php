@@ -92,8 +92,8 @@ function account_create(string $email, string $password, string $name): array {
     account_message_create([
         'account_id' => $id,
         'sender_role' => 'system',
-        'subject' => 'Willkommen',
-        'body' => 'Dein Konto wurde erfolgreich erstellt.',
+        'subject' => 'Herzlich willkommen bei ABJ 🎉',
+        'body' => "Schön, dass du da bist! Dein Konto ist startklar.\n\nStöbere in Ruhe durch unsere Produkte – und falls du etwas Bestimmtes suchst, das du nicht findest, stell einfach eine Produktanfrage. Wir freuen uns auf dich!",
         'is_read' => 0,
     ]);
     return ['ok' => true, 'id' => $id];
@@ -137,15 +137,6 @@ function customer_login(int $id, string $email, string $name): void {
     session_start_once();
     try { session_regenerate_id(true); } catch (\Throwable $e) {}
     $_SESSION['customer'] = ['id' => $id, 'email' => $email, 'name' => $name];
-    try {
-        account_message_create([
-            'account_id' => $id,
-            'sender_role' => 'system',
-            'subject' => 'Anmeldung',
-            'body' => 'Du hast dich erfolgreich angemeldet.',
-            'is_read' => 0,
-        ]);
-    } catch (\Throwable $e) {}
     session_write_close();
 }
 

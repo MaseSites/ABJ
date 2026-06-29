@@ -20,8 +20,8 @@ function order_create(array $data): string {
             'account_id' => (int)$acc['id'],
             'order_reference' => $reference,
             'sender_role' => 'system',
-            'subject' => 'Bestellung eingegangen',
-            'body' => 'Deine Bestellung ' . $reference . ' wurde erfolgreich erfasst.',
+            'subject' => 'Danke für deine Bestellung! 🎉',
+            'body' => 'Vielen Dank für deine Bestellung ' . $reference . "!\n\nWir haben sie erhalten und kümmern uns sofort darum. Sobald sich etwas tut, melden wir uns hier in deinem Posteingang – versprochen.",
             'is_read' => 0,
         ]);
     }
@@ -118,8 +118,8 @@ function order_update_status(string $ref, string $status, string $paymentStatus,
                         'account_id' => (int)$acc['id'],
                         'order_reference' => $ref,
                         'sender_role' => 'system',
-                        'subject' => 'Bestell-Update',
-                        'body' => implode("\n", $notes),
+                        'subject' => 'Update zu deiner Bestellung',
+                        'body' => 'Es gibt Neuigkeiten zu deiner Bestellung ' . $ref . ":\n\n" . implode("\n", $notes) . "\n\nDanke für deine Geduld!",
                         'is_read' => 0,
                     ]);
                 }
@@ -191,8 +191,8 @@ function order_merge(string $targetRef, string $sourceRef): bool {
             'account_id' => (int)$acc['id'],
             'order_reference' => $target['reference'],
             'sender_role' => 'system',
-            'subject' => 'Bestellungen zusammengeführt',
-            'body' => 'Die Bestellungen ' . $target['reference'] . ' und ' . $source['reference'] . ' wurden zusammengeführt.',
+            'subject' => 'Deine Bestellungen wurden zusammengelegt',
+            'body' => 'Gute Nachricht: Wir haben deine Bestellungen ' . $target['reference'] . ' und ' . $source['reference'] . ' zu einer zusammengefasst – so sparst du beim Versand. 😊',
             'is_read' => 0,
         ]);
     }

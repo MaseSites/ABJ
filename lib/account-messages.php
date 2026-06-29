@@ -35,6 +35,13 @@ function account_messages_mark_read(int $accountId): void {
     db()->prepare('UPDATE account_messages SET is_read=1 WHERE account_id=?')->execute([$accountId]);
 }
 
+function account_message_by_id(int $accountId, int $messageId): ?array {
+    $stmt = db()->prepare('SELECT * FROM account_messages WHERE account_id = ? AND id = ? LIMIT 1');
+    $stmt->execute([$accountId, $messageId]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
 function account_message_delete(int $accountId, int $messageId): bool {
     $stmt = db()->prepare('DELETE FROM account_messages WHERE account_id = ? AND id = ?');
     $stmt->execute([$accountId, $messageId]);

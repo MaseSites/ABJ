@@ -59,6 +59,7 @@ function db_init(PDO $pdo): void {
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             reference TEXT UNIQUE NOT NULL,
+            merged_into TEXT DEFAULT '',
             customer_name TEXT DEFAULT '',
             email TEXT DEFAULT '',
             phone TEXT DEFAULT '',
@@ -240,6 +241,7 @@ function db_init(PDO $pdo): void {
     $ord_cols = array_column($pdo->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     $ord_add = [
         'is_seen'                  => 'INTEGER DEFAULT 0',
+        'merged_into'              => "TEXT DEFAULT ''",
         'discount_code'            => "TEXT DEFAULT ''",
         'discount_cents'           => 'INTEGER DEFAULT 0',
         'note'                     => "TEXT DEFAULT ''",

@@ -9,6 +9,13 @@ try { order_messages_mark_read($ref); } catch (Throwable $e) { /* table may not 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_cap('orders.manage');
+    if (($_POST['action'] ?? '') === 'merge') {
+        $source = trim($_POST['source_ref'] ?? '');
+        if ($source) {
+            order_merge($ref, $source);
+        }
+        redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&merged=1');
+    }
     if (($_POST['action'] ?? '') === 'set_price') {
         $prod = (int)round((float)str_replace(',', '.', trim($_POST['total'] ?? '')) * 100);
         $ship = (int)round((float)str_replace(',', '.', trim($_POST['shipping'] ?? '')) * 100);
@@ -47,12 +54,14 @@ $currency  = setting_get('currency') ?: 'CHF';
 $addr      = is_array($order['address']) ? $order['address'] : ['raw' => $order['address']];
 $isRequest = order_is_request($order);
 $msgs      = order_messages_by_ref($ref);
+$otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''), fn($o) => $o['reference'] !== $ref));
 ?>
 <div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Bestellung <?= h($ref) ?> <?php if ($isRequest): ?><span class="tag tag-new" style="vertical-align:middle">Produktanfrage</span><?php endif; ?></h1>
   <a href="<?= url('/admin/bestellungen.php') ?>" class="btn btn-ghost">← Zurück</a>
 </div>
 <?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
+<?php if (!empty($_GET['merged'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Bestellungen wurden zusammengeführt.</div><?php endif; ?>
 
 <div class="admin-form" style="max-width:700px">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem">
@@ -144,6 +153,17 @@ $msgs      = order_messages_by_ref($ref);
       <span>Bemerkung für den Kunden</span>
       <textarea name="note" rows="3" placeholder="z. B. Preisänderung, Lieferhinweis, Rückfrage"></textarea>
     </label>
+    <?php if (!empty($otherOrders)): ?>
+    <label class="field" style="min-width:280px;flex:1">
+      <span>Mit anderer Bestellung zusammenführen</span>
+      <select name="source_ref">
+        <?php foreach ($otherOrders as $o): ?>
+          <option value="<?= h($o['reference']) ?>"><?= h($o['reference']) ?> · <?= h(substr($o['created_at'], 0, 16)) ?> · <?= format_price((int)$o['total_cents'], $currency) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </label>
+    <button class="btn btn-line" type="submit" name="action" value="merge">Zusammenführen</button>
+    <?php endif; ?>
     <button class="btn btn-primary" type="submit">Speichern</button>
   </form>
 

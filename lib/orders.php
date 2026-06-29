@@ -18,20 +18,23 @@ function order_create(array $data): string {
 }
 
 function orders_list(): array {
-    $stmt = db()->query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 500');
+    $stmt = db()->query("SELECT * FROM orders WHERE COALESCE(merged_into, '') = '' ORDER BY created_at DESC LIMIT 500");
     return array_map('order_parse', $stmt->fetchAll());
 }
 
 function orders_by_email(string $email): array {
-    $stmt = db()->prepare('SELECT * FROM orders WHERE lower(email) = lower(?) ORDER BY created_at DESC LIMIT 200');
+    $stmt = db()->prepare("SELECT * FROM orders WHERE lower(email) = lower(?) AND COALESCE(merged_into, '') = '' ORDER BY created_at DESC LIMIT 200");
     $stmt->execute([trim($email)]);
     return array_map('order_parse', $stmt->fetchAll());
 }
 
 function order_by_ref(string $ref): ?array {
-    $stmt = db()->prepare('SELECT * FROM orders WHERE reference = ?');
+    $stmt = db()->prepare("SELECT * FROM orders WHERE reference = ? LIMIT 1");
     $stmt->execute([$ref]);
     $row = $stmt->fetch();
+    if ($row && !empty($row['merged_into'])) {
+        return order_by_ref((string)$row['merged_into']);
+    }
     return $row ? order_parse($row) : null;
 }
 
@@ -110,6 +113,55 @@ function order_delete(string $ref): bool {
     $stmt = db()->prepare('DELETE FROM orders WHERE reference=?');
     $stmt->execute([$ref]);
     return $stmt->rowCount() > 0;
+}
+
+function order_merge(string $targetRef, string $sourceRef): bool {
+    $target = order_by_ref($targetRef);
+    $source = db()->prepare("SELECT * FROM orders WHERE reference = ? AND COALESCE(merged_into, '') = ''");
+    $source->execute([$sourceRef]);
+    $source = $source->fetch();
+    if (!$target || !$source) return false;
+    if ($target['reference'] === $source['reference']) return false;
+    if (strtolower(trim($target['email'] ?? '')) !== strtolower(trim($source['email'] ?? ''))) return false;
+
+    $targetItems = $target['items'];
+    $sourceItems = order_parse($source)['items'];
+    foreach ($sourceItems as $item) {
+        $merged = false;
+        foreach ($targetItems as &$tItem) {
+            $sameProduct = (int)($tItem['productId'] ?? 0) === (int)($item['productId'] ?? 0);
+            $sameSize = (string)($tItem['size'] ?? '') === (string)($item['size'] ?? '');
+            $sameLinePrice = (int)($tItem['unitCents'] ?? 0) === (int)($item['unitCents'] ?? 0);
+            if ($sameProduct && $sameSize && $sameLinePrice) {
+                $tItem['qty'] = (int)($tItem['qty'] ?? 1) + (int)($item['qty'] ?? 1);
+                $tItem['lineCents'] = (int)($tItem['unitCents'] ?? 0) * (int)$tItem['qty'];
+                $merged = true;
+                break;
+            }
+        }
+        unset($tItem);
+        if (!$merged) $targetItems[] = $item;
+    }
+
+    $targetTotal = (int)$target['total_cents'] + (int)$source['total_cents'];
+    $targetShipping = max((int)$target['shipping_cents'], (int)$source['shipping_cents']);
+    $stmt = db()->prepare("UPDATE orders SET items=?, total_cents=?, shipping_cents=?, updated_at=datetime('now') WHERE reference=?");
+    $stmt->execute([json_encode($targetItems), $targetTotal, $targetShipping, $target['reference']]);
+
+    $srcUpdate = db()->prepare("UPDATE orders SET merged_into=?, status='storniert', payment_status=CASE WHEN payment_status='bezahlt' THEN 'erstattet' ELSE payment_status END, updated_at=datetime('now') WHERE reference=?");
+    $srcUpdate->execute([$target['reference'], $source['reference']]);
+
+    db()->prepare("UPDATE order_messages SET order_reference=? WHERE order_reference=?")->execute([$target['reference'], $source['reference']]);
+    order_message_create([
+        'order_reference' => $target['reference'],
+        'author_role' => 'system',
+        'author_name' => 'System',
+        'subject' => 'Bestellungen zusammengeführt',
+        'body' => 'Die Bestellung ' . $source['reference'] . ' wurde mit dieser Bestellung zusammengeführt.',
+        'is_system' => 1,
+        'is_read' => 0,
+    ]);
+    return true;
 }
 
 function order_parse(array $r): array {

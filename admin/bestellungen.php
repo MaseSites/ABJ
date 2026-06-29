@@ -3,6 +3,7 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    require_cap('orders.delete'); // nur Root darf Bestellungen löschen
     $ref = trim($_POST['ref'] ?? '');
     if ($ref) order_delete($ref);
     redirect('/admin/bestellungen.php');
@@ -10,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 
 // Zahlungsstatus pro Bestellung umstellen (offen <-> bezahlt)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'set_payment') {
+    require_cap('orders.manage');
     $ref = trim($_POST['ref'] ?? '');
     $ps  = ($_POST['payment_status'] ?? '') === 'bezahlt' ? 'bezahlt' : 'offen';
     if ($ref) {
@@ -110,7 +112,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
       <td data-label="Status"><span class="tag"><?= h($o['status']) ?></span></td>
       <td data-label="Zahlung"><span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span></td>
       <td class="cell-actions">
-        <form method="post" action="<?= url('/admin/bestellungen.php') ?>">
+        <form method="post" action="<?= url('/admin/bestellungen.php') ?>" data-cap="orders.manage">
           <input type="hidden" name="action" value="set_payment">
           <input type="hidden" name="ref" value="<?= h($o['reference']) ?>">
           <input type="hidden" name="filter" value="<?= h($filter) ?>">

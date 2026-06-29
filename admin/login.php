@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch();
 
     if ($user && password_verify($password, $user['password_hash'])) {
-        admin_login((int)$user['id'], $user['username']);
+        admin_login((int)$user['id'], $user['username'], $user['role'] ?? 'root');
         redirect('/admin/index.php');
     }
     $error = true;
@@ -31,8 +31,8 @@ $shopName = setting_get('shop_name') ?: 'ABJ Store';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=38">
-  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=38">
+  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=39">
+  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=39">
 </head>
 <body>
 <main class="gate-wrap">

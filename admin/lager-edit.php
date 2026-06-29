@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/../lib/bootstrap.php';
+require_admin();
 $id  = (int)($_GET['id'] ?? 0);
 $row = $id ? (function($id){ $s = db()->prepare('SELECT i.*,p.name AS product_name FROM inventory i JOIN products p ON p.id=i.product_id WHERE i.id=?'); $s->execute([$id]); return $s->fetch() ?: null; })($id) : null;
 if (!$row) redirect('/admin/lager.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_cap('inventory.manage');
     $stmt = db()->prepare("UPDATE inventory SET stock=?,min_stock=?,sku=?,notes=?,title=?,next_delivery=?,variant_price_cents=?,back_order=?,updated_at=datetime('now') WHERE id=?");
     $stmt->execute([
         max(0,(int)$_POST['stock']), max(0,(int)$_POST['min_stock']),

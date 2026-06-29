@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../lib/bootstrap.php';
 require_admin();
+if (!admin_can('inventory.manage')) { json_response(['ok' => false, 'error' => 'Keine Berechtigung'], 403); }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['ok' => false, 'error' => 'POST required'], 405);

@@ -3,6 +3,7 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_cap('reviews.manage');
     $id = (int)($_POST['id'] ?? 0);
     $action = $_POST['action'] ?? '';
     if ($id && $action === 'approve') review_set_approved($id, true);
@@ -45,21 +46,21 @@ $pending = reviews_pending_count();
     <p><?= nl2br(h($r['text'])) ?></p>
     <div style="display:flex;gap:.5rem">
       <?php if (!$r['is_approved']): ?>
-      <form method="post">
+      <form method="post" data-cap="reviews.manage">
         <input type="hidden" name="action" value="approve">
         <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
         <input type="hidden" name="filter" value="<?= h($filter) ?>">
         <button class="btn btn-primary btn-sm" type="submit">Freigeben</button>
       </form>
       <?php else: ?>
-      <form method="post">
+      <form method="post" data-cap="reviews.manage">
         <input type="hidden" name="action" value="unapprove">
         <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
         <input type="hidden" name="filter" value="<?= h($filter) ?>">
         <button class="btn btn-ghost btn-sm" type="submit">Verbergen</button>
       </form>
       <?php endif; ?>
-      <form method="post" onsubmit="return confirm('Bewertung löschen?')">
+      <form method="post" data-cap="reviews.manage" onsubmit="return confirm('Bewertung löschen?')">
         <input type="hidden" name="action" value="delete">
         <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
         <input type="hidden" name="filter" value="<?= h($filter) ?>">

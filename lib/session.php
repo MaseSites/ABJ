@@ -65,14 +65,53 @@ function last_order_set(?string $ref): void {
     $_SESSION['lastOrder'] = $ref;
 }
 
-function admin_login(int $userId, string $username): void {
+function admin_login(int $userId, string $username, string $role = 'root'): void {
     session_start_once();
     try { session_regenerate_id(true); } catch (\Throwable $e) {}
     $_SESSION['admin'] = true;
     $_SESSION['admin_id'] = $userId;
     $_SESSION['admin_username'] = $username;
+    $_SESSION['admin_role'] = $role === 'lookup' ? 'lookup' : 'root';
     $_SESSION['admin_ts'] = time();
     session_write_close();
+}
+
+/** Rolle des angemeldeten Admins: 'root' (alle Rechte) oder 'lookup' (beschränkt). */
+function admin_role(): string {
+    session_start_once();
+    return is_admin() ? ($_SESSION['admin_role'] ?? 'root') : '';
+}
+
+function admin_username(): string {
+    session_start_once();
+    return (string)($_SESSION['admin_username'] ?? '');
+}
+
+function admin_is_root(): bool {
+    return admin_role() === 'root';
+}
+
+/** Berechtigungen des beschränkten Lookup-Kontos. */
+function admin_lookup_caps(): array {
+    return ['orders.manage', 'products.manage', 'reviews.manage', 'discounts.manage', 'security.gen_code'];
+}
+
+/** Darf der angemeldete Admin die Aktion ausführen? Root darf alles. */
+function admin_can(string $cap): bool {
+    if (!is_admin()) return false;
+    if (admin_is_root()) return true;
+    return admin_role() === 'lookup' && in_array($cap, admin_lookup_caps(), true);
+}
+
+/** Server-seitige Absicherung: bricht ab, wenn die Berechtigung fehlt. */
+function require_cap(string $cap): void {
+    if (admin_can($cap)) return;
+    $ref = $_SERVER['HTTP_REFERER'] ?? '';
+    if (!headers_sent()) {
+        http_response_code(403);
+        header('Location: ' . ($ref !== '' ? $ref : (base_path() . '/admin/index.php')) . (strpos($ref, 'denied=') === false ? (strpos($ref, '?') !== false ? '&' : '?') . 'denied=1' : ''));
+    }
+    exit;
 }
 
 function admin_logout(): void {

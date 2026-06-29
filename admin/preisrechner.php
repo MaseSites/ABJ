@@ -4,6 +4,7 @@ require_admin();
 
 // Konstanten / Faktoren merken
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_defaults') {
+    require_cap('settings.manage');
     foreach ([
         'usd_chf'     => 'calc_usd_chf',
         'flat'        => 'calc_flat',

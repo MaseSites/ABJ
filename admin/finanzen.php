@@ -6,6 +6,7 @@ $currency = setting_get('currency') ?: 'CHF';
 
 // Manuelle Werte speichern (Kontostand & Investiert)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save') {
+    require_cap('settings.manage');
     foreach (['account' => 'finance_account_cents', 'invested' => 'finance_invested_cents'] as $in => $key) {
         $raw = str_replace(["'", ' '], '', str_replace(',', '.', trim($_POST[$in] ?? '')));
         setting_set($key, (string)max(0, (int)round((float)$raw * 100)));

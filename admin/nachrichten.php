@@ -1,11 +1,14 @@
 <?php
 require_once __DIR__ . '/../lib/bootstrap.php';
+require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    require_cap('messages.manage');
     db()->prepare('DELETE FROM messages WHERE id=?')->execute([(int)$_POST['delete_id']]);
     redirect('/admin/nachrichten.php');
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['read_id'])) {
+    require_cap('messages.manage');
     db()->prepare('UPDATE messages SET is_read=1 WHERE id=?')->execute([(int)$_POST['read_id']]);
     redirect('/admin/nachrichten.php');
 }

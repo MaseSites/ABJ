@@ -83,6 +83,7 @@ $currency   = setting_get('currency') ?: 'CHF';
   id="product-form"
   data-action="<?= h($formAction) ?>"
   data-method="POST"
+  data-cap="products.manage"
   class="product-editor"
 >
 

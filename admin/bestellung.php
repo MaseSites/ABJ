@@ -7,6 +7,7 @@ if (!$order) redirect('/admin/bestellungen.php');
 try { order_mark_seen($ref); } catch (Throwable $e) { /* column may not exist yet */ }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_cap('orders.manage');
     if (($_POST['action'] ?? '') === 'set_price') {
         $prod = (int)round((float)str_replace(',', '.', trim($_POST['total'] ?? '')) * 100);
         $ship = (int)round((float)str_replace(',', '.', trim($_POST['shipping'] ?? '')) * 100);
@@ -77,7 +78,7 @@ $isRequest = order_is_request($order);
       foreach ($order['items'] as $it) $curProduct += (int)($it['lineCents'] ?? 0);
       $defaultShip = (int)$order['shipping_cents'] > 0 ? (int)$order['shipping_cents'] : (int)(setting_get('shipping_ch_cents') ?: 590);
     ?>
-    <form method="post" style="display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap">
+    <form method="post" data-cap="orders.manage" style="display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap">
       <input type="hidden" name="action" value="set_price">
       <label class="field" style="max-width:160px"><span>Produktpreis (<?= h($currency) ?>)</span>
         <input type="text" inputmode="decimal" name="total" value="<?= $curProduct > 0 ? number_format($curProduct / 100, 2, '.', '') : '' ?>" placeholder="z.B. 129.00">
@@ -94,7 +95,7 @@ $isRequest = order_is_request($order);
   <p><strong>Gesamt:</strong> <?= (int)$order['total_cents'] > 0 ? format_price((int)$order['total_cents'], $currency) : '<span class="muted">noch offen</span>' ?></p>
   <p><strong>Zahlung:</strong> <span class="tag <?= payment_status_class($order['payment_status']) ?>"><?= h(payment_status_label($order['payment_status'])) ?></span></p>
 
-  <form method="post" style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+  <form method="post" data-cap="orders.manage" style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
     <label class="field"><span>Status</span>
       <select name="status">
         <?php foreach (['neu','in_bearbeitung','versendet','abgeschlossen','storniert'] as $s): ?>

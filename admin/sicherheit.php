@@ -4,6 +4,8 @@ require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
+    // Lookup-Konto darf NUR Zugangscodes generieren – alles andere ist Root.
+    require_cap($action === 'gen_code' ? 'security.gen_code' : 'security.admin');
     if ($action === 'save_mode') {
         setting_set('security_mode', !empty($_POST['security_mode']) ? '1' : '0');
     } elseif ($action === 'gen_code') {
@@ -22,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ip_unblock(trim($_POST['ip'] ?? ''));
     } elseif ($action === 'password' && !empty($_POST['new_password'])) {
         $hash = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
-        db()->prepare("UPDATE users SET password_hash=? WHERE username='admin'")->execute([$hash]);
+        db()->prepare("UPDATE users SET password_hash=? WHERE username=?")->execute([$hash, admin_username()]);
     }
     redirect('/admin/sicherheit.php?saved=1');
 }
@@ -76,7 +78,7 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
 <div class="admin-section">
   <div class="admin-head-row" style="margin-bottom:1rem">
     <h2 style="margin:0">Zugangscodes</h2>
-    <form method="post"><input type="hidden" name="action" value="gen_code"><button class="btn btn-primary btn-sm" type="submit">+ Code generieren</button></form>
+    <form method="post" data-cap="security.gen_code"><input type="hidden" name="action" value="gen_code"><button class="btn btn-primary btn-sm" type="submit">+ Code generieren</button></form>
   </div>
   <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">
     Ein Code bringt eine Person in den Shop (Sicherheitsmodus) und ist <strong>einmal verwendbar</strong>.

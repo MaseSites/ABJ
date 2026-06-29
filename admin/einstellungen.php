@@ -3,6 +3,7 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_cap('settings.manage');
     $fields = [
         'shop_name','tagline','currency','hero_title','hero_subtitle','contact_email','announcement',
         'members_count','ratings_count','sale_ends_at','hero_image','accent','accent_2','accent_3',

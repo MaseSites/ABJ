@@ -24,10 +24,10 @@ try {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=38">
-  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=38">
+  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=39">
+  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=39">
 </head>
-<body>
+<body class="<?= admin_is_root() ? '' : 'admin-lookup' ?>" data-admin-caps="<?= h(admin_is_root() ? '*' : implode(',', admin_lookup_caps())) ?>">
 <div class="admin-shell">
 
   <aside class="admin-sidebar">
@@ -163,7 +163,7 @@ try {
     </nav>
 
     <div class="sidebar-footer">
-      <span class="sidebar-footer-user">Angemeldet als <strong><?= h($_SESSION['admin_username'] ?? 'admin') ?></strong></span>
+      <span class="sidebar-footer-user">Angemeldet als <strong><?= h($_SESSION['admin_username'] ?? 'admin') ?></strong><?php if (!admin_is_root()): ?> <span class="role-pill">eingeschränkt</span><?php endif; ?></span>
       <form method="post" action="<?= url('/admin/logout.php') ?>">
         <button class="sidebar-logout" type="submit">Abmelden</button>
       </form>
@@ -183,3 +183,9 @@ try {
       </a>
     </header>
     <main class="admin-main">
+      <?php if (!admin_is_root()): ?>
+      <div class="lookup-banner">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5l5.5 2.2V7c0 3.5-2.3 6-5.5 7-3.2-1-5.5-3.5-5.5-7V3.7z"/></svg>
+        <span><strong>Eingeschränkter Zugang.</strong> Du kannst alles sehen, aber nur Bestellungen, Produkte, Bewertungen, Rabattcodes und das Erstellen von Zugangscodes bearbeiten.</span>
+      </div>
+      <?php endif; ?>

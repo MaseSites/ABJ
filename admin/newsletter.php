@@ -3,6 +3,7 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    require_cap('newsletter.manage');
     db()->prepare('DELETE FROM newsletter WHERE id=?')->execute([(int)$_POST['delete_id']]);
     redirect('/admin/newsletter.php');
 }

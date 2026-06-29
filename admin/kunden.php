@@ -6,6 +6,7 @@ $currency = setting_get('currency') ?: 'CHF';
 
 // Konto löschen
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_account') {
+    require_cap('customers.manage');
     $aid = (int)($_POST['id'] ?? 0);
     if ($aid) account_delete($aid);
     redirect('/admin/kunden.php?deleted=1');

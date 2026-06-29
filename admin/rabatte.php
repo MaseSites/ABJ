@@ -4,6 +4,7 @@ require_admin();
 
 $err = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_cap('discounts.manage');
     $action = $_POST['action'] ?? '';
     if ($action === 'delete') {
         discount_delete((int)($_POST['id'] ?? 0));
@@ -59,7 +60,7 @@ function discount_value_label(array $c, string $currency): string {
 
 <div class="admin-section">
   <h2>Neuen Code anlegen</h2>
-  <form method="post" class="admin-form discount-form">
+  <form method="post" class="admin-form discount-form" data-cap="discounts.manage">
     <input type="hidden" name="action" value="create">
     <div class="form-row-3">
       <label class="field"><span>Code *</span><input type="text" name="code" required maxlength="40" placeholder="SOMMER20" style="text-transform:uppercase"></label>
@@ -98,12 +99,12 @@ function discount_value_label(array $c, string $currency): string {
         <td><?= $c['valid_until'] ? h(substr($c['valid_until'], 0, 10)) : '–' ?></td>
         <td><span class="tag <?= $c['is_active'] ? 'tag-ok' : 'tag-off' ?>"><?= $c['is_active'] ? 'aktiv' : 'inaktiv' ?></span></td>
         <td style="white-space:nowrap;display:flex;gap:.4rem">
-          <form method="post">
+          <form method="post" data-cap="discounts.manage">
             <input type="hidden" name="action" value="toggle">
             <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">
             <button class="btn btn-ghost btn-sm" type="submit"><?= $c['is_active'] ? 'Deaktivieren' : 'Aktivieren' ?></button>
           </form>
-          <form method="post" onsubmit="return confirm('Code <?= h($c['code']) ?> löschen?')">
+          <form method="post" data-cap="discounts.manage" onsubmit="return confirm('Code <?= h($c['code']) ?> löschen?')">
             <input type="hidden" name="action" value="delete">
             <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">
             <button class="btn btn-danger btn-sm" type="submit">Löschen</button>

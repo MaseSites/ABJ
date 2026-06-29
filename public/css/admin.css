@@ -877,6 +877,21 @@ input[type="checkbox"] { width: auto; accent-color: #7e8bb8; }
   margin: 1.8rem 0;
 }
 
+/* ---------- Eingeschränktes Lookup-Konto ---------- */
+.role-pill { display: inline-block; margin-left: .4rem; padding: .08rem .5rem; border-radius: 999px;
+  font-size: .62rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  color: #d8a33a; background: rgba(216,163,58,.14); border: 1px solid rgba(216,163,58,.35); }
+.lookup-banner { display: flex; align-items: center; gap: .7rem; margin-bottom: 1.4rem;
+  padding: .8rem 1rem; border-radius: 12px; font-size: .85rem; line-height: 1.45;
+  color: #d8c79a; background: rgba(216,163,58,.08); border: 1px solid rgba(216,163,58,.28); }
+.lookup-banner svg { width: 18px; height: 18px; flex: none; color: #d8a33a; }
+.admin-lookup .admin-main button.is-locked,
+.admin-lookup .admin-main button:disabled,
+.admin-lookup .admin-main input[type=submit]:disabled {
+  opacity: .4 !important; cursor: not-allowed !important; filter: grayscale(.3);
+  box-shadow: none !important; transform: none !important;
+}
+
 /* ---------- Tabellen-Wrapper (mobile scroll) ---------- */
 .admin-section, .admin-main { -webkit-overflow-scrolling: touch; }
 .table-scroll { overflow-x: auto; margin: 0 -.25rem; }

@@ -7,6 +7,7 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
 /* ── DELETE: Produkt löschen ── */
 if ($method === 'DELETE') {
+    if (!admin_can('products.delete')) { json_response(['ok' => false, 'error' => 'Keine Berechtigung'], 403); }
     if (!$id) { json_response(['ok' => false, 'error' => 'Keine ID'], 400); }
     inv_delete_by_product($id);
     product_delete($id);
@@ -15,6 +16,7 @@ if ($method === 'DELETE') {
 
 /* ── POST: Erstellen oder Aktualisieren ── */
 if ($method === 'POST') {
+    if (!admin_can('products.manage')) { json_response(['ok' => false, 'error' => 'Keine Berechtigung'], 403); }
     $name = trim($_POST['name'] ?? '');
     if (!$name) { json_response(['ok' => false, 'error' => 'Name fehlt'], 422); }
 

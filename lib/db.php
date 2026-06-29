@@ -259,19 +259,33 @@ function db_init(PDO $pdo): void {
         }
     } catch (\Throwable $e) {}
 
+    // Rollen-Spalte für Admin-Konten (root = alle Rechte, lookup = beschränkt)
+    $user_cols = array_column($pdo->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    if (!in_array('role', $user_cols, true)) {
+        try { $pdo->exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'root'"); } catch (\Throwable $e) {}
+    }
+
     $cnt = (int)$pdo->query("SELECT COUNT(*) AS n FROM users")->fetch()['n'];
     if ($cnt === 0) {
-        $hash = password_hash('abj', PASSWORD_DEFAULT);
-        $pdo->prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)")->execute(['admin', $hash]);
+        $pdo->prepare("INSERT INTO users (username, password_hash, role) VALUES ('admin_user_root', ?, 'root')")
+            ->execute([password_hash('Rem&mP3*uJYYT@', PASSWORD_DEFAULT)]);
     }
-    // One-time password reset: forces admin password to 'abj' once after this deploy
+
+    // Einmalige Umstellung der Admin-Zugänge: alten admin/abj entfernen, zwei
+    // neue Konten anlegen (Root mit allen Rechten + beschränktes Lookup-Konto).
     try {
-        $pwInit = $pdo->query("SELECT value FROM settings WHERE key='admin_pw_v2'")->fetch();
-        if (!$pwInit) {
-            $hash = password_hash('abj', PASSWORD_DEFAULT);
-            $pdo->prepare("INSERT OR IGNORE INTO users (username, password_hash) VALUES ('admin', ?)")->execute([$hash]);
-            $pdo->prepare("UPDATE users SET password_hash=? WHERE username='admin'")->execute([$hash]);
-            $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_pw_v2', '1')");
+        $accInit = $pdo->query("SELECT value FROM settings WHERE key='admin_accounts_v3'")->fetch();
+        if (!$accInit) {
+            $rootHash = password_hash('Rem&mP3*uJYYT@', PASSWORD_DEFAULT);
+            $lookHash = password_hash('admin_user_lookup', PASSWORD_DEFAULT);
+            $pdo->prepare("DELETE FROM users WHERE username='admin'")->execute();
+            $pdo->prepare("INSERT INTO users (username, password_hash, role) VALUES ('admin_user_root', ?, 'root')
+                           ON CONFLICT(username) DO UPDATE SET password_hash=excluded.password_hash, role='root'")
+                ->execute([$rootHash]);
+            $pdo->prepare("INSERT INTO users (username, password_hash, role) VALUES ('admin_user_lookup', ?, 'lookup')
+                           ON CONFLICT(username) DO UPDATE SET password_hash=excluded.password_hash, role='lookup'")
+                ->execute([$lookHash]);
+            $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_accounts_v3', '1')");
         }
     } catch (\Throwable $e) {}
 }

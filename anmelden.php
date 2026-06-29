@@ -4,19 +4,25 @@ require_once __DIR__ . '/lib/bootstrap.php';
 if (is_customer()) redirect('/konto.php');
 
 $error  = '';
-$weiter = $_GET['weiter'] ?? ($_POST['weiter'] ?? '/konto.php');
+$weiter = safe_redirect_target($_GET['weiter'] ?? ($_POST['weiter'] ?? '/konto.php'), '/konto.php');
 $prefillEmail = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email    = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $prefillEmail = $email;
-    $acc = account_verify_login($email, $password);
-    if ($acc) {
-        customer_login((int)$acc['id'], $acc['email'], $acc['name']);
-        redirect($weiter && $weiter[0] === '/' ? $weiter : '/konto.php');
+    if (!login_throttle_allowed('customer', 10, 15)) {
+        $error = 'Zu viele Login-Versuche. Bitte warte etwa 15 Minuten und versuche es erneut.';
+    } else {
+        $email    = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $prefillEmail = $email;
+        $acc = account_verify_login($email, $password);
+        if ($acc) {
+            login_throttle_clear('customer');
+            customer_login((int)$acc['id'], $acc['email'], $acc['name']);
+            redirect($weiter);
+        }
+        login_throttle_hit('customer');
+        $error = 'E-Mail oder Passwort ist falsch.';
     }
-    $error = 'E-Mail oder Passwort ist falsch.';
 }
 
 $cartCount   = cart_count();

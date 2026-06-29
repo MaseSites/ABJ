@@ -3,13 +3,22 @@ RewriteEngine On
 
 # HTTPS / Mixed-Content-Schutz + Sicherheits-Header
 <IfModule mod_headers.c>
-  # Unsichere http://-Subressourcen automatisch auf https:// hochstufen
-  Header always set Content-Security-Policy "upgrade-insecure-requests"
+  # Unsichere http://-Subressourcen automatisch auf https:// hochstufen + Clickjacking-Schutz
+  Header always set Content-Security-Policy "upgrade-insecure-requests; frame-ancestors 'self'; base-uri 'self'; object-src 'none'"
   Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
   # HSTS nur über HTTPS senden (erzwingt künftige Aufrufe über https)
   Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" "expr=%{HTTPS} == 'on'"
 </IfModule>
+
+# Sensible Dateitypen nie ausliefern (Datenbank, Logs, Konfig, Backups)
+<FilesMatch "\.(db|sqlite|sqlite3|log|env|ini|sh|md|lock|json)$">
+  Require all denied
+</FilesMatch>
+# package.json wird nicht benötigt; .well-known bleibt erreichbar (s. unten)
 
 # Datenbank und lib schützen
 RewriteRule ^data/        - [F,L]

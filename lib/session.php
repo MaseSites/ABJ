@@ -1,11 +1,15 @@
 <?php
 function session_start_once(): void {
     if (session_status() === PHP_SESSION_NONE) {
+        $secure = function_exists('is_https') ? is_https()
+            : (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off');
         ini_set('session.cookie_httponly', '1');
         ini_set('session.cookie_samesite', 'Lax');
         ini_set('session.cookie_path', '/');
+        ini_set('session.cookie_secure', $secure ? '1' : '0');
         ini_set('session.use_cookies', '1');
         ini_set('session.use_only_cookies', '1');
+        ini_set('session.use_strict_mode', '1');
         session_start();
     }
 }
@@ -16,7 +20,9 @@ function cart_token(): string {
         return $_COOKIE[$name];
     }
     $token = bin2hex(random_bytes(16));
-    setcookie($name, $token, ['expires' => time() + 86400 * 90, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
+    $secure = function_exists('is_https') ? is_https()
+        : (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off');
+    setcookie($name, $token, ['expires' => time() + 86400 * 90, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax', 'secure' => $secure]);
     $_COOKIE[$name] = $token;
     return $token;
 }

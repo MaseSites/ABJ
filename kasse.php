@@ -259,6 +259,7 @@ include __DIR__ . '/partials/header.php';
 <script>
 (function () {
   var BASE = document.documentElement.getAttribute('data-base-path') || '';
+  var CSRF = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
 
   /* ---------------- Rabattcode ---------------- */
   var dInput   = document.querySelector('[data-discount-input]');
@@ -291,7 +292,7 @@ include __DIR__ . '/partials/header.php';
     dApply.disabled = true;
     fetch(BASE + '/api/discount-check.php', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': CSRF, Accept: 'application/json' },
       body: fd.toString(),
     }).then(function (r) { return r.json(); }).then(function (d) {
       dApply.disabled = false;
@@ -347,11 +348,12 @@ include __DIR__ . '/partials/header.php';
       setLoading(true);
 
       var fd = new FormData(form);
+      fd.set('_csrf', CSRF);
 
       // Bestellung ohne Zahlung anlegen
       var data;
       try {
-        var res = await fetch(BASE + '/api/checkout.php', { method: 'POST', body: fd });
+        var res = await fetch(BASE + '/api/checkout.php', { method: 'POST', body: fd, headers: { 'X-CSRF-Token': CSRF } });
         if (res.status === 401) {
           window.location.href = BASE + '/anmelden.php?weiter=' + encodeURIComponent(BASE + '/kasse.php');
           return;

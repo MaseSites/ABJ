@@ -390,11 +390,11 @@ function ko_render_order(array $o, string $currency): void {
               <label class="field"><span>Vorname</span><input type="text" name="firstname" maxlength="80" value="<?= h($savedAddr['firstname'] ?? $firstName) ?>"></label>
               <label class="field"><span>Nachname</span><input type="text" name="lastname" maxlength="80" value="<?= h($savedAddr['lastname'] ?? '') ?>"></label>
             </div>
-            <div class="form-row-2" style="grid-template-columns:2fr 1fr">
+            <div class="form-row-2 form-row-street">
               <label class="field"><span>Strasse</span><input type="text" name="street" maxlength="120" value="<?= h($savedAddr['street'] ?? '') ?>"></label>
               <label class="field"><span>Nr.</span><input type="text" name="housenr" maxlength="20" value="<?= h($savedAddr['housenr'] ?? '') ?>"></label>
             </div>
-            <div class="form-row-2" style="grid-template-columns:1fr 2fr">
+            <div class="form-row-2 form-row-zip">
               <label class="field"><span>PLZ</span><input type="text" name="zip" maxlength="10" value="<?= h($savedAddr['zip'] ?? '') ?>"></label>
               <label class="field"><span>Stadt</span><input type="text" name="city" maxlength="80" value="<?= h($savedAddr['city'] ?? '') ?>"></label>
             </div>

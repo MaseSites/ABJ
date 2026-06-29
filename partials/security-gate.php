@@ -3,37 +3,60 @@
  * Tarnseite + 2-Stufen-Zugang für den Sicherheitsmodus.
  *
  * Stufe 1: Besucher gibt im Feld "Belegnummer" einen Code ein (ein Promo-/
- *          Zugangscode). Unbekannt -> Fehler (bleibt getarnt).
- * Stufe 2: Registrieren oder Anmelden. Danach wird die IP freigeschaltet und
- *          man gelangt auf den echten Shop. Wer sich mit dem Code eines Kunden
- *          NEU registriert, wird dessen Empfehlung (der Kunde bekommt Punkte).
+ *          Zugangscode). Unbekannt -> Fehler (bleibt getarnt). Bereits einem
+ *          Konto zugewiesen (verwendet) -> IP wird SOFORT gesperrt.
+ * Stufe 2: Registrieren oder Anmelden. Der Code wird dabei fest diesem Konto
+ *          zugewiesen (einmalig). Danach wird die IP freigeschaltet. Wer sich
+ *          mit dem Code eines Kunden NEU registriert, wird dessen Empfehlung.
  */
 session_start_once();
 
 $gateError = '';
 
+/** IP sperren und sofort die Sperr-Seite zeigen (Missbrauch eines Codes). */
+if (!function_exists('gate_block_and_exit')) {
+    function gate_block_and_exit(): void {
+        ip_block(client_ip(), 'Wiederverwendung eines bereits vergebenen Zugangscodes');
+        unset($_SESSION['gate_code']); session_write_close();
+        if (!headers_sent()) { http_response_code(403); header('Content-Type: text/html; charset=utf-8'); header('Cache-Control: no-store'); }
+        echo '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Zugriff gesperrt</title></head>'
+           . '<body style="font-family:system-ui,sans-serif;background:#0d0d12;color:#e8e8ee;display:grid;place-items:center;min-height:100vh;margin:0">'
+           . '<div style="text-align:center;padding:2rem"><h1 style="margin:0 0 .5rem">Zugriff gesperrt</h1>'
+           . '<p style="color:#9a9aa5">Dieser Beleg ist bereits einem Konto zugewiesen. Deine IP-Adresse wurde gesperrt.</p></div></body></html>';
+        exit;
+    }
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (isset($_POST['beleg'])) {
         // Stufe 1 – Code muss existieren UND noch frei sein (einmal verwendbar)
         $code = trim((string)$_POST['beleg']);
-        if (code_is_usable(code_find($code))) {
+        $row  = code_find($code);
+        if ($row === null) {
+            $gateError = 'Kein Beleg mit dieser Nummer gefunden.';
+        } elseif (!code_is_usable($row)) {
+            // Code ist bereits einem Konto zugewiesen -> Missbrauch -> sperren
+            gate_block_and_exit();
+        } else {
             $_SESSION['gate_code'] = $code;
             session_write_close();
             if (!headers_sent()) header('Location: ' . base_path() . '/');
             exit;
         }
-        $gateError = 'Kein Beleg mit dieser Nummer gefunden.';
     } elseif (isset($_POST['gate_action'])) {
         // Stufe 2
         $code = $_SESSION['gate_code'] ?? '';
         $row  = $code ? code_find($code) : null;
-        if (!code_is_usable($row)) {
+        if ($row === null) {
             unset($_SESSION['gate_code']);
-            $gateError = 'Dieser Beleg ist nicht mehr gültig. Bitte gib eine neue Nummer ein.';
+            $gateError = 'Bitte gib die Belegnummer erneut ein.';
+        } elseif (!code_is_usable($row)) {
+            // zwischenzeitlich vergeben -> Missbrauch -> sperren
+            gate_block_and_exit();
         } elseif ($_POST['gate_action'] === 'register') {
             $res = account_create(trim($_POST['email'] ?? ''), $_POST['password'] ?? '', trim($_POST['name'] ?? ''));
             if (!empty($res['ok'])) {
-                // Code einlösen (einmalig) + Werber zuordnen
+                // Code fest diesem Konto zuweisen (einmalig) + Werber zuordnen
                 code_mark_used($code, (int)$res['id']);
                 $owner = (int)($row['account_id'] ?? 0);
                 if ($owner > 0) account_set_referrer((int)$res['id'], $owner);
@@ -47,6 +70,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         } elseif ($_POST['gate_action'] === 'login') {
             $acc = account_verify_login(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
             if ($acc) {
+                // Code auch beim Login fest zuweisen -> wirklich nur einmal nutzbar
+                code_mark_used($code, (int)$acc['id']);
                 customer_login((int)$acc['id'], $acc['email'], $acc['name'] ?? '');
                 ip_allow_add(client_ip());
                 unset($_SESSION['gate_code']); session_write_close();

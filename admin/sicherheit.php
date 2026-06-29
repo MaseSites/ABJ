@@ -55,8 +55,9 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
   <p style="font-size:.84rem;color:#8a8a95;margin:0 0 1rem">
     Ist der Modus <strong>an</strong>, sehen Besucher statt des Shops eine neutrale Tarnseite („Belegassistent").
     Nur wer dort im Feld <strong>„Belegnummer"</strong> einen gültigen <strong>Zugangscode</strong> eingibt, kann sich
-    registrieren/anmelden und gelangt auf den echten Shop. Jeder Code ist <strong>einmal verwendbar</strong>.
-    Der Admin-Bereich ist nie betroffen.
+    registrieren/anmelden und gelangt auf den echten Shop. Jeder Code ist <strong>einmal verwendbar</strong> und wird
+    fest dem Konto zugewiesen, das ihn nutzt. Wird ein bereits vergebener Code erneut eingegeben, wird die IP
+    <strong>sofort gesperrt</strong>. Der Admin-Bereich ist nie betroffen.
   </p>
   <form method="post">
     <input type="hidden" name="action" value="save_mode">

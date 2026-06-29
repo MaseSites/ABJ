@@ -65,9 +65,21 @@ function order_is_request(array $order): bool {
 }
 
 function order_update_status(string $ref, string $status, string $paymentStatus): bool {
+    $before = order_by_ref($ref);
     $stmt = db()->prepare('UPDATE orders SET status=?, payment_status=? WHERE reference=?');
     $stmt->execute([$status, $paymentStatus, $ref]);
-    return $stmt->rowCount() > 0;
+    $ok = $stmt->rowCount() > 0;
+    // Promo-Punkte erst gutschreiben, wenn die Zahlung bestätigt wurde (einmalig).
+    if ($before && $paymentStatus === 'bezahlt'
+        && ($before['payment_status'] ?? '') !== 'bezahlt'
+        && empty($before['promo_awarded'])) {
+        $acc = account_by_email($before['email'] ?? '');
+        if ($acc) {
+            promo_award_for_buyer((int)$acc['id'], (int)($before['total_cents'] ?? 0));
+            db()->prepare('UPDATE orders SET promo_awarded=1 WHERE reference=?')->execute([$ref]);
+        }
+    }
+    return $ok;
 }
 
 function order_mark_seen(string $ref): void {

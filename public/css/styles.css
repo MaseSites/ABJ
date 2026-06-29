@@ -1814,6 +1814,11 @@ body.no-scroll { overflow: hidden; }
 .promo-points-num { font-size: 2.6rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
 .promo-points-label { font-size: .74rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-top: .3rem; }
 .promo-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .9rem; }
+.promo-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; margin-top: 1.1rem; }
+.promo-step { display: flex; gap: .7rem; align-items: flex-start; background: var(--elev); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.1rem; }
+.promo-step-no { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: .85rem; color: #14110a; background: linear-gradient(135deg, var(--gold), var(--accent-3)); }
+.promo-step strong { display: block; font-size: .9rem; margin-bottom: .15rem; }
+.promo-step p { margin: 0; font-size: .8rem; color: var(--ink-soft); line-height: 1.4; }
 .promo-card { padding: 1.2rem 1.3rem; }
 .promo-codes { display: flex; flex-direction: column; gap: .6rem; }
 .promo-code-row { display: flex; align-items: center; justify-content: space-between; gap: .8rem; padding: .75rem .9rem; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); background: rgba(184,156,103,.05); }
@@ -1825,13 +1830,12 @@ body.no-scroll { overflow: hidden; }
 .promo-code-status.free { color: #4a8f5b; }
 .promo-code-status.used { color: var(--ink-soft); }
 .promo-code-actions { display: flex; gap: .4rem; flex-shrink: 0; }
-.promo-code-check { font-size: 1.2rem; color: #4a8f5b; flex-shrink: 0; }
-.promo-shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .8rem; }
-.promo-reward { display: flex; flex-direction: column; gap: .45rem; padding: 1.1rem 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--elev); transition: border-color .15s, transform .15s; }
+.promo-code-badge { flex-shrink: 0; font-size: .72rem; font-weight: 700; color: var(--ink-soft); background: rgba(255,255,255,.05); border: 1px solid var(--line); padding: .22em .7em; border-radius: 999px; }
+.promo-shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .8rem; }
+.promo-reward { display: flex; flex-direction: column; gap: .4rem; padding: 1.15rem 1.1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--elev); transition: border-color .15s, transform .15s; }
 .promo-reward:not(.is-locked):hover { border-color: var(--accent-3); transform: translateY(-2px); }
-.promo-reward.is-locked { opacity: .55; }
-.promo-reward-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: rgba(184,156,103,.12); font-size: 1.15rem; }
-.promo-reward-label { font-weight: 700; font-size: .98rem; }
+.promo-reward.is-locked { opacity: .6; }
+.promo-reward-label { font-weight: 700; font-size: 1rem; }
 .promo-reward-desc { margin: 0; font-size: .82rem; color: var(--ink-soft); flex: 1; }
 .promo-reward-foot { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .3rem; }
 .promo-reward-cost { font-size: .8rem; font-weight: 800; color: var(--accent-3); background: rgba(184,156,103,.12); padding: .25em .65em; border-radius: 999px; white-space: nowrap; }
@@ -1841,10 +1845,11 @@ body.no-scroll { overflow: hidden; }
 .promo-voucher-code { font-weight: 800; letter-spacing: .1em; color: var(--accent-3); background: rgba(184,156,103,.1); padding: .25em .7em; border-radius: 6px; }
 @media (max-width: 620px) {
   .promo-top { grid-template-columns: 1fr; }
-  .promo-points-card { flex-direction: row; gap: .6rem; padding: 1rem 1.2rem; min-width: 0; }
+  .promo-points-card { flex-direction: row; gap: .6rem; padding: 1rem 1.2rem; min-width: 0; align-items: center; }
   .promo-points-num { font-size: 2rem; }
   .promo-points-label { margin-top: 0; }
   .promo-stats { gap: .5rem; }
+  .promo-steps { grid-template-columns: 1fr; gap: .6rem; }
   .promo-shop { grid-template-columns: repeat(2, 1fr); }
   .promo-code-row { flex-wrap: wrap; }
   .promo-code-actions { width: 100%; }

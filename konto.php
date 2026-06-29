@@ -281,7 +281,7 @@ function ko_render_order(array $o, string $currency): void {
       <section class="acc-panel<?= $activeTab === 'promo' ? ' active' : '' ?>" data-panel="promo">
         <div class="acc-panel-head">
           <h1>Promo Code</h1>
-          <p class="muted">Gib einem Freund einen Code. Sobald er sich damit registriert, ist der Code <strong>aufgebraucht</strong> — für den nächsten Freund generierst du einfach einen neuen. Für <strong>jede Bestellung</strong> deiner geworbenen Freunde bekommst du Punkte: <strong><?= (int)$promoPer100 ?> Punkte je 100&nbsp;CHF</strong> Bestellwert. Punkte löst du unten im Promo Shop ein.</p>
+          <p class="muted">Lade Freunde mit deinem Code ein. Für jede Bestellung eines geworbenen Freundes bekommst du Promo-Punkte — gutgeschrieben, sobald die <strong>Zahlung bestätigt</strong> ist (<?= (int)$promoPer100 ?> Punkte je 100&nbsp;CHF Bestellwert). Punkte löst du im Promo Shop gegen Gutscheine ein.</p>
         </div>
 
         <?php if ($promoFlash): ?><div class="alert alert-<?= str_starts_with($promoFlash, 'Eingelöst') ? 'ok' : 'error' ?>" style="margin-bottom:1.2rem"><?= h($promoFlash) ?></div><?php endif; ?>
@@ -293,9 +293,15 @@ function ko_render_order(array $o, string $currency): void {
           </div>
           <div class="promo-stats">
             <div class="acc-stat"><strong><?= (int)$promoStats['referrals'] ?></strong><span>Geworbene Freunde</span></div>
-            <div class="acc-stat"><strong><?= (int)$promoStats['orders'] ?></strong><span>Ihre Bestellungen</span></div>
-            <div class="acc-stat"><strong><?= (int)$promoPer100 ?></strong><span>Punkte / 100 CHF</span></div>
+            <div class="acc-stat"><strong><?= (int)$promoStats['orders'] ?></strong><span>Bestellungen</span></div>
+            <div class="acc-stat"><strong><?= count($promoRedeemed) ?></strong><span>Eingelöste Prämien</span></div>
           </div>
+        </div>
+
+        <div class="promo-steps">
+          <div class="promo-step"><span class="promo-step-no">1</span><div><strong>Code teilen</strong><p>Generiere einen Code und schick ihn einem Freund.</p></div></div>
+          <div class="promo-step"><span class="promo-step-no">2</span><div><strong>Freund registriert sich</strong><p>Mit deinem Code wird er deine Empfehlung.</p></div></div>
+          <div class="promo-step"><span class="promo-step-no">3</span><div><strong>Punkte sammeln</strong><p>Pro bezahlter Bestellung deines Freundes.</p></div></div>
         </div>
 
         <div class="acc-card promo-card" style="margin-top:1.4rem">
@@ -304,7 +310,7 @@ function ko_render_order(array $o, string $currency): void {
             <form method="post" action="<?= url('/konto.php') ?>"><input type="hidden" name="action" value="promo_gen"><button class="btn btn-primary btn-sm" type="submit">+ Neuen Code</button></form>
           </div>
           <?php if (empty($promoCodes)): ?>
-            <p class="muted" style="margin:0">Du hast noch keinen Code. Generiere einen und teile ihn mit einem Freund!</p>
+            <p class="muted" style="margin:0">Du hast noch keinen Code. Generiere einen und teile ihn mit einem Freund.</p>
           <?php else: ?>
             <div class="promo-codes">
               <?php foreach ($promoCodes as $pc):
@@ -321,10 +327,10 @@ function ko_render_order(array $o, string $currency): void {
                   <?php endif; ?>
                 </div>
                 <?php if ($used): ?>
-                  <span class="promo-code-check" aria-hidden="true">✓</span>
+                  <span class="promo-code-badge">Vergeben</span>
                 <?php else: ?>
                   <div class="promo-code-actions">
-                    <button type="button" class="btn btn-ghost btn-sm" data-copy-btn="<?= h($pc['code']) ?>">Code</button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-copy-btn="<?= h($pc['code']) ?>">Code kopieren</button>
                     <button type="button" class="btn btn-ghost btn-sm" data-copy-btn="<?= h($shareUrl) ?>">Link</button>
                   </div>
                 <?php endif; ?>
@@ -334,19 +340,21 @@ function ko_render_order(array $o, string $currency): void {
           <?php endif; ?>
         </div>
 
-        <h2 style="font-size:1.15rem;margin:2rem 0 1rem">Promo Shop</h2>
+        <div class="acc-section-head" style="margin:2rem 0 1rem">
+          <h2 style="font-size:1.15rem;margin:0">Promo Shop</h2>
+          <span class="muted" style="font-size:.85rem">Du hast <strong><?= $promoPoints ?></strong> Punkte</span>
+        </div>
         <div class="promo-shop">
-          <?php foreach ($promoRewards as $key => $r): $can = $promoPoints >= $r['cost']; ?>
+          <?php foreach ($promoRewards as $key => $r): $can = $promoPoints >= $r['cost']; $missing = $r['cost'] - $promoPoints; ?>
           <div class="promo-reward<?= $can ? '' : ' is-locked' ?>">
-            <div class="promo-reward-icon"><?= h($r['icon'] ?? '★') ?></div>
             <span class="promo-reward-label"><?= h($r['label']) ?></span>
             <p class="promo-reward-desc"><?= h($r['desc']) ?></p>
             <div class="promo-reward-foot">
-              <span class="promo-reward-cost"><?= (int)$r['cost'] ?> Pkt.</span>
+              <span class="promo-reward-cost"><?= (int)$r['cost'] ?> Punkte</span>
               <form method="post" action="<?= url('/konto.php') ?>" onsubmit="return confirm('<?= (int)$r['cost'] ?> Punkte für „<?= h($r['label']) ?>" einlösen?')">
                 <input type="hidden" name="action" value="promo_redeem">
                 <input type="hidden" name="reward" value="<?= h($key) ?>">
-                <button class="btn btn-primary btn-sm" type="submit"<?= $can ? '' : ' disabled' ?>><?= $can ? 'Einlösen' : 'Zu wenig' ?></button>
+                <button class="btn btn-primary btn-sm" type="submit"<?= $can ? '' : ' disabled' ?>><?= $can ? 'Einlösen' : ('Noch ' . $missing . ' Pkt.') ?></button>
               </form>
             </div>
           </div>
@@ -459,12 +467,12 @@ function ko_render_order(array $o, string $currency): void {
   });
   // Promo: Code/Link kopieren
   function copy(text, btn, label) {
-    var done = function () { var t = btn.textContent; btn.textContent = label || 'Kopiert ✓'; setTimeout(function(){ btn.textContent = t; }, 1500); };
+    var done = function () { var t = btn.textContent; btn.textContent = label || 'Kopiert'; setTimeout(function(){ btn.textContent = t; }, 1500); };
     if (navigator.clipboard) { navigator.clipboard.writeText(text).then(done, done); }
     else { var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); done(); }
   }
   root.querySelectorAll('[data-copy-btn]').forEach(function (b) {
-    b.addEventListener('click', function () { copy(b.getAttribute('data-copy-btn'), b, 'Link kopiert ✓'); });
+    b.addEventListener('click', function () { copy(b.getAttribute('data-copy-btn'), b, 'Kopiert'); });
   });
   root.querySelectorAll('[data-copy]').forEach(function (el) {
     el.style.cursor = 'pointer'; el.title = 'Klicken zum Kopieren';

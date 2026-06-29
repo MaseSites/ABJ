@@ -79,16 +79,19 @@ function promo_award_for_buyer(int $buyerAccountId, int $orderTotalCents): void 
     if ($pts > 0) promo_add_points($referrer, $pts);
 }
 
-/** Verfügbare Prämien im Promo-Shop. */
+/**
+ * Verfügbare Prämien im Promo-Shop.
+ * Einheitlicher, realistischer Wechselkurs: 10 Punkte = CHF 1 Gutschein-Wert
+ * (du verdienst 10 Punkte je 100 CHF, die deine Freunde ausgeben -> ~1 % zurück).
+ * Gratis Versand ist die günstige Einstiegsprämie.
+ */
 function promo_rewards(): array {
     return [
-        'ship'  => ['label' => 'Gratis Versand',  'cost' => 50,  'type' => 'free_shipping', 'value' => 0,    'desc' => 'Eine Bestellung versandkostenfrei.', 'icon' => '🚚'],
-        'p5'    => ['label' => '5% Rabatt',        'cost' => 40,  'type' => 'percent',       'value' => 5,    'desc' => '5% auf eine Bestellung.',           'icon' => '%'],
-        'p10'   => ['label' => '10% Rabatt',       'cost' => 80,  'type' => 'percent',       'value' => 10,   'desc' => '10% auf eine Bestellung.',          'icon' => '%'],
-        'p15'   => ['label' => '15% Rabatt',       'cost' => 120, 'type' => 'percent',       'value' => 15,   'desc' => '15% auf eine Bestellung.',          'icon' => '%'],
-        'p20'   => ['label' => '20% Rabatt',       'cost' => 160, 'type' => 'percent',       'value' => 20,   'desc' => '20% auf eine Bestellung.',          'icon' => '%'],
-        'chf10' => ['label' => 'CHF 10 Gutschein', 'cost' => 100, 'type' => 'fixed',        'value' => 1000, 'desc' => 'CHF 10 Rabatt auf eine Bestellung.', 'icon' => '💰'],
-        'chf25' => ['label' => 'CHF 25 Gutschein', 'cost' => 230, 'type' => 'fixed',        'value' => 2500, 'desc' => 'CHF 25 Rabatt auf eine Bestellung.', 'icon' => '💰'],
+        'ship'   => ['label' => 'Gratis Versand',    'cost' => 50,   'type' => 'free_shipping', 'value' => 0,     'desc' => 'Versandkostenfrei bei deiner nächsten Bestellung.'],
+        'chf10'  => ['label' => 'CHF 10 Gutschein',  'cost' => 100,  'type' => 'fixed',         'value' => 1000,  'desc' => 'CHF 10 Rabatt auf eine Bestellung.'],
+        'chf25'  => ['label' => 'CHF 25 Gutschein',  'cost' => 250,  'type' => 'fixed',         'value' => 2500,  'desc' => 'CHF 25 Rabatt auf eine Bestellung.'],
+        'chf50'  => ['label' => 'CHF 50 Gutschein',  'cost' => 500,  'type' => 'fixed',         'value' => 5000,  'desc' => 'CHF 50 Rabatt auf eine Bestellung.'],
+        'chf100' => ['label' => 'CHF 100 Gutschein', 'cost' => 1000, 'type' => 'fixed',         'value' => 10000, 'desc' => 'CHF 100 Rabatt auf eine Bestellung.'],
     ];
 }
 

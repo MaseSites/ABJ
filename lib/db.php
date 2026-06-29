@@ -232,6 +232,7 @@ function db_init(PDO $pdo): void {
         'discount_code'            => "TEXT DEFAULT ''",
         'discount_cents'           => 'INTEGER DEFAULT 0',
         'note'                     => "TEXT DEFAULT ''",
+        'promo_awarded'            => 'INTEGER DEFAULT 0',
     ];
     foreach ($ord_add as $col => $def) {
         if (!in_array($col, $ord_cols)) {

@@ -3,27 +3,20 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 if (is_admin()) redirect('/admin/index.php');
 
 $error = false;
-$locked = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!login_throttle_allowed('admin', 8, 15)) {
-        $locked = true;
-    } else {
-        $username = trim($_POST['username'] ?? '');
-        $password = $_POST['password'] ?? '';
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-        $stmt = db()->prepare('SELECT * FROM users WHERE username = ?');
-        $stmt->execute([$username]);
-        $user = $stmt->fetch();
+    $stmt = db()->prepare('SELECT * FROM users WHERE username = ?');
+    $stmt->execute([$username]);
+    $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['password_hash'])) {
-            login_throttle_clear('admin');
-            admin_login((int)$user['id'], $user['username'], $user['role'] ?? 'root');
-            redirect('/admin/index.php');
-        }
-        login_throttle_hit('admin');
-        $error = true;
+    if ($user && password_verify($password, $user['password_hash'])) {
+        admin_login((int)$user['id'], $user['username'], $user['role'] ?? 'root');
+        redirect('/admin/index.php');
     }
+    $error = true;
 }
 $shopName = setting_get('shop_name') ?: 'ABJ Store';
 ?>
@@ -32,7 +25,6 @@ $shopName = setting_get('shop_name') ?: 'ABJ Store';
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  <?= csrf_meta() ?>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Admin Login – <?= h($shopName) ?></title>
@@ -48,9 +40,7 @@ $shopName = setting_get('shop_name') ?: 'ABJ Store';
     <p class="admin-kicker"><?= h($shopName) ?></p>
     <h1>Admin-Login</h1>
     <p class="muted" style="font-size:.9rem">Melde dich an, um das Dashboard zu öffnen.</p>
-    <?php if ($locked): ?>
-      <div class="alert alert-error" style="margin-top:1rem">Zu viele Login-Versuche. Bitte warte etwa 15 Minuten und versuche es erneut.</div>
-    <?php elseif ($error): ?>
+    <?php if ($error): ?>
       <div class="alert alert-error" style="margin-top:1rem">Benutzername oder Passwort falsch.</div>
     <?php endif; ?>
     <form method="post" action="<?= url('/admin/login.php') ?>" class="gate-form">

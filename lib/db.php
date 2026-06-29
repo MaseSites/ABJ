@@ -204,12 +204,6 @@ function db_init(PDO $pdo): void {
             used_at TEXT DEFAULT '',
             created_at TEXT DEFAULT (datetime('now'))
         );
-        CREATE TABLE IF NOT EXISTS login_throttle (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            scope TEXT NOT NULL DEFAULT '',
-            ip TEXT NOT NULL DEFAULT '',
-            created_at TEXT DEFAULT (datetime('now'))
-        );
         CREATE TABLE IF NOT EXISTS promo_redemptions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             account_id INTEGER NOT NULL,

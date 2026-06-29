@@ -238,8 +238,8 @@
           if (!file) return;
           upBtn.disabled = true; upBtn.textContent = 'Lädt…';
           try {
-            const fd = new FormData(); fd.append('image', file); fd.append('_csrf', csrf(null));
-            const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf(null) } });
+            const fd = new FormData(); fd.append('image', file);
+            const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd });
             const d = await res.json().catch(() => ({}));
             if (d.ok && d.src) { colors[idx].image = d.src; imgI.value = d.src; thumb.src = d.src; thumb.hidden = false; upBtn.textContent = '✓ Bild'; }
             else { window.alert('Upload fehlgeschlagen'); upBtn.textContent = '↑ Bild'; }
@@ -357,8 +357,7 @@
         try {
           const fd = new FormData();
           fd.append('image', file);
-          fd.append('_csrf', csrf(null));
-          const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd, headers: { 'X-CSRF-Token': csrf(null) } });
+          const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd });
           const data = await res.json().catch(() => ({}));
           if (data.ok && data.src) uploaded.push({ type: 'upload', src: data.src });
         } catch { /* ignore single-file failures */ }
@@ -521,7 +520,7 @@
         stepper.classList.add('saving');
         fetch(BASE_PATH + '/admin/api/stock-adjust.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': csrf(null), Accept: 'application/json' },
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
           body: fd.toString(),
         }).then((r) => r.json()).then((d) => {
           stepper.classList.remove('saving');
@@ -562,7 +561,7 @@
         badge.classList.add('removing');
         fetch(BASE_PATH + '/admin/bestellungen.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': csrf(null), Accept: 'application/json' },
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
           body: fd.toString(),
         }).then((r) => r.json()).then((d) => {
           if (d && d.ok) {

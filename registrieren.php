@@ -4,7 +4,7 @@ require_once __DIR__ . '/lib/bootstrap.php';
 if (is_customer()) redirect('/konto.php');
 
 $error = '';
-$weiter = safe_redirect_target($_GET['weiter'] ?? ($_POST['weiter'] ?? '/konto.php'), '/konto.php');
+$weiter = $_GET['weiter'] ?? ($_POST['weiter'] ?? '/konto.php');
 $prefill = ['name' => '', 'email' => ''];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($owner) account_set_referrer((int)$res['id'], $owner);
         }
         customer_login($res['id'], $email, $name);
-        redirect($weiter);
+        redirect($weiter && $weiter[0] === '/' ? $weiter : '/konto.php');
     }
     $error = $res['error'];
 }

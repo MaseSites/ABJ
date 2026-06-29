@@ -1,24 +1,14 @@
 <?php
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
-// Fehler werden protokolliert, dem Besucher aber nur generisch gemeldet
-// (keine Dateipfade/Stacktraces nach aussen -> kein Information-Leak).
-function _abj_render_error_page(): void {
-    if (!headers_sent()) {
-        http_response_code(500);
-        header('Content-Type: text/html; charset=utf-8');
-    }
-    echo '<!doctype html><html lang="de"><meta charset="utf-8"><title>Server-Fehler</title>'
-       . '<body style="font-family:system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1.5rem;line-height:1.6">'
-       . '<h2>Es ist ein Fehler aufgetreten</h2>'
-       . '<p>Bitte versuche es in einem Moment erneut. Falls das Problem bestehen bleibt, melde dich bei uns.</p>'
-       . '</body></html>';
-}
 set_exception_handler(function (\Throwable $e) {
     $msg = '[' . date('Y-m-d H:i:s') . '] ' . $e->getMessage()
          . ' in ' . $e->getFile() . ':' . $e->getLine();
     @file_put_contents(__DIR__ . '/../data/error.log', $msg . "\n", FILE_APPEND);
-    _abj_render_error_page();
+    if (!headers_sent()) http_response_code(500);
+    echo '<html><body style="font-family:sans-serif;padding:2rem">'
+       . '<h2>Server-Fehler</h2><pre style="background:#f5f5f5;padding:1rem">'
+       . htmlspecialchars($msg) . '</pre></body></html>';
     exit;
 });
 register_shutdown_function(function () {
@@ -27,7 +17,10 @@ register_shutdown_function(function () {
         $msg = '[' . date('Y-m-d H:i:s') . '] FATAL: ' . $err['message']
              . ' in ' . $err['file'] . ':' . $err['line'];
         @file_put_contents(__DIR__ . '/../data/error.log', $msg . "\n", FILE_APPEND);
-        _abj_render_error_page();
+        if (!headers_sent()) { http_response_code(500); }
+        echo '<html><body style="font-family:sans-serif;padding:2rem">'
+           . '<h2>Fatal Error</h2><pre style="background:#f5f5f5;padding:1rem">'
+           . htmlspecialchars($msg) . '</pre></body></html>';
     }
 });
 require_once __DIR__ . '/db.php';
@@ -48,38 +41,18 @@ require_once __DIR__ . '/shipping.php';
 require_once __DIR__ . '/accounts.php';
 require_once __DIR__ . '/promo.php';
 require_once __DIR__ . '/visits.php';
-require_once __DIR__ . '/security.php';
 
 // HTTPS / Mixed-Content-Schutz: weist den Browser an, jede unsichere
 // http://-Subressource (Bilder, Skripte, Styles, Fonts, fetch) automatisch
 // auf https:// hochzustufen. Greift auch bei dynamisch per JS eingefügten
 // oder im Admin gespeicherten Bild-URLs -> keine "nicht sicher"-Warnung.
 if (!headers_sent()) {
-    // frame-ancestors 'self' + X-Frame-Options schützen vor Clickjacking.
-    header("Content-Security-Policy: upgrade-insecure-requests; frame-ancestors 'self'; base-uri 'self'; object-src 'none'");
+    header('Content-Security-Policy: upgrade-insecure-requests');
     header('X-Content-Type-Options: nosniff');
-    header('X-Frame-Options: SAMEORIGIN');
     header('Referrer-Policy: strict-origin-when-cross-origin');
-    header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=()');
-    header('Cross-Origin-Opener-Policy: same-origin');
-    if (is_https()) {
-        header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
-    }
 }
 
 db(); // initialise connection & tables
-
-// CSRF: Session + Token früh sicherstellen (solange Header noch offen sind),
-// HTML-Formulare automatisch mit _csrf-Feld versehen und zustandsändernde
-// Anfragen global gegen CSRF prüfen.
-if (PHP_SAPI !== 'cli') {
-    $__csrfPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-    csrf_token();
-    if (strpos($__csrfPath, '/api/') === false) {
-        ob_start('csrf_inject_forms');
-    }
-    csrf_guard();
-}
 
 // IP-Sperre (nur Shop-Bereich; Admin bleibt erreichbar, damit man entsperren kann)
 // und Besucher-Log.

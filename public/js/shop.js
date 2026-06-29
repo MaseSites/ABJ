@@ -597,11 +597,10 @@
       e.preventDefault();
       const fd = new FormData(reviewForm);
       fd.set('product_id', reviewForm.getAttribute('data-product-id') || '');
-      fd.set('_csrf', CSRF);
       const msg = $('[data-review-msg]', reviewForm);
       const btn = reviewForm.querySelector('button[type="submit"]');
       if (btn) btn.classList.add('loading');
-      fetch(BASE_PATH + '/api/review.php', { method: 'POST', body: fd, headers: { 'X-CSRF-Token': CSRF, Accept: 'application/json' } })
+      fetch(BASE_PATH + '/api/review.php', { method: 'POST', body: fd, headers: { Accept: 'application/json' } })
         .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
         .then(({ ok, d }) => {
           if (btn) btn.classList.remove('loading');

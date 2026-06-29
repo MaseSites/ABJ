@@ -41,3 +41,9 @@ function request_update_status(int $id, string $status, int $priceCents = 0, str
     $stmt->execute([$status, max(0, $priceCents), $note, $id]);
     return $stmt->rowCount() > 0;
 }
+
+function request_delete(int $id): bool {
+    $stmt = db()->prepare('DELETE FROM product_requests WHERE id = ?');
+    $stmt->execute([$id]);
+    return $stmt->rowCount() > 0;
+}

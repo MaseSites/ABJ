@@ -70,6 +70,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reord
     redirect('/warenkorb.php');
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_inbox_message') {
+    $messageId = (int)($_POST['message_id'] ?? 0);
+    if ($messageId > 0) {
+        account_message_delete((int)$cust['id'], $messageId);
+    }
+    redirect('/konto.php?tab=inbox&deleted=1');
+}
+
 // ── Promo: Code generieren / Prämie einlösen ──
 $promoFlash = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'promo_gen') {
@@ -301,6 +309,7 @@ function ko_render_order(array $o, string $currency): void {
           <h1>Posteingang</h1>
           <p class="muted">Alle Nachrichten zu deinem Konto und deinen Bestellungen an einem Ort.</p>
         </div>
+        <?php if (!empty($_GET['deleted'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Nachricht gelöscht.</div><?php endif; ?>
         <?php if (empty($inbox)): ?>
           <div class="cart-empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="52" height="52"><path d="M21 15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6h18v9z"/><path d="M3 8l9 6 9-6"/></svg>
@@ -323,12 +332,17 @@ function ko_render_order(array $o, string $currency): void {
                 <div class="acc-order-items">
                   <span class="acc-order-item" style="white-space:pre-line"><?= h($msg['body']) ?></span>
                 </div>
-                <?php if (!empty($msg['message_type']) && $msg['message_type'] === 'request_offer'): ?>
                 <div class="acc-order-actions" style="margin-top:.8rem">
-                  <?php if (!empty($msg['action_url'])): ?><a class="btn btn-primary btn-sm" href="<?= h($msg['action_url']) ?>"><?= h($msg['action_label'] ?: 'Dem Warenkorb hinzufügen') ?></a><?php endif; ?>
-                  <?php if (!empty($msg['decline_url'])): ?><a class="btn btn-danger btn-sm" href="<?= h($msg['decline_url']) ?>"><?= h($msg['decline_label'] ?: 'Kein Interesse') ?></a><?php endif; ?>
+                  <?php if (!empty($msg['message_type']) && $msg['message_type'] === 'request_offer'): ?>
+                    <?php if (!empty($msg['action_url'])): ?><a class="btn btn-primary btn-sm" href="<?= h($msg['action_url']) ?>"><?= h($msg['action_label'] ?: 'Dem Warenkorb hinzufügen') ?></a><?php endif; ?>
+                    <?php if (!empty($msg['decline_url'])): ?><a class="btn btn-danger btn-sm" href="<?= h($msg['decline_url']) ?>"><?= h($msg['decline_label'] ?: 'Kein Interesse') ?></a><?php endif; ?>
+                  <?php endif; ?>
+                  <form method="post" action="<?= url('/konto.php') ?>" onsubmit="return confirm('Nachricht wirklich löschen?')" style="margin:0">
+                    <input type="hidden" name="action" value="delete_inbox_message">
+                    <input type="hidden" name="message_id" value="<?= (int)$msg['id'] ?>">
+                    <button class="btn btn-ghost btn-sm" type="submit">Löschen</button>
+                  </form>
                 </div>
-                <?php endif; ?>
               </article>
             <?php endforeach; ?>
           </div>

@@ -65,6 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/admin/kunde.php?id=' . $id . '&err=pw');
     }
 
+    if ($action === 'message_delete') {
+        $messageId = (int)($_POST['message_id'] ?? 0);
+        if ($messageId > 0) account_message_delete($id, $messageId);
+        redirect('/admin/kunde.php?id=' . $id . '&saved=msgdel');
+    }
+
     if ($action === 'delete') {
         account_delete($id);
         redirect('/admin/kunden.php?deleted=1');
@@ -84,6 +90,8 @@ $custOrders = $os->fetchAll();
 $ordRevenue = 0;
 foreach ($custOrders as $o) if (($o['payment_status'] ?? '') === 'bezahlt') $ordRevenue += (int)$o['total_cents'];
 
+$inbox = account_messages_by_account($id);
+
 $adminTitle = 'Kunde: ' . ($acc['name'] ?: $acc['email']);
 include __DIR__ . '/partials/admin-layout-top.php';
 ?>
@@ -95,6 +103,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 
 <?php if (($_GET['saved'] ?? '') === '1'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
 <?php if (($_GET['saved'] ?? '') === 'msg'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Nachricht gesendet.</div><?php endif; ?>
+<?php if (($_GET['saved'] ?? '') === 'msgdel'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Nachricht gelöscht.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'email'): ?><div class="alert alert-error" style="margin-bottom:1rem">E-Mail ungültig oder bereits vergeben.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'pw'): ?><div class="alert alert-error" style="margin-bottom:1rem">Passwort muss mindestens 8 Zeichen lang sein.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'msg'): ?><div class="alert alert-error" style="margin-bottom:1rem">Bitte eine Nachricht eingeben.</div><?php endif; ?>
@@ -180,6 +189,30 @@ include __DIR__ . '/partials/admin-layout-top.php';
       </form>
     </div>
   </div>
+</div>
+
+<div class="admin-section" style="margin-top:1.6rem">
+  <h2>Posteingang des Kunden (<?= count($inbox) ?>)</h2>
+  <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Alle Nachrichten, die dieser Kunde in seinem Konto sieht.</p>
+  <?php if (empty($inbox)): ?>
+    <p class="muted" style="margin:0">Noch keine Nachrichten.</p>
+  <?php else: foreach ($inbox as $m): ?>
+    <div class="message-card <?= !empty($m['is_read']) ? '' : 'message-unread' ?>">
+      <div class="message-meta">
+        <strong><?= h($m['subject'] ?: 'Nachricht') ?></strong>
+        <?php if (!empty($m['order_reference'])): ?><span class="muted"><?= h($m['order_reference']) ?></span><?php endif; ?>
+        <span class="muted"><?= h($m['sender_role'] ?: 'admin') ?></span>
+        <span class="muted"><?= h(substr($m['created_at'], 0, 16)) ?></span>
+        <?php if (empty($m['is_read'])): ?><span class="tag">ungelesen</span><?php endif; ?>
+      </div>
+      <p style="white-space:pre-line"><?= nl2br(h($m['body'])) ?></p>
+      <form method="post" data-cap="customers.manage" onsubmit="return confirm('Nachricht wirklich löschen?')" style="margin:0">
+        <input type="hidden" name="action" value="message_delete">
+        <input type="hidden" name="message_id" value="<?= (int)$m['id'] ?>">
+        <button class="btn btn-ghost btn-sm btn-danger" type="submit">Löschen</button>
+      </form>
+    </div>
+  <?php endforeach; endif; ?>
 </div>
 
 <div class="admin-section" style="margin-top:1.6rem">

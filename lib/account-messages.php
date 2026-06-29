@@ -34,3 +34,9 @@ function account_messages_unread_count(int $accountId): int {
 function account_messages_mark_read(int $accountId): void {
     db()->prepare('UPDATE account_messages SET is_read=1 WHERE account_id=?')->execute([$accountId]);
 }
+
+function account_message_delete(int $accountId, int $messageId): bool {
+    $stmt = db()->prepare('DELETE FROM account_messages WHERE account_id = ? AND id = ?');
+    $stmt->execute([$accountId, $messageId]);
+    return $stmt->rowCount() > 0;
+}

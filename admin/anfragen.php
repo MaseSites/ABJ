@@ -8,6 +8,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $req = $id ? request_by_id($id) : null;
     if ($req) {
         $action = $_POST['action'] ?? '';
+        if ($action === 'delete') {
+            request_delete($id);
+            redirect('/admin/anfragen.php?deleted=1');
+        }
         $price = (int)round((float)str_replace(',', '.', trim($_POST['price'] ?? '')) * 100);
         $note  = trim($_POST['note'] ?? '');
         if ($action === 'accept') {
@@ -47,6 +51,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
   <h1>Anfragen (<?= count($requests) ?>)</h1>
 </div>
 <?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
+<?php if (!empty($_GET['deleted'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Anfrage gelöscht.</div><?php endif; ?>
 
 <div class="admin-section">
   <?php if (empty($requests)): ?>
@@ -76,6 +81,11 @@ include __DIR__ . '/partials/admin-layout-top.php';
                 <input type="hidden" name="action" value="reject">
                 <label class="field" style="min-width:220px;flex:1"><span>Ablehnungsnachricht</span><input type="text" name="note" placeholder="Optional"></label>
                 <button class="btn btn-danger" type="submit">Ablehnen</button>
+              </form>
+              <form method="post" onsubmit="return confirm('Anfrage wirklich löschen?')" style="margin-top:.5rem">
+                <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                <input type="hidden" name="action" value="delete">
+                <button class="btn btn-ghost btn-sm btn-danger" type="submit">Löschen</button>
               </form>
             </td>
           </tr>

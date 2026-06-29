@@ -9,7 +9,7 @@ $_unreadMsgs  = 0;
 $_unreadOrderMsgs = 0;
 $_pendingRevs = 0;
 try {
-    $_newOrders   = (int)db()->query("SELECT COUNT(*) AS n FROM orders WHERE is_seen=0")->fetch()['n'];
+    $_newOrders   = (int)db()->query("SELECT COUNT(*) AS n FROM orders WHERE is_seen=0 AND COALESCE(merged_into,'')=''")->fetch()['n'];
     $_unreadMsgs  = messages_unread_count();
     $_unreadOrderMsgs = order_messages_unread_count();
     $_pendingRevs = reviews_pending_count();

@@ -177,7 +177,7 @@ function order_merge(string $targetRef, string $sourceRef): bool {
     $stmt = db()->prepare("UPDATE orders SET items=?, total_cents=?, shipping_cents=?, updated_at=datetime('now') WHERE reference=?");
     $stmt->execute([json_encode($targetItems), $targetTotal, $targetShipping, $target['reference']]);
 
-    $srcUpdate = db()->prepare("UPDATE orders SET merged_into=?, status='storniert', payment_status=CASE WHEN payment_status='bezahlt' THEN 'erstattet' ELSE payment_status END, updated_at=datetime('now') WHERE reference=?");
+    $srcUpdate = db()->prepare("UPDATE orders SET merged_into=?, status='storniert', is_seen=1, payment_status=CASE WHEN payment_status='bezahlt' THEN 'erstattet' ELSE payment_status END, updated_at=datetime('now') WHERE reference=?");
     $srcUpdate->execute([$target['reference'], $source['reference']]);
 
     db()->prepare("UPDATE order_messages SET order_reference=? WHERE order_reference=?")->execute([$target['reference'], $source['reference']]);

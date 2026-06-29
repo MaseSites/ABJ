@@ -14,10 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'merge') {
         $source = trim($_POST['source_ref'] ?? '');
-        if ($source) {
-            order_merge($ref, $source);
-        }
-        redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&merged=1');
+        $ok = $source !== '' && order_merge($ref, $source);
+        redirect('/admin/bestellung.php?ref=' . urlencode($ref) . ($ok ? '&merged=1' : '&merge_failed=1'));
     }
 
     if ($action === 'set_price') {
@@ -102,6 +100,7 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
 </div>
 <?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
 <?php if (!empty($_GET['merged'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Bestellungen wurden zusammengeführt.</div><?php endif; ?>
+<?php if (!empty($_GET['merge_failed'])): ?><div class="alert alert-error" style="margin-bottom:1rem">Zusammenführen nicht möglich – die ausgewählte Bestellung gehört zu einer anderen E-Mail oder wurde bereits zusammengeführt.</div><?php endif; ?>
 
 <div class="admin-form" style="max-width:700px">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem">

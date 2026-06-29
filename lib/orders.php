@@ -67,7 +67,7 @@ function order_is_request(array $order): bool {
     return false;
 }
 
-function order_update_status(string $ref, string $status, string $paymentStatus): bool {
+function order_update_status(string $ref, string $status, string $paymentStatus, bool $notifyCustomer = true): bool {
     $before = order_by_ref($ref);
     $stmt = db()->prepare('UPDATE orders SET status=?, payment_status=? WHERE reference=?');
     $stmt->execute([$status, $paymentStatus, $ref]);
@@ -100,16 +100,18 @@ function order_update_status(string $ref, string $status, string $paymentStatus)
                 'is_system' => 1,
                 'is_read' => 0,
             ]);
-            $acc = account_by_email($before['email'] ?? '');
-            if ($acc) {
-                account_message_create([
-                    'account_id' => (int)$acc['id'],
-                    'order_reference' => $ref,
-                    'sender_role' => 'system',
-                    'subject' => 'Bestell-Update',
-                    'body' => implode("\n", $notes),
-                    'is_read' => 0,
-                ]);
+            if ($notifyCustomer) {
+                $acc = account_by_email($before['email'] ?? '');
+                if ($acc) {
+                    account_message_create([
+                        'account_id' => (int)$acc['id'],
+                        'order_reference' => $ref,
+                        'sender_role' => 'system',
+                        'subject' => 'Bestell-Update',
+                        'body' => implode("\n", $notes),
+                        'is_read' => 0,
+                    ]);
+                }
             }
         }
     }

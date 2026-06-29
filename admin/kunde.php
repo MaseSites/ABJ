@@ -26,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'country'   => trim($_POST['country'] ?? 'CH'),
         ];
         account_update_profile($id, trim($_POST['name'] ?? ''), trim($_POST['phone'] ?? ''), $address);
-        // E-Mail separat (eindeutig)
         $newEmail = trim($_POST['email'] ?? '');
         if ($newEmail !== '' && strtolower($newEmail) !== strtolower($acc['email'])) {
             if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL) || account_by_email($newEmail)) {
@@ -35,6 +34,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             db()->prepare('UPDATE accounts SET email=? WHERE id=?')->execute([$newEmail, $id]);
         }
         redirect('/admin/kunde.php?id=' . $id . '&saved=1');
+    }
+
+    if ($action === 'message') {
+        $subject = trim($_POST['subject'] ?? '');
+        $body = trim($_POST['body'] ?? '');
+        if ($body !== '') {
+            account_message_create([
+                'account_id' => $id,
+                'sender_role' => 'admin',
+                'subject' => $subject !== '' ? $subject : 'Nachricht',
+                'body' => $body,
+                'is_read' => 0,
+            ]);
+            redirect('/admin/kunde.php?id=' . $id . '&saved=msg');
+        }
+        redirect('/admin/kunde.php?id=' . $id . '&err=msg');
     }
 
     if ($action === 'points') {
@@ -62,7 +77,6 @@ $points   = promo_points($id);
 $refStats = promo_referral_stats($id);
 $refBy    = !empty($acc['referred_by']) ? account_by_id((int)$acc['referred_by']) : null;
 
-// Bestellungen dieses Kunden (per E-Mail)
 $os = db()->prepare("SELECT reference, total_cents, payment_status, status, created_at
                      FROM orders WHERE lower(email) = lower(?) ORDER BY created_at DESC");
 $os->execute([$acc['email']]);
@@ -79,9 +93,11 @@ include __DIR__ . '/partials/admin-layout-top.php';
   <a class="btn btn-ghost" href="<?= url('/admin/kunden.php') ?>">← Zurück</a>
 </div>
 
-<?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
+<?php if (($_GET['saved'] ?? '') === '1'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
+<?php if (($_GET['saved'] ?? '') === 'msg'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Nachricht gesendet.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'email'): ?><div class="alert alert-error" style="margin-bottom:1rem">E-Mail ungültig oder bereits vergeben.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'pw'): ?><div class="alert alert-error" style="margin-bottom:1rem">Passwort muss mindestens 8 Zeichen lang sein.</div><?php endif; ?>
+<?php if (($_GET['err'] ?? '') === 'msg'): ?><div class="alert alert-error" style="margin-bottom:1rem">Bitte eine Nachricht eingeben.</div><?php endif; ?>
 
 <div class="stat-grid" style="margin-bottom:1.6rem">
   <div class="stat-card stat-highlight"><span class="stat-num"><?= $points ?></span><span class="stat-label">Promo Punkte</span></div>
@@ -91,7 +107,6 @@ include __DIR__ . '/partials/admin-layout-top.php';
 </div>
 
 <div class="admin-2col">
-  <!-- Profil & Adresse -->
   <div class="admin-section">
     <h2>Profil &amp; Adresse</h2>
     <form method="post" data-cap="customers.manage" class="admin-form">
@@ -125,7 +140,17 @@ include __DIR__ . '/partials/admin-layout-top.php';
   </div>
 
   <div>
-    <!-- Promo Punkte -->
+    <div class="admin-section">
+      <h2>Nachricht senden</h2>
+      <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Die Nachricht landet direkt im Posteingang dieses Kunden.</p>
+      <form method="post" data-cap="customers.manage" class="admin-form">
+        <input type="hidden" name="action" value="message">
+        <label class="field"><span>Betreff</span><input type="text" name="subject" maxlength="120" placeholder="z. B. Rückfrage zur Bestellung"></label>
+        <label class="field"><span>Nachricht</span><textarea name="body" rows="4" placeholder="Text für den Kunden"></textarea></label>
+        <button class="btn btn-primary" type="submit" style="align-self:flex-start">Senden</button>
+      </form>
+    </div>
+
     <div class="admin-section">
       <h2>Promo Punkte</h2>
       <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Aktuell: <strong><?= $points ?></strong> Punkte.<?php if ($refBy): ?> Geworben von <strong><?= h($refBy['name'] ?: $refBy['email']) ?></strong>.<?php endif; ?></p>
@@ -136,7 +161,6 @@ include __DIR__ . '/partials/admin-layout-top.php';
       </form>
     </div>
 
-    <!-- Passwort zurücksetzen -->
     <div class="admin-section">
       <h2>Passwort zurücksetzen</h2>
       <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Falls der Kunde sein Passwort vergessen hat, setze hier ein neues.</p>
@@ -147,7 +171,6 @@ include __DIR__ . '/partials/admin-layout-top.php';
       </form>
     </div>
 
-    <!-- Konto löschen -->
     <div class="admin-section" style="border-color:rgba(226,96,76,.3)">
       <h2>Konto löschen</h2>
       <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Entfernt den Zugang. Bestellungen bleiben als Historie erhalten.</p>
@@ -159,7 +182,6 @@ include __DIR__ . '/partials/admin-layout-top.php';
   </div>
 </div>
 
-<!-- Bestellungen -->
 <div class="admin-section" style="margin-top:1.6rem">
   <h2>Bestellungen (<?= count($custOrders) ?>)</h2>
   <?php if (empty($custOrders)): ?>

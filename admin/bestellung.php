@@ -3,34 +3,30 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 $ref   = trim($_GET['ref'] ?? '');
 $order = $ref ? order_by_ref($ref) : null;
 if (!$order) redirect('/admin/bestellungen.php');
+$currency = setting_get('currency') ?: 'CHF';
 
 try { order_mark_seen($ref); } catch (Throwable $e) { /* column may not exist yet */ }
 try { order_messages_mark_read($ref); } catch (Throwable $e) { /* table may not exist yet */ }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_cap('orders.manage');
-    if (($_POST['action'] ?? '') === 'merge') {
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'merge') {
         $source = trim($_POST['source_ref'] ?? '');
         if ($source) {
             order_merge($ref, $source);
         }
         redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&merged=1');
     }
-    if (($_POST['action'] ?? '') === 'set_price') {
+
+    if ($action === 'set_price') {
         $prod = (int)round((float)str_replace(',', '.', trim($_POST['total'] ?? '')) * 100);
         $ship = (int)round((float)str_replace(',', '.', trim($_POST['shipping'] ?? '')) * 100);
+        $sendMessage = !empty($_POST['send_message']);
+        $note = trim($_POST['note'] ?? '');
+
         order_set_price($ref, max(0, $prod), max(0, $ship));
-        $acc = account_by_email($order['email'] ?? '');
-        if ($acc) {
-            account_message_create([
-                'account_id' => (int)$acc['id'],
-                'order_reference' => $ref,
-                'sender_role' => 'system',
-                'subject' => 'Preisänderung',
-                'body' => 'Neuer Produktpreis: ' . number_format($prod / 100, 2, '.', '') . "\nVersand: " . number_format($ship / 100, 2, '.', ''),
-                'is_read' => 0,
-            ]);
-        }
         order_message_create([
             'order_reference' => $ref,
             'author_role' => 'system',
@@ -40,43 +36,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'is_system' => 1,
             'is_read' => 0,
         ]);
-    } else {
-        $newStatus = trim($_POST['status'] ?? 'neu');
-        $newPay = trim($_POST['payment_status'] ?? 'offen');
-        order_update_status($ref, $newStatus, $newPay);
+
+        if ($sendMessage) {
+            $acc = account_by_email($order['email'] ?? '');
+            if ($acc) {
+                $body = $note !== '' ? $note : ('Preis geändert auf ' . number_format(($prod + $ship) / 100, 2, '.', '') . ' ' . $currency);
+                account_message_create([
+                    'account_id' => (int)$acc['id'],
+                    'order_reference' => $ref,
+                    'sender_role' => 'system',
+                    'subject' => 'Preisänderung',
+                    'body' => $body,
+                    'is_read' => 0,
+                ]);
+            }
+        }
+
+        redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&saved=1');
     }
-    if (!empty($_POST['note'])) {
-        $note = trim($_POST['note']);
-        order_message_create([
-            'order_reference' => $ref,
-            'author_role' => 'admin',
-            'author_name' => 'ABJ Team',
-            'subject' => 'Bemerkung',
-            'body' => $note,
-            'is_system' => 0,
-            'is_read' => 0,
-        ]);
-        $acc = account_by_email($order['email'] ?? '');
+
+    $newStatus = trim($_POST['status'] ?? 'neu');
+    $newPay = trim($_POST['payment_status'] ?? 'offen');
+    $sendMessage = !empty($_POST['send_message']);
+    $note = trim($_POST['note'] ?? '');
+    $before = order_by_ref($ref);
+    $ok = order_update_status($ref, $newStatus, $newPay, false);
+
+    if ($ok && $sendMessage) {
+        $acc = account_by_email($before['email'] ?? '');
         if ($acc) {
+            $body = $note;
+            if ($body === '') {
+                $parts = [];
+                if (($before['status'] ?? '') !== $newStatus) {
+                    $parts[] = 'Status geändert: ' . str_replace('_', ' ', $newStatus);
+                }
+                if (($before['payment_status'] ?? '') !== $newPay) {
+                    $parts[] = 'Zahlungsstatus geändert: ' . $newPay;
+                }
+                $body = $parts ? implode("\n", $parts) : 'Bestellung wurde aktualisiert.';
+            }
             account_message_create([
                 'account_id' => (int)$acc['id'],
                 'order_reference' => $ref,
-                'sender_role' => 'admin',
-                'subject' => 'Nachricht zur Bestellung',
-                'body' => $note,
+                'sender_role' => 'system',
+                'subject' => 'Bestell-Update',
+                'body' => $body,
                 'is_read' => 0,
             ]);
         }
     }
+
     redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&saved=1');
 }
 
 $adminTitle = 'Bestellung ' . $ref;
 include __DIR__ . '/partials/admin-layout-top.php';
-$currency  = setting_get('currency') ?: 'CHF';
 $addr      = is_array($order['address']) ? $order['address'] : ['raw' => $order['address']];
 $isRequest = order_is_request($order);
-$msgs      = order_messages_by_ref($ref);
 $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''), fn($o) => $o['reference'] !== $ref));
 ?>
 <div class="admin-head-row" style="margin-bottom:1.4rem">
@@ -132,7 +149,6 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
         foreach ($order['items'] as $it) $curProduct += (int)($it['lineCents'] ?? 0);
         $defaultShip = $curShip > 0 ? $curShip : (int)(setting_get('shipping_ch_cents') ?: 590);
     } else {
-        // Bei normalen Bestellungen: Produktpreis = Gesamt minus Versand.
         $curProduct  = max(0, (int)$order['total_cents'] - $curShip);
         $defaultShip = $curShip;
     }
@@ -150,7 +166,14 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
       <label class="field" style="max-width:160px"><span>Versand (<?= h($currency) ?>)</span>
         <input type="text" inputmode="decimal" name="shipping" value="<?= number_format($defaultShip / 100, 2, '.', '') ?>" placeholder="z.B. 5.90">
       </label>
-      <button class="btn btn-primary" type="submit">Preis speichern</button>
+      <label class="field" style="min-width:280px;flex:1">
+        <span>Nachricht für den Kunden</span>
+        <textarea name="note" rows="3" placeholder="Optionaler Text für die Inbox"></textarea>
+      </label>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <button class="btn btn-danger" type="submit" name="send_message" value="0">Stumm speichern</button>
+        <button class="btn btn-primary" type="submit" name="send_message" value="1">Mit Nachricht speichern</button>
+      </div>
     </form>
   </div>
 
@@ -173,8 +196,8 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
       </select>
     </label>
     <label class="field" style="min-width:280px;flex:1">
-      <span>Bemerkung für den Kunden</span>
-      <textarea name="note" rows="3" placeholder="z. B. Preisänderung, Lieferhinweis, Rückfrage"></textarea>
+      <span>Nachricht für den Kunden</span>
+      <textarea name="note" rows="3" placeholder="Optionaler Text für die Inbox"></textarea>
     </label>
     <?php if (!empty($otherOrders)): ?>
     <label class="field" style="min-width:280px;flex:1">
@@ -187,24 +210,11 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
     </label>
     <button class="btn btn-line" type="submit" name="action" value="merge">Zusammenführen</button>
     <?php endif; ?>
-    <button class="btn btn-primary" type="submit">Speichern</button>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+      <button class="btn btn-danger" type="submit" name="send_message" value="0">Stumm speichern</button>
+      <button class="btn btn-primary" type="submit" name="send_message" value="1">Mit Nachricht speichern</button>
+    </div>
   </form>
-
-  <div class="admin-section" style="margin-top:1.5rem">
-    <h2>Posteingang</h2>
-    <?php if (empty($msgs)): ?>
-      <p class="muted">Noch keine Nachrichten zu dieser Bestellung.</p>
-    <?php else: foreach ($msgs as $m): ?>
-      <div class="message-card <?= !empty($m['is_read']) ? '' : 'message-unread' ?>">
-        <div class="message-meta">
-          <strong><?= h($m['subject'] ?: ($m['is_system'] ? 'System' : 'Nachricht')) ?></strong>
-          <span class="muted"><?= h($m['author_name'] ?: $m['author_role']) ?></span>
-          <span class="muted"><?= h(substr($m['created_at'], 0, 16)) ?></span>
-        </div>
-        <p><?= nl2br(h($m['body'])) ?></p>
-      </div>
-    <?php endforeach; endif; ?>
-  </div>
 </div>
 
 <?php include __DIR__ . '/partials/admin-layout-bottom.php'; ?>

@@ -18,10 +18,12 @@ if (count($featured) < 4) {
 $featured = array_slice($featured, 0, 8);
 
 $categories = products_categories();
-// Kategorie-Kacheln mit Bild des neuesten Produkts der Kategorie
+// Kategorie-Kacheln mit Bild des neuesten Produkts der Kategorie.
+// Alle Kategorien anzeigen – der horizontale Scroller fasst beliebig viele.
 $catTiles = [];
-foreach (array_slice($categories, 0, 6) as $c) {
+foreach ($categories as $c) {
     $ps = products_list_public($c);
+    if (empty($ps)) continue; // leere Kategorien überspringen
     $catTiles[] = ['name' => $c, 'image' => $ps[0]['images'][0]['src'] ?? null, 'count' => count($ps)];
 }
 

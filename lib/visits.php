@@ -30,6 +30,71 @@ function visit_log(): void {
     } catch (\Throwable $e) { /* Logging darf die Seite nie blockieren */ }
 }
 
+// ──────────────── Auto-Sperre verdächtiger Scanner ────────────────
+
+/**
+ * Vertrauenswürdiger Besucher? Admins, freigeschaltete IPs und die bekannten
+ * Inhaber-Konten (Loma, Camillo, Lewis) werden NIE automatisch gesperrt.
+ */
+function security_is_trusted_visitor(): bool {
+    if (function_exists('is_admin') && is_admin()) return true;
+    if (ip_is_allowed(client_ip())) return true;
+    if (function_exists('is_customer') && is_customer()) {
+        $name = strtolower(trim((string)(current_customer()['name'] ?? '')));
+        if ($name !== '') {
+            foreach (['loma', 'camillo', 'lewis'] as $t) {
+                if (strpos($name, $t) !== false) return true;
+            }
+        }
+    }
+    return false;
+}
+
+/** Sieht der Pfad nach einem Hack-/Scanner-Versuch aus? (nie eine echte Shop-URL) */
+function security_path_is_malicious(string $path): bool {
+    $p = strtolower(rawurldecode($path));
+    // Pfad-Traversal / Nullbyte
+    if (strpos($p, '..') !== false || strpos($p, "\0") !== false || strpos($p, '%00') !== false) return true;
+    // Bekannte Angriffs-/Scan-Pfade (kommen in diesem Shop niemals legitim vor)
+    static $needles = [
+        'passkey', 'passwd', '.env', '.git', '.svn', '.hg', '.ssh', 'id_rsa', 'id_dsa', '.aws', '.npmrc',
+        'wp-admin', 'wp-login', 'wp-content', 'wp-includes', 'wordpress', 'wp-json', 'xmlrpc.php', 'wlwmanifest',
+        'phpmyadmin', 'phpadmin', 'mysqladmin', 'adminer', 'dbadmin', '/pma/', 'administrator/',
+        '.htpasswd', '.htaccess', 'eval-stdin', 'phpunit', 'phpinfo', 'base64_', 'allow_url',
+        'webshell', 'c99.php', 'r57.php', 'wso.php', 'alfa.php', 'cgi-bin', 'shell.php', 'cmd.php',
+        'autodiscover', '/owa/', '/actuator', 'solr/', 'jenkins', 'struts2',
+        'config.php', 'configuration.php', 'config.json', 'web.config', 'database.yml', 'settings.py',
+        'etc/passwd', '/proc/self', 'vendor/phpunit', 'sftp-config', 'credentials', 'aws/credentials',
+    ];
+    foreach ($needles as $n) { if (strpos($p, $n) !== false) return true; }
+    // Verdächtige Dateiendungen (Backups, Dumps, Secrets, fremde Skripte)
+    if (preg_match('#\.(env|git|sql|sqlite|db|bak|old|save|swp|swo|ini|sh|log|zip|tar|tgz|gz|rar|7z|dump|pem|key|crt|p12|pfx|conf|cfg|yml|yaml|asp|aspx|jsp|cgi|exe|dll)(\?|$)#', $p)) return true;
+    return false;
+}
+
+/**
+ * Sperrt die IP sofort, wenn ein verdächtiger Pfad von einem nicht
+ * vertrauenswürdigen Besucher aufgerufen wird, und zeigt die Sperr-Seite.
+ */
+function security_autoban_guard(string $path): void {
+    if (!security_path_is_malicious($path)) return;     // zuerst billig prüfen (keine Session)
+    if (security_is_trusted_visitor()) return;
+    $ip = client_ip();
+    if (!ip_is_blocked($ip)) {
+        ip_block($ip, 'Auto-Sperre: verdächtiger Zugriff auf ' . mb_substr($path, 0, 150));
+    }
+    if (!headers_sent()) {
+        http_response_code(403);
+        header('Content-Type: text/html; charset=utf-8');
+        header('Cache-Control: no-store');
+    }
+    echo '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Zugriff gesperrt</title></head>'
+       . '<body style="font-family:system-ui,sans-serif;background:#0d0d12;color:#e8e8ee;display:grid;place-items:center;min-height:100vh;margin:0">'
+       . '<div style="text-align:center;padding:2rem;max-width:420px"><h1 style="margin:0 0 .5rem">Zugriff gesperrt</h1>'
+       . '<p style="color:#9a9aa5">Verdächtige Aktivität erkannt. Deine IP-Adresse wurde gesperrt.</p></div></body></html>';
+    exit;
+}
+
 function ip_is_blocked(string $ip): bool {
     if ($ip === '') return false;
     try {

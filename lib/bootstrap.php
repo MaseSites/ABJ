@@ -57,6 +57,13 @@ db(); // initialise connection & tables
 // IP-Sperre (nur Shop-Bereich; Admin bleibt erreichbar, damit man entsperren kann)
 // und Besucher-Log.
 $__reqPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+
+// Verdächtige Scanner (z.B. /passkey, /.env, /wp-admin, Backup-/Secret-Dateien)
+// sofort sperren – ausser bei Admins, freigeschalteten IPs oder den Inhabern.
+if (PHP_SAPI !== 'cli') {
+    security_autoban_guard($__reqPath);
+}
+
 if (PHP_SAPI !== 'cli' && strpos($__reqPath, '/admin') !== 0) {
     if (ip_is_blocked(client_ip())) {
         if (!headers_sent()) { http_response_code(403); header('Content-Type: text/html; charset=utf-8'); }

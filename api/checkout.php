@@ -66,6 +66,8 @@ foreach ($cart as $line) {
     $safeQty = $isBO ? $line['qty'] : min($line['qty'], max(0, $avail));
     if ($safeQty === 0) continue;
     $subtotal += $unit * $safeQty;
+    $imgs  = $variantRow ? safe_parse($variantRow['images'] ?? '[]', []) : [];
+    $image = $imgs[0]['src'] ?? ($p['images'][0]['src'] ?? null);
     $lineItems[] = [
         'productId' => $p['id'],
         'slug'      => $p['slug'],
@@ -74,6 +76,7 @@ foreach ($cart as $line) {
         'qty'       => $safeQty,
         'unitCents' => $unit,
         'lineCents' => $unit * $safeQty,
+        'image'     => $image,
     ];
 }
 

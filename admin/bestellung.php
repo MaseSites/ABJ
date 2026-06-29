@@ -126,10 +126,18 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
     <thead><tr><th></th><th>Produkt</th><th>Variante</th><th>Menge</th><th>Preis</th></tr></thead>
     <tbody>
       <?php foreach ($order['items'] as $item): ?>
+      <?php
+        // Bild aus der Bestellung, sonst Fallback auf das aktuelle Produktbild
+        $itemImg = $item['image'] ?? '';
+        if (empty($itemImg) && !empty($item['productId'])) {
+            $pp = product_by_id((int)$item['productId']);
+            $itemImg = $pp['images'][0]['src'] ?? '';
+        }
+      ?>
       <tr>
         <td style="width:64px">
-          <?php if (!empty($item['image'])): ?>
-            <a href="<?= h($item['image']) ?>" target="_blank" rel="noopener"><img src="<?= h($item['image']) ?>" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.1)"></a>
+          <?php if (!empty($itemImg)): ?>
+            <a href="<?= h($itemImg) ?>" target="_blank" rel="noopener"><img src="<?= h($itemImg) ?>" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.1)"></a>
           <?php else: ?>—<?php endif; ?>
         </td>
         <td><?= h($item['name']) ?></td>

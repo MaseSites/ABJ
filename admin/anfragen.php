@@ -59,13 +59,18 @@ include __DIR__ . '/partials/admin-layout-top.php';
   <?php else: ?>
     <div class="table-card">
       <table class="data-table">
-        <thead><tr><th>ID</th><th>Kunde</th><th>Beschreibung</th><th>Status</th><th>Preis</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>Bild</th><th>Kunde</th><th>Beschreibung</th><th>Status</th><th>Preis</th><th></th></tr></thead>
         <tbody>
           <?php foreach ($requests as $r): ?>
           <tr>
             <td><?= (int)$r['id'] ?></td>
+            <td style="width:72px">
+              <?php if (!empty($r['screenshot'])): ?>
+                <a href="<?= h($r['screenshot']) ?>" target="_blank" rel="noopener"><img src="<?= h($r['screenshot']) ?>" alt="Screenshot" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.12)"></a>
+              <?php else: ?><span class="muted">—</span><?php endif; ?>
+            </td>
             <td><?= h($r['customer_name'] ?: $r['email']) ?></td>
-            <td><?= h($r['description']) ?></td>
+            <td><?= h($r['description']) ?><?php if (!empty($r['link'])): ?><br><a href="<?= h(secure_url($r['link'])) ?>" target="_blank" rel="noopener" class="muted" style="font-size:.82rem;word-break:break-all"><?= h($r['link']) ?></a><?php endif; ?></td>
             <td><span class="tag"><?= h($r['status']) ?></span></td>
             <td><?= (int)$r['price_cents'] > 0 ? format_price((int)$r['price_cents'], setting_get('currency') ?: 'CHF') : '—' ?></td>
             <td>

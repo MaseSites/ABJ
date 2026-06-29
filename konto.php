@@ -70,6 +70,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reord
     redirect('/warenkorb.php');
 }
 
+// ── Bestellung stornieren ──
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'cancel_order') {
+    $ref = trim($_POST['ref'] ?? '');
+    $ok  = $ref !== '' && order_cancel_by_customer($ref, $cust['email'] ?? '');
+    redirect('/konto.php?tab=orders&' . ($ok ? 'cancelled=1' : 'cancel_failed=1'));
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete_inbox_message') {
     $messageId = (int)($_POST['message_id'] ?? 0);
     if ($messageId > 0) {
@@ -199,6 +206,13 @@ function ko_render_order(array $o, string $currency): void {
         </form>
         <?php endif; ?>
         <a class="btn btn-ghost btn-sm" href="<?= url('/bestellung.php?ref=' . urlencode($o['reference'])) ?>">Details</a>
+        <?php if (!$isReq && in_array($o['status'], ['neu', 'in_bearbeitung'], true)): ?>
+        <form method="post" action="<?= url('/konto.php') ?>" style="display:inline" onsubmit="return confirm('Diese Bestellung wirklich stornieren?')">
+          <input type="hidden" name="action" value="cancel_order">
+          <input type="hidden" name="ref" value="<?= h($o['reference']) ?>">
+          <button class="btn btn-ghost btn-sm" type="submit" style="color:#e2604c">Stornieren</button>
+        </form>
+        <?php endif; ?>
       </div>
     </div>
   </article>
@@ -310,6 +324,8 @@ function ko_render_order(array $o, string $currency): void {
       <!-- Bestellungen -->
       <section class="acc-panel<?= $activeTab === 'orders' ? ' active' : '' ?>" data-panel="orders">
         <div class="acc-panel-head"><h1>Meine Bestellungen</h1></div>
+        <?php if (!empty($_GET['cancelled'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Deine Bestellung wurde storniert.</div><?php endif; ?>
+        <?php if (!empty($_GET['cancel_failed'])): ?><div class="alert alert-error" style="margin-bottom:1rem">Diese Bestellung kann nicht mehr storniert werden (bereits versendet, abgeschlossen oder storniert).</div><?php endif; ?>
         <?php if (empty($orders)): ?>
           <div class="cart-empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="52" height="52"><path d="M6 7h12l-1 13H7zM9 7a3 3 0 0 1 6 0"/></svg>

@@ -129,6 +129,60 @@ function order_update_status(string $ref, string $status, string $paymentStatus,
     return $ok;
 }
 
+/**
+ * Storniert eine Bestellung durch den Kunden. Nur erlaubt, solange die
+ * Bestellung noch nicht versendet/abgeschlossen/storniert ist und dem Kunden
+ * gehört. Bucht den Lagerbestand zurück und benachrichtigt Kunde + Admin.
+ */
+function order_cancel_by_customer(string $ref, string $email): bool {
+    $order = order_by_ref($ref);
+    if (!$order) return false;
+    if (strtolower(trim((string)($order['email'] ?? ''))) !== strtolower(trim($email))) return false;
+    if (function_exists('order_is_request') && order_is_request($order)) return false;
+    if (!in_array($order['status'] ?? '', ['neu', 'in_bearbeitung'], true)) return false;
+
+    db()->prepare("UPDATE orders SET status='storniert', updated_at=datetime('now') WHERE reference=?")
+        ->execute([$order['reference']]);
+
+    // Lagerbestand wieder freigeben
+    try { inv_restock_stock($order['items'] ?? []); } catch (\Throwable $e) {}
+
+    $wasPaid = ($order['payment_status'] ?? '') === 'bezahlt';
+
+    // Eintrag in der Bestell-Zeitleiste
+    order_message_create([
+        'order_reference' => $order['reference'],
+        'author_role' => 'system', 'author_name' => 'System',
+        'subject' => 'Vom Kunden storniert',
+        'body' => 'Der Kunde hat diese Bestellung storniert.' . ($wasPaid ? ' Bestellung war bereits bezahlt – Rückerstattung prüfen.' : ''),
+        'is_system' => 1, 'is_read' => 0,
+    ]);
+
+    // Admin-Nachricht (erscheint unter „Nachrichten")
+    message_create([
+        'name'    => $order['customer_name'] ?: ($order['email'] ?? 'Kunde'),
+        'email'   => $order['email'] ?? '',
+        'subject' => 'Bestellung storniert: ' . $order['reference'],
+        'message' => 'Der Kunde hat die Bestellung ' . $order['reference'] . ' storniert.'
+            . ($wasPaid ? "\n\nACHTUNG: Die Bestellung war bereits BEZAHLT – bitte Rückerstattung prüfen." : ''),
+    ]);
+
+    // Bestätigung im Kunden-Posteingang
+    $acc = account_by_email($order['email'] ?? '');
+    if ($acc) {
+        account_message_create([
+            'account_id' => (int)$acc['id'],
+            'order_reference' => $order['reference'],
+            'sender_role' => 'system',
+            'subject' => 'Bestellung storniert',
+            'body' => 'Deine Bestellung ' . $order['reference'] . ' wurde storniert. '
+                . ($wasPaid ? 'Eine allfällige Rückerstattung wird von uns bearbeitet.' : 'Es entstehen dir keine Kosten.'),
+            'is_read' => 0,
+        ]);
+    }
+    return true;
+}
+
 function order_mark_seen(string $ref): void {
     db()->prepare('UPDATE orders SET is_seen=1 WHERE reference=?')->execute([$ref]);
 }

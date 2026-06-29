@@ -204,3 +204,19 @@ function inv_deduct_stock(array $lines): void {
         }
     }
 }
+
+/** Bucht den Bestand wieder zurück (z.B. bei Storno einer Bestellung). */
+function inv_restock_stock(array $lines): void {
+    $pdo = db();
+    foreach ($lines as $line) {
+        $qty  = (int)($line['qty'] ?? 0);
+        if ($qty <= 0) continue;
+        $size = $line['size'] ?? '';
+        $row  = inv_by_variant($line['productId'], $size, '');
+        if ($row) {
+            $pdo->prepare("UPDATE inventory SET stock=stock+?, updated_at=datetime('now') WHERE product_id=? AND size=? AND color=?")->execute([$qty, $line['productId'], $size, '']);
+        } else if (inv_row_count($line['productId']) === 0) {
+            $pdo->prepare("UPDATE products SET stock=stock+?, updated_at=datetime('now') WHERE id=?")->execute([$qty, $line['productId']]);
+        }
+    }
+}

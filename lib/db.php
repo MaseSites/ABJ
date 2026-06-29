@@ -288,4 +288,14 @@ function db_init(PDO $pdo): void {
             $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_accounts_v3', '1')");
         }
     } catch (\Throwable $e) {}
+
+    // Einmalig: alle bestehenden Admin-Sessions ungültig machen -> jeder muss
+    // sich neu anmelden (Session-Epoche auf einen frischen Wert setzen).
+    try {
+        $loFlag = $pdo->query("SELECT value FROM settings WHERE key='admin_logout_all_v1'")->fetch();
+        if (!$loFlag) {
+            $pdo->prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_session_epoch', ?)")->execute([(string)time()]);
+            $pdo->exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_logout_all_v1', '1')");
+        }
+    } catch (\Throwable $e) {}
 }

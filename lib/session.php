@@ -65,6 +65,14 @@ function last_order_set(?string $ref): void {
     $_SESSION['lastOrder'] = $ref;
 }
 
+/**
+ * Globale Session-Epoche. Wird die Einstellung erhöht, werden ALLE bestehenden
+ * Admin-Sessions ungültig und jeder muss sich neu anmelden.
+ */
+function admin_session_epoch(): string {
+    return (string)(setting_get('admin_session_epoch') ?: '1');
+}
+
 function admin_login(int $userId, string $username, string $role = 'root'): void {
     session_start_once();
     try { session_regenerate_id(true); } catch (\Throwable $e) {}
@@ -72,6 +80,7 @@ function admin_login(int $userId, string $username, string $role = 'root'): void
     $_SESSION['admin_id'] = $userId;
     $_SESSION['admin_username'] = $username;
     $_SESSION['admin_role'] = $role === 'lookup' ? 'lookup' : 'root';
+    $_SESSION['admin_epoch'] = admin_session_epoch();
     $_SESSION['admin_ts'] = time();
     session_write_close();
 }
@@ -122,7 +131,10 @@ function admin_logout(): void {
 
 function is_admin(): bool {
     session_start_once();
-    return !empty($_SESSION['admin']);
+    if (empty($_SESSION['admin'])) return false;
+    // Stimmt die Session-Epoche nicht mehr, gilt die Session als abgemeldet.
+    if (($_SESSION['admin_epoch'] ?? null) !== admin_session_epoch()) return false;
+    return true;
 }
 
 function require_admin(): void {

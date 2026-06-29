@@ -1,8 +1,8 @@
     </main><!-- .admin-main -->
   </div><!-- .admin-content -->
 </div><!-- .admin-shell -->
-<script src="<?= url('/js/admin.js') ?>?v=41"></script>
-<script src="<?= url('/js/inventory.js') ?>?v=41"></script>
+<script src="<?= url('/js/admin.js') ?>?v=42"></script>
+<script src="<?= url('/js/inventory.js') ?>?v=42"></script>
 <?php if (!admin_is_root()): ?>
 <script>
 /* Eingeschränktes Lookup-Konto: alle Aktionsknöpfe sperren, ausser denen in

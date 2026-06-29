@@ -1554,10 +1554,24 @@ body.no-scroll { overflow: hidden; }
 
 /* Shop toolbar */
 .shop-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.6rem; }
-.sort-form, .shop-filter { display: flex; align-items: center; gap: .5rem; }
-.sort-label { font-size: .76rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
-.sort-form select, .shop-select { padding: .5em 2em .5em .9em; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--elev); color: var(--ink); font: inherit; cursor: pointer; color-scheme: dark; font-size: .85rem; }
-.sort-form select:focus, .shop-select:focus { outline: none; border-color: rgba(255,255,255,.3); }
+.sort-form, .shop-filter { display: flex; align-items: center; gap: .6rem; }
+.sort-label { font-size: .72rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
+.sort-form select, .shop-select {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  padding: .62em 2.5em .62em 1.1em;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background-color: var(--elev);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23b89c67' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1em center;
+  background-size: 12px;
+  color: var(--ink); font: inherit; font-size: .85rem; font-weight: 500; cursor: pointer; color-scheme: dark;
+  transition: border-color .18s, background-color .18s, box-shadow .18s;
+}
+.sort-form select:hover, .shop-select:hover { border-color: rgba(184,156,103,.45); background-color: rgba(184,156,103,.06); }
+.sort-form select:focus, .shop-select:focus { outline: none; border-color: var(--accent-3); box-shadow: 0 0 0 3px rgba(184,156,103,.16); }
+.sort-form select option, .shop-select option { background: #15151a; color: var(--ink); }
 .result-info { margin-bottom: 1.2rem; }
 .result-info a { color: var(--accent-3); }
 

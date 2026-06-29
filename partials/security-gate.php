@@ -7,6 +7,9 @@
  *   - Ein freier Code wird beim Registrieren/Anmelden fest dem Konto zugewiesen.
  *   - Ein bereits zugewiesener Code lässt NUR das zugehörige Konto wieder rein
  *     (z. B. neues Gerät). Wer damit ein NEUES/fremdes Konto nutzt -> IP-Sperre.
+ *
+ * Die Oberfläche ist neutral gehalten (Einladungs-/Zugangsportal) und gibt
+ * keinerlei Hinweis darauf, dass dahinter ein Shop liegt.
  */
 session_start_once();
 
@@ -98,64 +101,57 @@ if (!headers_sent()) {
     header('Cache-Control: no-store, no-cache, must-revalidate');
     header('Pragma: no-cache');
 }
-$today = date('d.m.Y');
 ?><!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Belegassistent — Zugang</title>
+<title>Zugang · Anmeldung erforderlich</title>
 <style>
-  :root { --bd:#e5e8ef; --mut:#6b7280; --ink:#1b2230; --pri:#2f5fe0; --pri-d:#214bc0; --bg:#eef1f6; }
+  :root { --bd:#e6e9f0; --mut:#697086; --ink:#1c2333; --pri:#3551d1; --pri-d:#2940ad; --tint:#eef1fb; --bg:#f1f3f8; }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--ink); font-size:15px;
-         background:radial-gradient(1100px 540px at 50% -8%, #ffffff 0%, var(--bg) 60%); min-height:100vh; display:flex; flex-direction:column; }
-  .top { background:rgba(255,255,255,.85); backdrop-filter:saturate(150%) blur(6px); border-bottom:1px solid var(--bd); }
-  .top-in { max-width:1040px; margin:0 auto; padding:.85rem 1.4rem; display:flex; align-items:center; gap:.7rem; }
-  .logo { width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#2f5fe0,#5b8def); display:grid; place-items:center; color:#fff; font-weight:800; }
-  .top h1 { font-size:1.03rem; margin:0; font-weight:700; letter-spacing:-.01em; }
-  .top small { color:var(--mut); margin-left:auto; font-size:.82rem; }
-  .stage { flex:1; display:flex; align-items:flex-start; justify-content:center; padding:3rem 1.2rem; }
-  .card { width:100%; max-width:440px; background:#fff; border:1px solid var(--bd); border-radius:18px;
-          box-shadow:0 18px 50px -22px rgba(20,33,71,.35), 0 2px 8px -4px rgba(20,33,71,.15); padding:2rem 1.9rem; }
-  .eyebrow { font-size:.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--pri); margin:0 0 .5rem; }
-  .card h2 { font-size:1.45rem; margin:0 0 .5rem; letter-spacing:-.02em; }
-  .lead { color:var(--mut); margin:0 0 1.5rem; line-height:1.5; font-size:.92rem; }
+  body { margin:0; font-family:-apple-system,"Segoe UI",Roboto,Inter,Arial,sans-serif; color:var(--ink); font-size:15px;
+         background:radial-gradient(900px 520px at 50% -10%, #ffffff 0%, var(--bg) 62%); min-height:100vh; min-height:100dvh;
+         display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1.5rem 1.1rem; }
+  .shell { width:100%; max-width:420px; }
+  .card { background:#fff; border:1px solid var(--bd); border-radius:20px;
+          box-shadow:0 24px 60px -28px rgba(20,30,70,.4), 0 3px 10px -6px rgba(20,30,70,.18); padding:2.1rem 1.9rem 1.9rem; }
+  .badge { width:54px; height:54px; border-radius:15px; background:var(--tint); color:var(--pri);
+           display:grid; place-items:center; margin:0 0 1.15rem; }
+  .badge svg { width:26px; height:26px; }
+  .card h1 { font-size:1.5rem; line-height:1.15; margin:0 0 .55rem; letter-spacing:-.02em; }
+  .lead { color:var(--mut); margin:0 0 1.5rem; line-height:1.5; font-size:.93rem; }
   label { display:block; font-size:.78rem; color:var(--ink); font-weight:600; margin:1rem 0 .4rem; }
   label:first-of-type { margin-top:0; }
   label .opt { color:var(--mut); font-weight:400; }
-  input { width:100%; border:1px solid #d6dae3; border-radius:10px; padding:.8rem .9rem; font:inherit; color:var(--ink); background:#fbfcfe; outline:none; transition:border-color .15s, box-shadow .15s; }
+  input { width:100%; border:1px solid #d7dbe6; border-radius:11px; padding:.82rem .95rem; font:inherit; color:var(--ink); background:#fbfcfe; outline:none; transition:border-color .15s, box-shadow .15s; }
   input::placeholder { color:#9aa1ad; }
-  input:focus { border-color:var(--pri); box-shadow:0 0 0 3px rgba(47,95,224,.14); background:#fff; }
-  .code-input { text-align:center; font-size:1.5rem; font-weight:800; letter-spacing:.35em; text-transform:uppercase; padding:.95rem .9rem; }
-  .btn { display:flex; width:100%; justify-content:center; align-items:center; gap:.45rem; background:var(--pri); color:#fff; border:none; border-radius:10px; padding:.85rem 1.1rem; font:inherit; font-weight:700; cursor:pointer; margin-top:1.3rem; transition:background .15s, transform .05s; }
+  input:focus { border-color:var(--pri); box-shadow:0 0 0 3px rgba(53,81,209,.15); background:#fff; }
+  .code-input { text-align:center; font-size:1.55rem; font-weight:800; letter-spacing:.4em; text-indent:.4em; text-transform:uppercase; padding:1rem .9rem; }
+  .btn { display:flex; width:100%; justify-content:center; align-items:center; gap:.45rem; background:var(--pri); color:#fff; border:none; border-radius:11px; padding:.9rem 1.1rem; font:inherit; font-size:1rem; font-weight:700; cursor:pointer; margin-top:1.4rem; transition:background .15s, transform .05s; }
   .btn:hover { background:var(--pri-d); }
   .btn:active { transform:translateY(1px); }
-  .err { margin-top:1rem; background:#fdecec; color:#b42318; border:1px solid #f6cccc; padding:.65rem .85rem; border-radius:10px; font-size:.86rem; }
-  .note { margin-top:1rem; background:#eef4ff; color:#264a9e; border:1px solid #d4e0fb; padding:.65rem .85rem; border-radius:10px; font-size:.84rem; line-height:1.45; }
-  .switch { margin-top:1.3rem; padding-top:1.1rem; border-top:1px solid #eef1f5; text-align:center; font-size:.86rem; color:var(--mut); }
-  .switch button { background:none; border:none; color:var(--pri); cursor:pointer; font:inherit; font-weight:600; padding:0; }
-  .hint { margin-top:1.4rem; display:flex; gap:.6rem; align-items:flex-start; color:var(--mut); font-size:.82rem; line-height:1.45; }
-  .hint svg { flex:none; width:17px; height:17px; margin-top:.1rem; color:var(--pri); }
-  .foot { max-width:1040px; margin:0 auto; width:100%; padding:1.4rem; color:#9aa1ad; font-size:.78rem; text-align:center; }
-  @media (max-width:520px){ .stage { padding:1.6rem 1rem; } .card { padding:1.6rem 1.3rem; } .card h2 { font-size:1.3rem; } }
+  .err { margin-top:1rem; background:#fdecec; color:#b42318; border:1px solid #f6cccc; padding:.7rem .9rem; border-radius:11px; font-size:.86rem; }
+  .note { margin-top:1rem; background:var(--tint); color:#2b3a86; border:1px solid #d9e0fa; padding:.7rem .9rem; border-radius:11px; font-size:.84rem; line-height:1.45; }
+  .switch { margin-top:1.4rem; padding-top:1.15rem; border-top:1px solid #eef1f6; text-align:center; font-size:.88rem; color:var(--mut); }
+  .switch button { background:none; border:none; color:var(--pri); cursor:pointer; font:inherit; font-weight:700; padding:0; }
+  .hint { margin-top:1.5rem; display:flex; gap:.6rem; align-items:flex-start; color:var(--mut); font-size:.82rem; line-height:1.45; }
+  .hint svg { flex:none; width:16px; height:16px; margin-top:.12rem; color:var(--pri); }
+  .foot { text-align:center; color:#9aa1ad; font-size:.76rem; margin:1.3rem 0 0; }
+  @media (max-width:480px){ .card { padding:1.7rem 1.35rem 1.5rem; border-radius:18px; } .card h1 { font-size:1.32rem; } }
 </style>
 </head>
 <body>
-  <div class="top"><div class="top-in">
-    <span class="logo">B</span>
-    <h1>Belegassistent</h1>
-    <small>Sicherer Zugang · <?= h($today) ?></small>
-  </div></div>
-
-  <div class="stage">
+  <div class="shell">
 <?php if ($gateRow && $codeUsed): ?>
     <!-- Stufe 2b: vergebener Code -> nur Anmeldung des zugehörigen Kontos -->
     <div class="card">
-      <p class="eyebrow">Anmelden</p>
-      <h2>Willkommen zurück</h2>
-      <p class="lead">Dieser Zugangscode ist bereits einem Konto zugewiesen. Melde dich mit <strong>diesem Konto</strong> an, um den Zugang auf diesem Gerät freizuschalten.</p>
+      <div class="badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+      </div>
+      <h1>Willkommen zurück</h1>
+      <p class="lead">Melde dich mit deinem Konto an, um den Zugang auf diesem Gerät freizuschalten.</p>
       <form method="post" action="">
         <input type="hidden" name="gate_action" value="login">
         <label>E-Mail-Adresse</label>
@@ -163,17 +159,19 @@ $today = date('d.m.Y');
         <label>Passwort</label>
         <input type="password" name="password" required autocomplete="current-password" placeholder="••••••••">
         <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
-        <div class="note">Achtung: Dieser Code lässt nur das zugewiesene Konto rein. Ein anderes Konto führt zur Sperrung.</div>
-        <button class="btn" type="submit">Anmelden &amp; fortfahren</button>
+        <div class="note">Dieser Code gehört zu einem Konto. Bitte melde dich mit genau diesem Konto an.</div>
+        <button class="btn" type="submit">Anmelden</button>
       </form>
     </div>
 
 <?php elseif ($gateRow): ?>
     <!-- Stufe 2a: freier Code -> Registrieren (oder Anmelden) -->
     <div class="card">
-      <p class="eyebrow">Fast geschafft</p>
-      <h2>Konto erstellen</h2>
-      <p class="lead">Dein Zugangscode ist gültig. Erstelle jetzt dein Konto, um fortzufahren — oder melde dich an, falls du bereits eines hast.</p>
+      <div class="badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="4"/><path d="M3 21c0-3.6 3-5.5 6-5.5"/><path d="M17 10.5v6M14 13.5h6"/></svg>
+      </div>
+      <h1>Konto erstellen</h1>
+      <p class="lead">Nur noch ein Schritt: Richte dein Konto ein, um den Zugang abzuschliessen — oder melde dich an, falls du bereits eines hast.</p>
       <form method="post" action="" data-form="register">
         <input type="hidden" name="gate_action" value="register">
         <label>Name <span class="opt">(optional)</span></label>
@@ -183,7 +181,7 @@ $today = date('d.m.Y');
         <label>Passwort <span class="opt">(min. 8 Zeichen)</span></label>
         <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="••••••••">
         <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
-        <button class="btn" type="submit">Konto erstellen &amp; fortfahren</button>
+        <button class="btn" type="submit">Konto erstellen</button>
       </form>
       <form method="post" action="" data-form="login" hidden>
         <input type="hidden" name="gate_action" value="login">
@@ -191,7 +189,7 @@ $today = date('d.m.Y');
         <input type="email" name="email" required autocomplete="email" placeholder="du@beispiel.ch">
         <label>Passwort</label>
         <input type="password" name="password" required autocomplete="current-password" placeholder="••••••••">
-        <button class="btn" type="submit">Anmelden &amp; fortfahren</button>
+        <button class="btn" type="submit">Anmelden</button>
       </form>
       <div class="switch">
         <span data-switch-text>Bereits ein Konto?</span>
@@ -215,23 +213,24 @@ $today = date('d.m.Y');
 <?php else: ?>
     <!-- Stufe 1: Zugangscode eingeben -->
     <div class="card">
-      <p class="eyebrow">Zugang</p>
-      <h2>Zugangscode eingeben</h2>
-      <p class="lead">Dieser Bereich ist privat. Gib deinen persönlichen Zugangscode ein, um dich zu registrieren und fortzufahren.</p>
+      <div class="badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="11" width="16" height="10" rx="2.2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></svg>
+      </div>
+      <h1>Zugangscode eingeben</h1>
+      <p class="lead">Dieser Bereich ist nur mit Einladung zugänglich. Gib den Zugangscode ein, den du erhalten hast, um fortzufahren.</p>
       <form method="post" action="">
-        <label for="beleg">Dein Zugangscode</label>
-        <input type="text" id="beleg" name="beleg" autocomplete="off" autocapitalize="characters" spellcheck="false" class="code-input" maxlength="16" placeholder="z.B. AB12CD" value="<?= h(trim((string)($_POST['beleg'] ?? ''))) ?>" autofocus>
+        <label for="beleg">Zugangscode</label>
+        <input type="text" id="beleg" name="beleg" autocomplete="off" autocapitalize="characters" spellcheck="false" class="code-input" maxlength="16" placeholder="z. B. AB12CD" value="<?= h(trim((string)($_POST['beleg'] ?? ''))) ?>" autofocus>
         <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
         <button class="btn" type="submit">Weiter</button>
       </form>
       <div class="hint">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
-        <span>Noch keinen Code? Du erhältst einen von einem bestehenden Mitglied. Jeder Code funktioniert nur einmal.</span>
+        <span>Du erhältst deinen persönlichen Code per Einladung. Jeder Code lässt sich nur einmal verwenden.</span>
       </div>
     </div>
 <?php endif; ?>
+    <p class="foot">Geschützter Zugang · Anmeldung erforderlich</p>
   </div>
-
-  <div class="foot">© <?= date('Y') ?> Belegassistent · Sicherer Bereich</div>
 </body>
 </html>

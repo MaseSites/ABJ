@@ -183,9 +183,8 @@ try {
         <strong><?= h(setting_get('shop_name') ?: 'ABJ') ?></strong>
         <span><?= h($adminTitle ?? 'Admin') ?></span>
       </a>
-      <a class="admin-topbar-inbox" href="<?= url('/admin/nachrichten.php') ?>" aria-label="Posteingang öffnen">
+      <a class="admin-topbar-icon" href="<?= url('/admin/nachrichten.php') ?>" aria-label="Posteingang öffnen" title="Posteingang">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6h18v9z"/><path d="M3 8l9 6 9-6"/></svg>
-        <span>Posteingang</span>
         <?php if (($_unreadMsgs + $_unreadOrderMsgs) > 0): ?><span class="nav-badge"><?= $_unreadMsgs + $_unreadOrderMsgs ?></span><?php endif; ?>
       </a>
       <form method="post" action="<?= url('/admin/logout.php') ?>" class="admin-topbar-logout-form">

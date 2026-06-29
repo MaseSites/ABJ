@@ -24,8 +24,8 @@ try {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=42">
-  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=42">
+  <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=43">
+  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=43">
 </head>
 <body class="<?= admin_is_root() ? '' : 'admin-lookup' ?>" data-admin-caps="<?= h(admin_is_root() ? '*' : implode(',', admin_lookup_caps())) ?>">
 <div class="admin-shell">
@@ -181,6 +181,12 @@ try {
         <strong><?= h(setting_get('shop_name') ?: 'ABJ') ?></strong>
         <span><?= h($adminTitle ?? 'Admin') ?></span>
       </a>
+      <form method="post" action="<?= url('/admin/logout.php') ?>" class="admin-topbar-logout-form">
+        <button class="admin-topbar-logout" type="submit" aria-label="Abmelden" title="Abmelden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9"/><path d="M18 16l4-4-4-4M22 12H10"/></svg>
+          <span>Abmelden</span>
+        </button>
+      </form>
     </header>
     <main class="admin-main">
       <?php if (!admin_is_root()): ?>

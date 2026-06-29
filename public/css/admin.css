@@ -971,6 +971,15 @@ input[type="checkbox"] { width: auto; accent-color: #7e8bb8; }
   .admin-topbar-brand { display: flex; flex-direction: column; line-height: 1.15; text-decoration: none; min-width: 0; }
   .admin-topbar-brand strong { color: #e8eaf1; font-size: .95rem; font-weight: 800; letter-spacing: -.01em; }
   .admin-topbar-brand span { color: #7e8bb8; font-size: .72rem; font-weight: 600; }
+  .admin-topbar-logout-form { margin-left: auto; }
+  .admin-topbar-logout {
+    display: inline-flex; align-items: center; gap: .4rem; flex: none;
+    padding: .5rem .8rem; border-radius: 10px; cursor: pointer;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+    color: #c8ccd8; font: inherit; font-size: .82rem; font-weight: 600;
+  }
+  .admin-topbar-logout:hover { background: rgba(226,96,76,.14); border-color: rgba(226,96,76,.45); color: #ff9b8c; }
+  .admin-topbar-logout svg { width: 17px; height: 17px; }
 
   /* Sidebar = Off-Canvas */
   .admin-sidebar {

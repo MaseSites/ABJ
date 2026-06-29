@@ -69,15 +69,23 @@ $isRequest = order_is_request($order);
     </tbody>
   </table>
 
-  <?php if ($isRequest): ?>
-  <div class="admin-section" style="margin-bottom:1.5rem;border-color:rgba(99,102,241,.3)">
-    <h2 style="margin-top:0">Preis festlegen</h2>
-    <p class="muted" style="font-size:.84rem;margin-top:-.5rem">Sobald du den Preis setzt, sieht ihn der Kunde im Profil unter „Meine Bestellungen".</p>
-    <?php
-      $curProduct = 0;
-      foreach ($order['items'] as $it) $curProduct += (int)($it['lineCents'] ?? 0);
-      $defaultShip = (int)$order['shipping_cents'] > 0 ? (int)$order['shipping_cents'] : (int)(setting_get('shipping_ch_cents') ?: 590);
-    ?>
+  <?php
+    $curShip = (int)$order['shipping_cents'];
+    if ($isRequest) {
+        $curProduct = 0;
+        foreach ($order['items'] as $it) $curProduct += (int)($it['lineCents'] ?? 0);
+        $defaultShip = $curShip > 0 ? $curShip : (int)(setting_get('shipping_ch_cents') ?: 590);
+    } else {
+        // Bei normalen Bestellungen: Produktpreis = Gesamt minus Versand.
+        $curProduct  = max(0, (int)$order['total_cents'] - $curShip);
+        $defaultShip = $curShip;
+    }
+  ?>
+  <div class="admin-section" style="margin-bottom:1.5rem<?= $isRequest ? ';border-color:rgba(99,102,241,.3)' : '' ?>">
+    <h2 style="margin-top:0"><?= $isRequest ? 'Preis festlegen' : 'Preis anpassen' ?></h2>
+    <p class="muted" style="font-size:.84rem;margin-top:-.5rem"><?= $isRequest
+        ? 'Sobald du den Preis setzt, sieht ihn der Kunde im Profil unter „Meine Bestellungen".'
+        : 'Passe Produktpreis und Versand an. Der neue Gesamtbetrag wird sofort übernommen.' ?></p>
     <form method="post" data-cap="orders.manage" style="display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap">
       <input type="hidden" name="action" value="set_price">
       <label class="field" style="max-width:160px"><span>Produktpreis (<?= h($currency) ?>)</span>
@@ -89,7 +97,6 @@ $isRequest = order_is_request($order);
       <button class="btn btn-primary" type="submit">Preis speichern</button>
     </form>
   </div>
-  <?php endif; ?>
 
   <p><strong>Versand:</strong> <?= format_price((int)$order['shipping_cents'], $currency) ?></p>
   <p><strong>Gesamt:</strong> <?= (int)$order['total_cents'] > 0 ? format_price((int)$order['total_cents'], $currency) : '<span class="muted">noch offen</span>' ?></p>

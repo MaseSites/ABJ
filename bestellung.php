@@ -9,6 +9,7 @@ $currentPath    = '/bestellung';
 
 $order = $reference ? order_by_ref($reference) : null;
 $isAnfrage = ($order && order_is_request($order));
+$messages = $order ? order_messages_by_ref($reference) : [];
 
 $pageTitle = $isAnfrage ? 'Anfrage erhalten' : 'Bestellung eingegangen';
 include __DIR__ . '/partials/head.php';
@@ -116,7 +117,7 @@ include __DIR__ . '/partials/header.php';
         </div>
         <?php endif; ?>
 
-        <?php if ($order['payment_method'] === 'vorkasse'): ?>
+      <?php if ($order['payment_method'] === 'vorkasse'): ?>
         <?php
           $bankRecipient = setting_get('bank_recipient') ?: (setting_get('shop_name') ?: 'ABJ Store');
           $bankIban = setting_get('bank_iban') ?: '';
@@ -138,6 +139,23 @@ include __DIR__ . '/partials/header.php';
           <?php endif; ?>
         </div>
         <?php endif; ?>
+
+        <div class="order-confirm-section">
+          <div class="order-confirm-label">Posteingang</div>
+          <?php if (empty($messages)): ?>
+            <p class="muted" style="margin:0;font-size:.9rem">Sobald wir die Bestellung aktualisieren oder Bemerkungen hinterlegen, erscheinen sie hier.</p>
+          <?php else: foreach ($messages as $m): ?>
+            <div class="order-confirm-row" style="align-items:flex-start;gap:1rem">
+              <div style="flex:1">
+                <strong><?= h($m['subject'] ?: ($m['is_system'] ? 'System' : 'Nachricht')) ?></strong>
+                <div class="muted" style="font-size:.78rem;margin:.2rem 0 .4rem">
+                  <?= h($m['author_name'] ?: $m['author_role']) ?> · <?= h(substr($m['created_at'], 0, 16)) ?>
+                </div>
+                <div style="white-space:pre-line;font-size:.9rem;color:var(--ink-soft)"><?= h($m['body']) ?></div>
+              </div>
+            </div>
+          <?php endforeach; endif; ?>
+        </div>
 
       </div>
 

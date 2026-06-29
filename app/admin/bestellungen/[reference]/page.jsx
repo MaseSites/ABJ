@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { notFound } from 'next/navigation';
 import * as orders from '../../../../src/models/orders.js';
+import * as orderMessages from '../../../../src/models/order-messages.js';
 import * as settings from '../../../../src/models/settings.js';
 
 function formatPrice(cents) {
@@ -20,12 +21,39 @@ async function updateStatusAction(formData) {
   redirect(`/admin/bestellungen/${encodeURIComponent(reference)}`);
 }
 
+async function sendMessageAction(formData) {
+  'use server';
+  const { redirect } = await import('next/navigation');
+  const ord = await import('../../../../src/models/orders.js');
+  const msgs = await import('../../../../src/models/order-messages.js');
+  const reference = String(formData.get('reference') || '');
+  const subject = String(formData.get('subject') || '').trim();
+  const body = String(formData.get('body') || '').trim();
+  if (reference && body) {
+    const order = ord.getByReference(reference);
+    if (order) {
+      msgs.create({
+        order_reference: reference,
+        author_role: 'admin',
+        author_name: 'ABJ Team',
+        subject,
+        body,
+        is_system: 0,
+        is_read: 0,
+      });
+    }
+  }
+  redirect(`/admin/bestellungen/${encodeURIComponent(reference)}?sent=1`);
+}
+
 export default async function OrderDetail({ params }) {
   const { reference } = await params;
+  orderMessages.markOrderRead(reference);
   const order = orders.getByReference(reference);
   if (!order) return notFound();
 
   const items = Array.isArray(order.items) ? order.items : [];
+  const messages = Array.isArray(order.messages) ? order.messages : [];
 
   return (
     <main className="admin-main narrow">
@@ -106,6 +134,46 @@ export default async function OrderDetail({ params }) {
           </div>
           <button className="btn btn-primary" type="submit">Status speichern</button>
         </form>
+      </section>
+
+      <section className="admin-section">
+        <h2>Posteingang</h2>
+        <p className="muted">Hier senden wir automatische Updates und freie Notizen an den Kunden. Alles landet im Verlauf zu dieser Bestellung.</p>
+        <form action={sendMessageAction} className="admin-form" style={{ marginBottom: '1.2rem' }}>
+          <input type="hidden" name="reference" value={order.reference} />
+          <div className="form-grid">
+            <label className="field">
+              <span>Betreff</span>
+              <input name="subject" placeholder="z. B. Preisänderung oder Lieferinfo" />
+            </label>
+            <label className="field">
+              <span>Nachricht</span>
+              <textarea name="body" rows="4" placeholder="Deine Nachricht an den Kunden" required />
+            </label>
+          </div>
+          <button className="btn btn-primary" type="submit">Nachricht senden</button>
+        </form>
+
+        {messages.length === 0 ? (
+          <p className="muted">Noch keine Nachrichten für diese Bestellung.</p>
+        ) : (
+          <div className="msg-list">
+            {messages.map((msg) => (
+              <article key={msg.id} className={`msg-card ${msg.is_system ? 'unread' : ''}`}>
+                <div className="msg-head">
+                  <div>
+                    <strong>{msg.subject || (msg.is_system ? 'System' : 'Nachricht')}</strong>
+                    <div className="muted" style={{ fontSize: '.82rem' }}>
+                      {msg.author_name || msg.author_role} · {msg.created_at?.slice(0, 16)}
+                    </div>
+                  </div>
+                  <span className="tag">{msg.author_role}</span>
+                </div>
+                <p className="msg-body" style={{ whiteSpace: 'pre-line' }}>{msg.body}</p>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   );

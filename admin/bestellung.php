@@ -5,6 +5,7 @@ $order = $ref ? order_by_ref($ref) : null;
 if (!$order) redirect('/admin/bestellungen.php');
 
 try { order_mark_seen($ref); } catch (Throwable $e) { /* column may not exist yet */ }
+try { order_messages_mark_read($ref); } catch (Throwable $e) { /* table may not exist yet */ }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_cap('orders.manage');
@@ -12,8 +13,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prod = (int)round((float)str_replace(',', '.', trim($_POST['total'] ?? '')) * 100);
         $ship = (int)round((float)str_replace(',', '.', trim($_POST['shipping'] ?? '')) * 100);
         order_set_price($ref, max(0, $prod), max(0, $ship));
+        order_message_create([
+            'order_reference' => $ref,
+            'author_role' => 'system',
+            'author_name' => 'System',
+            'subject' => 'Preisänderung',
+            'body' => 'Neuer Produktpreis: ' . number_format($prod / 100, 2, '.', '') . "\nVersand: " . number_format($ship / 100, 2, '.', ''),
+            'is_system' => 1,
+            'is_read' => 0,
+        ]);
     } else {
-        order_update_status($ref, trim($_POST['status'] ?? 'neu'), trim($_POST['payment_status'] ?? 'offen'));
+        $newStatus = trim($_POST['status'] ?? 'neu');
+        $newPay = trim($_POST['payment_status'] ?? 'offen');
+        order_update_status($ref, $newStatus, $newPay);
+    }
+    if (!empty($_POST['note'])) {
+        order_message_create([
+            'order_reference' => $ref,
+            'author_role' => 'admin',
+            'author_name' => 'ABJ Team',
+            'subject' => 'Bemerkung',
+            'body' => trim($_POST['note']),
+            'is_system' => 0,
+            'is_read' => 0,
+        ]);
     }
     redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&saved=1');
 }
@@ -23,6 +46,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 $currency  = setting_get('currency') ?: 'CHF';
 $addr      = is_array($order['address']) ? $order['address'] : ['raw' => $order['address']];
 $isRequest = order_is_request($order);
+$msgs      = order_messages_by_ref($ref);
 ?>
 <div class="admin-head-row" style="margin-bottom:1.4rem">
   <h1>Bestellung <?= h($ref) ?> <?php if ($isRequest): ?><span class="tag tag-new" style="vertical-align:middle">Produktanfrage</span><?php endif; ?></h1>
@@ -116,8 +140,28 @@ $isRequest = order_is_request($order);
         <option value="bezahlt"<?= $order['payment_status'] === 'bezahlt' ? ' selected' : '' ?>>Bezahlt</option>
       </select>
     </label>
+    <label class="field" style="min-width:280px;flex:1">
+      <span>Bemerkung für den Kunden</span>
+      <textarea name="note" rows="3" placeholder="z. B. Preisänderung, Lieferhinweis, Rückfrage"></textarea>
+    </label>
     <button class="btn btn-primary" type="submit">Speichern</button>
   </form>
+
+  <div class="admin-section" style="margin-top:1.5rem">
+    <h2>Posteingang</h2>
+    <?php if (empty($msgs)): ?>
+      <p class="muted">Noch keine Nachrichten zu dieser Bestellung.</p>
+    <?php else: foreach ($msgs as $m): ?>
+      <div class="message-card <?= !empty($m['is_read']) ? '' : 'message-unread' ?>">
+        <div class="message-meta">
+          <strong><?= h($m['subject'] ?: ($m['is_system'] ? 'System' : 'Nachricht')) ?></strong>
+          <span class="muted"><?= h($m['author_name'] ?: $m['author_role']) ?></span>
+          <span class="muted"><?= h(substr($m['created_at'], 0, 16)) ?></span>
+        </div>
+        <p><?= nl2br(h($m['body'])) ?></p>
+      </div>
+    <?php endforeach; endif; ?>
+  </div>
 </div>
 
 <?php include __DIR__ . '/partials/admin-layout-bottom.php'; ?>

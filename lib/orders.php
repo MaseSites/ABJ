@@ -79,6 +79,26 @@ function order_update_status(string $ref, string $status, string $paymentStatus)
             db()->prepare('UPDATE orders SET promo_awarded=1 WHERE reference=?')->execute([$ref]);
         }
     }
+    if ($ok && $before && (($before['status'] ?? '') !== $status || ($before['payment_status'] ?? '') !== $paymentStatus)) {
+        $notes = [];
+        if (($before['status'] ?? '') !== $status) {
+            $notes[] = 'Status geändert: ' . str_replace('_', ' ', $status);
+        }
+        if (($before['payment_status'] ?? '') !== $paymentStatus) {
+            $notes[] = 'Zahlungsstatus geändert: ' . $paymentStatus;
+        }
+        if ($notes) {
+            order_message_create([
+                'order_reference' => $ref,
+                'author_role' => 'system',
+                'author_name' => 'System',
+                'subject' => 'Automatische Info',
+                'body' => implode("\n", $notes),
+                'is_system' => 1,
+                'is_read' => 0,
+            ]);
+        }
+    }
     return $ok;
 }
 

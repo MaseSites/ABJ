@@ -29,8 +29,7 @@ Sicherer E-Commerce-Shop mit privatem Admin-Dashboard. Eigenständiger Code & ei
 - **Performance**: gzip-Kompression, Cache-Header für statische Assets, Lazy-Loading,
   schlanker Render-Pfad (Ziel < 2 s).
 - **Barrierefreiheit**: Skip-Link, Fokus-Zustände, aria-Labels, `prefers-reduced-motion`.
-- **Zahlungen**: aktuell nur Katalog + Warenkorb. Stripe ist über `src/services/payments.js`
-  vorbereitet und später ohne Umbau einsetzbar.
+- **Zahlungen**: aktuell manuelle Abwicklung ohne externen Zahlungsanbieter.
 
 ## Technik
 
@@ -95,12 +94,6 @@ npm test
 4. `npm run create-admin` ausführen, dann `npm start` (idealerweise via systemd/PM2).
 
 Die Datenbank liegt portabel in `data/app.db`, hochgeladene Bilder in `src/public/uploads/`.
-
-## Stripe später aktivieren
-
-In `src/services/payments.js` ist der Erweiterungspunkt dokumentiert. Stripe-Keys in `.env`
-ergänzen und den `paymentProvider` durch einen Stripe-Adapter ersetzen – Routen/Checkout
-bleiben unverändert.
 
 ## Hinweis Urheberrecht
 

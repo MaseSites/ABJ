@@ -6,10 +6,12 @@ $_cur = strtolower(basename($_SERVER['PHP_SELF'], '.php'));
 // Badges
 $_newOrders   = 0;
 $_unreadMsgs  = 0;
+$_unreadOrderMsgs = 0;
 $_pendingRevs = 0;
 try {
     $_newOrders   = (int)db()->query("SELECT COUNT(*) AS n FROM orders WHERE is_seen=0")->fetch()['n'];
     $_unreadMsgs  = messages_unread_count();
+    $_unreadOrderMsgs = order_messages_unread_count();
     $_pendingRevs = reviews_pending_count();
 } catch (\Throwable $e) {}
 ?>
@@ -133,7 +135,7 @@ try {
           <path d="M14 10.5a1.5 1.5 0 01-1.5 1.5H4L1.5 14.5V2.5A1.5 1.5 0 013 1h10.5A1.5 1.5 0 0115 2.5v8z"/>
         </svg>
         Nachrichten
-        <?php if ($_unreadMsgs > 0): ?><span class="nav-badge"><?= $_unreadMsgs ?></span><?php endif; ?>
+        <?php if (($_unreadMsgs + $_unreadOrderMsgs) > 0): ?><span class="nav-badge"><?= $_unreadMsgs + $_unreadOrderMsgs ?></span><?php endif; ?>
       </a>
 
       <span class="sidebar-section-label">System</span>

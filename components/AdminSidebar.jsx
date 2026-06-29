@@ -47,6 +47,15 @@ const NAV = [
     ),
   },
   {
+    label: 'Posteingang',
+    href: '/admin/posteingang',
+    icon: (
+      <svg className="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 10.5a1.5 1.5 0 01-1.5 1.5H4L1.5 14.5V2.5A1.5 1.5 0 013 1h10.5A1.5 1.5 0 0115 2.5v8z"/>
+      </svg>
+    ),
+  },
+  {
     label: 'Nachrichten',
     href: '/admin/nachrichten',
     icon: (

@@ -3,6 +3,7 @@ import * as products from '../../src/models/products.js';
 import * as orders from '../../src/models/orders.js';
 import * as newsletter from '../../src/models/newsletter.js';
 import * as messages from '../../src/models/messages.js';
+import * as orderMessages from '../../src/models/order-messages.js';
 import * as settings from '../../src/models/settings.js';
 
 function fmt(cents) {
@@ -38,7 +39,7 @@ export default function AdminDashboard() {
     products:    allProducts.length,
     active:      allProducts.filter((p) => p.is_active).length,
     subscribers: newsletter.count(),
-    messages:    messages.unreadCount(),
+    messages:    messages.unreadCount() + orderMessages.unreadTotal(),
   };
 
   const W = 480, H = 140, pad = 20;

@@ -1,15 +1,7 @@
 // Neutrales Zahlungs-Interface.
 //
-// Aktuell: "manuelle" Abwicklung ohne echte Zahlung (nur Katalog + Warenkorb).
-// Später: Hier einen Stripe-Adapter einsetzen, ohne die Routen/Checkout-Logik zu ändern.
-//
-// Beispiel für später (Stripe):
-//   import Stripe from 'stripe';
-//   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-//   async function createCheckout(order) {
-//     const session = await stripe.checkout.sessions.create({ ... });
-//     return { redirectUrl: session.url, provider: 'stripe' };
-//   }
+// Aktuell: manuelle Abwicklung ohne externen Zahlungsanbieter.
+// Das hält den Checkout schlank und vermeidet unnötige Abhängigkeiten.
 
 export const paymentProvider = {
   name: 'manual',

@@ -1,5 +1,6 @@
 import db from '../config/db.js';
 import { customAlphabet } from 'nanoid';
+import * as orderMessages from './order-messages.js';
 
 const refId = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 8);
 
@@ -48,7 +49,25 @@ const updateStatusStmt = db.prepare(
 );
 
 export function updateStatus(reference, status, paymentStatus) {
-  return updateStatusStmt.run(status, paymentStatus, reference).changes > 0;
+  const order = getByReference(reference);
+  const changed = updateStatusStmt.run(status, paymentStatus, reference).changes > 0;
+  if (changed && order) {
+    const notes = [];
+    if (order.status !== status) notes.push(`Status geändert: ${status.replaceAll('_', ' ')}`);
+    if (order.payment_status !== paymentStatus) notes.push(`Zahlungsstatus geändert: ${paymentStatus}`);
+    if (notes.length) {
+      orderMessages.create({
+        order_reference: reference,
+        author_role: 'system',
+        author_name: 'System',
+        subject: 'Status-Update',
+        body: notes.join('\n'),
+        is_system: 1,
+        is_read: 0,
+      });
+    }
+  }
+  return changed;
 }
 
 function parseOrder(r) {
@@ -57,7 +76,7 @@ function parseOrder(r) {
     const parsed = JSON.parse(r.address);
     if (parsed && typeof parsed === 'object') address = parsed;
   } catch { /* bleibt string */ }
-  return { ...r, items: JSON.parse(r.items || '[]'), address };
+  return { ...r, items: JSON.parse(r.items || '[]'), address, messages: orderMessages.listByOrder(r.reference) };
 }
 
 // Aggregierte Umsatzkennzahlen + Tagesreihe (letzte N Tage) für das Dashboard.

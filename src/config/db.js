@@ -63,6 +63,20 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at);
 
+  CREATE TABLE IF NOT EXISTS order_messages (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_reference TEXT NOT NULL REFERENCES orders(reference) ON DELETE CASCADE,
+    author_role     TEXT NOT NULL DEFAULT 'admin',
+    author_name     TEXT NOT NULL DEFAULT '',
+    subject         TEXT NOT NULL DEFAULT '',
+    body            TEXT NOT NULL,
+    is_system       INTEGER NOT NULL DEFAULT 0,
+    is_read         INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_order_messages_order ON order_messages(order_reference, created_at DESC);
+
   CREATE TABLE IF NOT EXISTS newsletter (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     email      TEXT NOT NULL UNIQUE,
@@ -141,6 +155,19 @@ try {
   if (!cols.includes('shipping_cents')) db.exec("ALTER TABLE orders ADD COLUMN shipping_cents INTEGER NOT NULL DEFAULT 0;");
 } catch (e) {
   console.warn('Schema-Update orders skipped:', e?.message || e);
+}
+
+try {
+  const info = db.prepare("PRAGMA table_info(order_messages)").all();
+  const cols = info.map((c) => c.name);
+  if (!cols.includes('subject')) db.exec("ALTER TABLE order_messages ADD COLUMN subject TEXT NOT NULL DEFAULT ''; ");
+  if (!cols.includes('author_role')) db.exec("ALTER TABLE order_messages ADD COLUMN author_role TEXT NOT NULL DEFAULT 'admin';");
+  if (!cols.includes('author_name')) db.exec("ALTER TABLE order_messages ADD COLUMN author_name TEXT NOT NULL DEFAULT ''; ");
+  if (!cols.includes('is_system')) db.exec("ALTER TABLE order_messages ADD COLUMN is_system INTEGER NOT NULL DEFAULT 0;");
+  if (!cols.includes('is_read')) db.exec("ALTER TABLE order_messages ADD COLUMN is_read INTEGER NOT NULL DEFAULT 0;");
+  if (!cols.includes('order_reference')) db.exec("ALTER TABLE order_messages ADD COLUMN order_reference TEXT NOT NULL DEFAULT ''; ");
+} catch (e) {
+  console.warn('Schema-Update order_messages skipped:', e?.message || e);
 }
 
 export default db;

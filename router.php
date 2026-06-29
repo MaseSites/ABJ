@@ -68,6 +68,7 @@ $routes = [
     '#^/admin/logout/?$#'            => '/admin/logout.php',
     '#^/admin/produkte/?$#'          => '/admin/produkte.php',
     '#^/admin/bestellungen/?$#'      => '/admin/bestellungen.php',
+    '#^/admin/posteingang/?$#'       => '/admin/posteingang.php',
     '#^/admin/lager/?$#'             => '/admin/lager.php',
     '#^/admin/nachrichten/?$#'       => '/admin/nachrichten.php',
     '#^/admin/newsletter/?$#'        => '/admin/newsletter.php',

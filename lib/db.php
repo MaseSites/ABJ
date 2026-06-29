@@ -72,6 +72,17 @@ function db_init(PDO $pdo): void {
             created_at TEXT DEFAULT (datetime('now')),
             updated_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS order_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_reference TEXT NOT NULL,
+            author_role TEXT DEFAULT 'admin',
+            author_name TEXT DEFAULT '',
+            subject TEXT DEFAULT '',
+            body TEXT DEFAULT '',
+            is_system INTEGER DEFAULT 0,
+            is_read INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
         CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
             value TEXT DEFAULT ''
@@ -237,6 +248,22 @@ function db_init(PDO $pdo): void {
     foreach ($ord_add as $col => $def) {
         if (!in_array($col, $ord_cols)) {
             try { $pdo->exec("ALTER TABLE orders ADD COLUMN $col $def"); } catch (\Throwable $e) {}
+        }
+    }
+
+    $msg_cols = array_column($pdo->query("PRAGMA table_info(order_messages)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    $msg_add = [
+        'author_role'    => "TEXT DEFAULT 'admin'",
+        'author_name'    => "TEXT DEFAULT ''",
+        'subject'        => "TEXT DEFAULT ''",
+        'body'           => "TEXT DEFAULT ''",
+        'is_system'      => 'INTEGER DEFAULT 0',
+        'is_read'        => 'INTEGER DEFAULT 0',
+        'order_reference'=> "TEXT DEFAULT ''",
+    ];
+    foreach ($msg_add as $col => $def) {
+        if (!in_array($col, $msg_cols)) {
+            try { $pdo->exec("ALTER TABLE order_messages ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
     }
 

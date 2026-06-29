@@ -153,12 +153,17 @@ function order_merge(string $targetRef, string $sourceRef): bool {
     foreach ($sourceItems as $item) {
         $merged = false;
         foreach ($targetItems as &$tItem) {
+            // Gleiches Produkt + gleiche Grösse/Variante werden zusammengefasst –
+            // auch wenn der Stückpreis abweicht (z.B. Sale-/Varianten-/Sonderpreis).
             $sameProduct = (int)($tItem['productId'] ?? 0) === (int)($item['productId'] ?? 0);
-            $sameSize = (string)($tItem['size'] ?? '') === (string)($item['size'] ?? '');
-            $sameLinePrice = (int)($tItem['unitCents'] ?? 0) === (int)($item['unitCents'] ?? 0);
-            if ($sameProduct && $sameSize && $sameLinePrice) {
-                $tItem['qty'] = (int)($tItem['qty'] ?? 1) + (int)($item['qty'] ?? 1);
-                $tItem['lineCents'] = (int)($tItem['unitCents'] ?? 0) * (int)$tItem['qty'];
+            $sameSize    = (string)($tItem['size'] ?? '') === (string)($item['size'] ?? '');
+            if ($sameProduct && $sameSize) {
+                $newQty  = (int)($tItem['qty'] ?? 1) + (int)($item['qty'] ?? 1);
+                $newLine = (int)($tItem['lineCents'] ?? 0) + (int)($item['lineCents'] ?? 0);
+                $tItem['qty']       = $newQty;
+                $tItem['lineCents'] = $newLine;
+                // Stückpreis als Mischpreis konsistent halten (Anzeige nutzt lineCents).
+                if ($newQty > 0) $tItem['unitCents'] = (int) round($newLine / $newQty);
                 $merged = true;
                 break;
             }

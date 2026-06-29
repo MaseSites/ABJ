@@ -677,6 +677,9 @@ input[type="checkbox"] { width: auto; accent-color: #7e8bb8; }
 .cust-main { min-width: 0; }
 .cust-name-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 .cust-name { font-weight: 600; color: #e8eaf2; font-size: .96rem; }
+.cust-name-link { text-decoration: none; }
+.cust-name-link:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.cust-actions { gap: .4rem; }
 .cust-badge { font-size: .66rem; font-weight: 700; letter-spacing: .04em; padding: .15em .55em; border-radius: 999px; text-transform: uppercase; }
 .cust-badge-acc { background: rgba(52,211,153,.12); color: #6ee7b7; border: 1px solid rgba(52,211,153,.25); }
 .cust-badge-guest { background: rgba(255,255,255,.05); color: #8a8f9f; border: 1px solid rgba(255,255,255,.1); }

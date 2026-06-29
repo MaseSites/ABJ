@@ -122,10 +122,11 @@ include __DIR__ . '/partials/admin-layout-top.php';
     </div>
     <div class="cust-main">
       <div class="cust-name-row">
-        <span class="cust-name"><?= h($c['name'] ?: 'Unbenannt') ?></span>
         <?php if ($c['registered']): ?>
+          <a class="cust-name cust-name-link" href="<?= url('/admin/kunde.php?id=' . (int)$c['id']) ?>"><?= h($c['name'] ?: 'Unbenannt') ?></a>
           <span class="cust-badge cust-badge-acc">Konto</span>
         <?php else: ?>
+          <span class="cust-name"><?= h($c['name'] ?: 'Unbenannt') ?></span>
           <span class="cust-badge cust-badge-guest">Gast</span>
         <?php endif; ?>
       </div>
@@ -139,6 +140,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
     </div>
     <div class="cust-actions">
       <?php if ($c['registered']): ?>
+      <a class="btn btn-ghost btn-sm" href="<?= url('/admin/kunde.php?id=' . (int)$c['id']) ?>">Bearbeiten</a>
       <form method="post" onsubmit="return confirm('Konto von <?= h($c['name'] ?: $c['email']) ?> wirklich löschen? Die Bestellhistorie bleibt erhalten.')">
         <input type="hidden" name="action" value="delete_account">
         <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">

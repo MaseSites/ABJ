@@ -11,14 +11,18 @@
 
   /* ---------------- Toasts ---------------- */
   const toastWrap = $('[data-toasts]');
+  let toastTimer = null;
   function toast(msg, type = 'ok') {
     if (!toastWrap) return;
+    // Vorhandene Toasts entfernen -> beim Spammen stapelt sich nichts mehr.
+    clearTimeout(toastTimer);
+    while (toastWrap.firstChild) toastWrap.removeChild(toastWrap.firstChild);
     const t = document.createElement('div');
     t.className = 'toast toast-' + type;
     t.textContent = msg;
     toastWrap.appendChild(t);
     requestAnimationFrame(() => t.classList.add('in'));
-    setTimeout(() => {
+    toastTimer = setTimeout(() => {
       t.classList.remove('in');
       setTimeout(() => t.remove(), 350);
     }, 3200);

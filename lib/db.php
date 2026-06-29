@@ -73,6 +73,21 @@ function db_init(PDO $pdo): void {
             created_at TEXT DEFAULT (datetime('now')),
             updated_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS product_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL,
+            customer_name TEXT DEFAULT '',
+            email TEXT DEFAULT '',
+            phone TEXT DEFAULT '',
+            description TEXT DEFAULT '',
+            link TEXT DEFAULT '',
+            screenshot TEXT DEFAULT '',
+            status TEXT DEFAULT 'neu',
+            price_cents INTEGER DEFAULT 0,
+            admin_note TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now'))
+        );
         CREATE TABLE IF NOT EXISTS order_messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             order_reference TEXT NOT NULL,
@@ -249,6 +264,11 @@ function db_init(PDO $pdo): void {
         'subject'         => "TEXT DEFAULT ''",
         'body'            => "TEXT DEFAULT ''",
         'is_read'         => 'INTEGER DEFAULT 0',
+        'message_type'    => "TEXT DEFAULT 'plain'",
+        'action_url'      => "TEXT DEFAULT ''",
+        'decline_url'     => "TEXT DEFAULT ''",
+        'action_label'    => "TEXT DEFAULT ''",
+        'decline_label'   => "TEXT DEFAULT ''",
     ];
     foreach ($am_add as $col => $def) {
         if (!in_array($col, $am_cols)) {
@@ -275,6 +295,25 @@ function db_init(PDO $pdo): void {
     foreach ($ord_add as $col => $def) {
         if (!in_array($col, $ord_cols)) {
             try { $pdo->exec("ALTER TABLE orders ADD COLUMN $col $def"); } catch (\Throwable $e) {}
+        }
+    }
+
+    $req_cols = array_column($pdo->query("PRAGMA table_info(product_requests)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    $req_add = [
+        'account_id'    => 'INTEGER DEFAULT 0',
+        'customer_name' => "TEXT DEFAULT ''",
+        'email'         => "TEXT DEFAULT ''",
+        'phone'         => "TEXT DEFAULT ''",
+        'description'   => "TEXT DEFAULT ''",
+        'link'          => "TEXT DEFAULT ''",
+        'screenshot'    => "TEXT DEFAULT ''",
+        'status'        => "TEXT DEFAULT 'neu'",
+        'price_cents'   => 'INTEGER DEFAULT 0',
+        'admin_note'    => "TEXT DEFAULT ''",
+    ];
+    foreach ($req_add as $col => $def) {
+        if (!in_array($col, $req_cols)) {
+            try { $pdo->exec("ALTER TABLE product_requests ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
     }
 

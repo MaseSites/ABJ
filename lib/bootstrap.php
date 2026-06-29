@@ -31,6 +31,7 @@ require_once __DIR__ . '/products.php';
 require_once __DIR__ . '/inventory.php';
 require_once __DIR__ . '/orders.php';
 require_once __DIR__ . '/order-messages.php';
+require_once __DIR__ . '/requests.php';
 require_once __DIR__ . '/account-messages.php';
 require_once __DIR__ . '/newsletter.php';
 require_once __DIR__ . '/messages.php';

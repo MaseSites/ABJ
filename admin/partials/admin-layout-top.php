@@ -74,6 +74,13 @@ try {
         <?php if ($_newOrders > 0): ?><span class="nav-badge"><?= $_newOrders ?></span><?php endif; ?>
       </a>
 
+      <a href="<?= url('/admin/anfragen.php') ?>" class="<?= str_has($_cur, 'anfrage') ? 'active' : '' ?>">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3.5h12v9H5l-3 3v-3H2v-9z"/><path d="M5 6h6M5 8.5h4"/>
+        </svg>
+        Anfragen
+      </a>
+
       <a href="<?= url('/admin/kunden.php') ?>" class="<?= str_has($_cur, 'kunden') ? 'active' : '' ?>">
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="6" cy="5" r="2.6"/><path d="M1.5 14c.5-2.8 2.3-4.2 4.5-4.2s4 1.4 4.5 4.2"/>

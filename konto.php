@@ -323,6 +323,12 @@ function ko_render_order(array $o, string $currency): void {
                 <div class="acc-order-items">
                   <span class="acc-order-item" style="white-space:pre-line"><?= h($msg['body']) ?></span>
                 </div>
+                <?php if (!empty($msg['message_type']) && $msg['message_type'] === 'request_offer'): ?>
+                <div class="acc-order-actions" style="margin-top:.8rem">
+                  <?php if (!empty($msg['action_url'])): ?><a class="btn btn-primary btn-sm" href="<?= h($msg['action_url']) ?>"><?= h($msg['action_label'] ?: 'Dem Warenkorb hinzufügen') ?></a><?php endif; ?>
+                  <?php if (!empty($msg['decline_url'])): ?><a class="btn btn-danger btn-sm" href="<?= h($msg['decline_url']) ?>"><?= h($msg['decline_label'] ?: 'Kein Interesse') ?></a><?php endif; ?>
+                </div>
+                <?php endif; ?>
               </article>
             <?php endforeach; ?>
           </div>

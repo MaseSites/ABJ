@@ -2,7 +2,7 @@
 function account_message_create(array $data): int {
     $accountId = (int)($data['account_id'] ?? 0);
     if ($accountId <= 0) return 0;
-    $stmt = db()->prepare('INSERT INTO account_messages (account_id, order_reference, sender_role, subject, body, is_read) VALUES (?, ?, ?, ?, ?, ?)');
+    $stmt = db()->prepare('INSERT INTO account_messages (account_id, order_reference, sender_role, subject, body, is_read, message_type, action_url, decline_url, action_label, decline_label) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $stmt->execute([
         $accountId,
         $data['order_reference'] ?? '',
@@ -10,6 +10,11 @@ function account_message_create(array $data): int {
         $data['subject'] ?? '',
         $data['body'] ?? '',
         !empty($data['is_read']) ? 1 : 0,
+        $data['message_type'] ?? 'plain',
+        $data['action_url'] ?? '',
+        $data['decline_url'] ?? '',
+        $data['action_label'] ?? '',
+        $data['decline_label'] ?? '',
     ]);
     return (int)db()->lastInsertId();
 }

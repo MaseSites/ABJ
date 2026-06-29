@@ -36,18 +36,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'request'   => true,
         ];
 
-        $reference = order_create([
+        $requestId = request_create([
+            'account_id'    => (int)$cust['id'],
             'customer_name' => $cust['name'] ?? '',
             'email'         => $cust['email'] ?? '',
             'phone'         => $account['phone'] ?? '',
-            'address'       => $addr,
-            'items'         => [$item],
-            'total_cents'   => 0,
-            'shipping_cents'=> 0,
-            'payment_method'=> '',
+            'description'   => $desc,
+            'link'          => $link,
+            'screenshot'    => $screenshot ?: '',
+            'status'        => 'neu',
         ]);
-        last_order_set($reference);
-        redirect('/bestellung.php?ref=' . urlencode($reference) . '&anfrage=1');
+        account_message_create([
+            'account_id' => (int)$cust['id'],
+            'sender_role' => 'system',
+            'subject' => 'Produktanfrage erhalten',
+            'body' => 'Deine Anfrage wurde gespeichert. Wir prüfen sie und melden uns in deiner Inbox.',
+            'is_read' => 0,
+        ]);
+        redirect('/konto.php?tab=inbox&request=' . $requestId);
     }
 }
 

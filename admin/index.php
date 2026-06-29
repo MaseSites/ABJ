@@ -22,6 +22,7 @@ try {
 
 $trend = $revPrev30 > 0 ? round(($rev30 - $revPrev30) / $revPrev30 * 100) : ($rev30 > 0 ? 100 : 0);
 try { $customerCount = accounts_count(); } catch (\Throwable $e) { $customerCount = 0; }
+try { $requestCount = (int)db()->query("SELECT COUNT(*) n FROM product_requests WHERE status='neu'")->fetch()['n']; } catch (\Throwable $e) { $requestCount = 0; }
 
 $hour = (int)date('G');
 $greeting = $hour < 11 ? 'Guten Morgen' : ($hour < 17 ? 'Guten Tag' : 'Guten Abend');
@@ -119,6 +120,11 @@ function statusTagClass(string $status): string {
   <a class="todo-card is-neutral" href="<?= url('/admin/kunden.php') ?>">
     <span class="todo-num"><?= $customerCount ?></span>
     <span class="todo-text"><strong>Kundenkonten</strong><small>Registrierte Kunden</small></span>
+    <svg class="todo-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg>
+  </a>
+  <a class="todo-card <?= $requestCount > 0 ? 'is-warn' : 'is-ok' ?>" href="<?= url('/admin/anfragen.php') ?>">
+    <span class="todo-num"><?= $requestCount ?></span>
+    <span class="todo-text"><strong>Anfragen</strong><small>Produktanfragen prüfen</small></span>
     <svg class="todo-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5"/></svg>
   </a>
 </div>

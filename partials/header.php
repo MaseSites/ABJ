@@ -2,6 +2,8 @@
 $cartCount    = isset($cartCount) ? (int)$cartCount : cart_count();
 $currentPath  = isset($currentPath) ? $currentPath : current_path();
 $announcement = setting_get('announcement') ?: '';
+$customer     = is_customer() ? current_customer() : null;
+$customerUnread = $customer ? account_messages_unread_count((int)$customer['id']) : 0;
 ?>
 <a class="skip-link" href="#main">Zum Inhalt springen</a>
 <div class="scroll-progress" data-progress aria-hidden="true"></div>
@@ -40,6 +42,14 @@ $announcement = setting_get('announcement') ?: '';
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/>
         </svg>
+      </a>
+      <a class="icon-btn" href="<?= url(is_customer() ? '/konto.php?tab=inbox' : '/anmelden.php') ?>" aria-label="Posteingang" title="Posteingang">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6h18v9z"/><path d="M3 8l9 6 9-6"/>
+        </svg>
+        <?php if ($customerUnread > 0): ?>
+          <span class="badge-count"><?= $customerUnread ?></span>
+        <?php endif; ?>
       </a>
       <a class="icon-btn" href="<?= url('/wunschliste.php') ?>" aria-label="Wunschliste">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -80,6 +90,7 @@ $announcement = setting_get('announcement') ?: '';
   <a href="<?= url('/kontakt.php') ?>">Kontakt</a>
   <a href="<?= url('/wunschliste.php') ?>">Wunschliste</a>
   <?php if (is_customer()): ?>
+    <a href="<?= url('/konto.php?tab=inbox') ?>">Posteingang</a>
     <a href="<?= url('/konto.php') ?>">Mein Konto</a>
     <a href="<?= url('/abmelden.php') ?>">Abmelden</a>
   <?php else: ?>

@@ -20,6 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prod = (int)round((float)str_replace(',', '.', trim($_POST['total'] ?? '')) * 100);
         $ship = (int)round((float)str_replace(',', '.', trim($_POST['shipping'] ?? '')) * 100);
         order_set_price($ref, max(0, $prod), max(0, $ship));
+        $acc = account_by_email($order['email'] ?? '');
+        if ($acc) {
+            account_message_create([
+                'account_id' => (int)$acc['id'],
+                'order_reference' => $ref,
+                'sender_role' => 'system',
+                'subject' => 'Preisänderung',
+                'body' => 'Neuer Produktpreis: ' . number_format($prod / 100, 2, '.', '') . "\nVersand: " . number_format($ship / 100, 2, '.', ''),
+                'is_read' => 0,
+            ]);
+        }
         order_message_create([
             'order_reference' => $ref,
             'author_role' => 'system',
@@ -35,15 +46,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         order_update_status($ref, $newStatus, $newPay);
     }
     if (!empty($_POST['note'])) {
+        $note = trim($_POST['note']);
         order_message_create([
             'order_reference' => $ref,
             'author_role' => 'admin',
             'author_name' => 'ABJ Team',
             'subject' => 'Bemerkung',
-            'body' => trim($_POST['note']),
+            'body' => $note,
             'is_system' => 0,
             'is_read' => 0,
         ]);
+        $acc = account_by_email($order['email'] ?? '');
+        if ($acc) {
+            account_message_create([
+                'account_id' => (int)$acc['id'],
+                'order_reference' => $ref,
+                'sender_role' => 'admin',
+                'subject' => 'Nachricht zur Bestellung',
+                'body' => $note,
+                'is_read' => 0,
+            ]);
+        }
     }
     redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&saved=1');
 }

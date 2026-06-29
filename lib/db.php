@@ -146,6 +146,16 @@ function db_init(PDO $pdo): void {
             address TEXT DEFAULT '{}',
             created_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS account_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL,
+            order_reference TEXT DEFAULT '',
+            sender_role TEXT DEFAULT 'admin',
+            subject TEXT DEFAULT '',
+            body TEXT DEFAULT '',
+            is_read INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        );
         CREATE TABLE IF NOT EXISTS visits (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ip TEXT DEFAULT '',
@@ -228,6 +238,21 @@ function db_init(PDO $pdo): void {
               'referred_by' => 'INTEGER', 'promo_points' => 'INTEGER DEFAULT 0'] as $col => $def) {
         if (!in_array($col, $acc_cols)) {
             try { $pdo->exec("ALTER TABLE accounts ADD COLUMN $col $def"); } catch (\Throwable $e) {}
+        }
+    }
+
+    $am_cols = array_column($pdo->query("PRAGMA table_info(account_messages)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    $am_add = [
+        'account_id'      => 'INTEGER DEFAULT 0',
+        'order_reference' => "TEXT DEFAULT ''",
+        'sender_role'     => "TEXT DEFAULT 'admin'",
+        'subject'         => "TEXT DEFAULT ''",
+        'body'            => "TEXT DEFAULT ''",
+        'is_read'         => 'INTEGER DEFAULT 0',
+    ];
+    foreach ($am_add as $col => $def) {
+        if (!in_array($col, $am_cols)) {
+            try { $pdo->exec("ALTER TABLE account_messages ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
     }
 

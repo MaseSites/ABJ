@@ -92,6 +92,13 @@ session_write_close();
 $account    = account_by_id((int)$cust['id']);
 $savedAddr  = account_address($account);
 $orders     = orders_by_email($cust['email']);
+$inbox      = account_messages_by_account((int)$cust['id']);
+$activeTab  = $_GET['tab'] ?? 'overview';
+$activeTab  = in_array($activeTab, ['overview','orders','promo','profile','security','inbox'], true) ? $activeTab : 'overview';
+if ($activeTab === 'inbox') {
+    account_messages_mark_read((int)$cust['id']);
+    $inbox = account_messages_by_account((int)$cust['id']);
+}
 $totalSpent = array_sum(array_map(fn($o) => $o['payment_status'] === 'bezahlt' ? (int)$o['total_cents'] : 0, $orders));
 $openPay    = array_sum(array_map(fn($o) => $o['payment_status'] !== 'bezahlt' && $o['status'] !== 'storniert' ? (int)$o['total_cents'] : 0, $orders));
 
@@ -192,6 +199,10 @@ function ko_render_order(array $o, string $currency): void {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h12l-1 13H7zM9 7a3 3 0 0 1 6 0"/></svg>
           Bestellungen <?php if ($orders): ?><span class="acc-nav-count"><?= count($orders) ?></span><?php endif; ?>
         </button>
+        <button type="button" class="acc-nav-item<?= $activeTab === 'inbox' ? ' active' : '' ?>" data-tab-btn="inbox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6h18v9z"/><path d="M3 8l9 6 9-6"/></svg>
+          Posteingang <?php if (account_messages_unread_count((int)$cust['id']) > 0): ?><span class="acc-nav-count"><?= account_messages_unread_count((int)$cust['id']) ?></span><?php endif; ?>
+        </button>
         <button type="button" class="acc-nav-item<?= $activeTab === 'promo' ? ' active' : '' ?>" data-tab-btn="promo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
           Promo Code <span class="acc-nav-count"><?= $promoPoints ?></span>
@@ -281,6 +292,39 @@ function ko_render_order(array $o, string $currency): void {
         <?php else: ?>
           <div class="acc-orders">
             <?php foreach ($orders as $o) ko_render_order($o, $currency); ?>
+          </div>
+        <?php endif; ?>
+      </section>
+
+      <section class="acc-panel<?= $activeTab === 'inbox' ? ' active' : '' ?>" data-panel="inbox">
+        <div class="acc-panel-head">
+          <h1>Posteingang</h1>
+          <p class="muted">Alle Nachrichten zu deinem Konto und deinen Bestellungen an einem Ort.</p>
+        </div>
+        <?php if (empty($inbox)): ?>
+          <div class="cart-empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="52" height="52"><path d="M21 15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6h18v9z"/><path d="M3 8l9 6 9-6"/></svg>
+            <p>Noch keine Nachrichten.</p>
+          </div>
+        <?php else: ?>
+          <div class="acc-orders">
+            <?php foreach ($inbox as $msg): ?>
+              <article class="acc-order">
+                <div class="acc-order-head">
+                  <div>
+                    <span class="acc-order-ref"><?= h($msg['subject'] ?: 'Nachricht') ?></span>
+                    <span class="acc-order-date"><?= h(substr($msg['created_at'], 0, 16)) ?></span>
+                  </div>
+                  <div class="acc-order-tags">
+                    <?php if (!empty($msg['order_reference'])): ?><span class="tag tag-anfrage"><?= h($msg['order_reference']) ?></span><?php endif; ?>
+                    <span class="tag"><?= h($msg['sender_role'] ?: 'admin') ?></span>
+                  </div>
+                </div>
+                <div class="acc-order-items">
+                  <span class="acc-order-item" style="white-space:pre-line"><?= h($msg['body']) ?></span>
+                </div>
+              </article>
+            <?php endforeach; ?>
           </div>
         <?php endif; ?>
       </section>

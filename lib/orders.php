@@ -100,6 +100,17 @@ function order_update_status(string $ref, string $status, string $paymentStatus)
                 'is_system' => 1,
                 'is_read' => 0,
             ]);
+            $acc = account_by_email($before['email'] ?? '');
+            if ($acc) {
+                account_message_create([
+                    'account_id' => (int)$acc['id'],
+                    'order_reference' => $ref,
+                    'sender_role' => 'system',
+                    'subject' => 'Bestell-Update',
+                    'body' => implode("\n", $notes),
+                    'is_read' => 0,
+                ]);
+            }
         }
     }
     return $ok;

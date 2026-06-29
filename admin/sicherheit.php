@@ -39,6 +39,13 @@ $allowed = ip_allow_list();
 $blocked = ip_blocks_list();
 $myAllowed = false;
 foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; } }
+$ipUsers    = ip_user_map(array_merge(array_column($allowed, 'ip'), array_column($blocked, 'ip')));
+$ipUserCell = function (string $ip) use ($ipUsers): string {
+    $u = $ipUsers[$ip] ?? null;
+    if (!$u) return '<span class="muted">unbekannt</span>';
+    $name = trim((string)($u['name'] ?? ''));
+    return ($name !== '' ? '<strong>' . h($name) . '</strong> ' : '') . '<span class="muted">' . h($u['email'] ?? '') . '</span>';
+};
 ?>
 <p class="admin-kicker">System</p>
 <div class="admin-head-row" style="margin-bottom:1.4rem"><h1>Sicherheit</h1></div>
@@ -141,12 +148,13 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
     <p class="muted">Noch keine freigeschalteten IPs.</p>
   <?php else: ?>
   <div class="table-card"><table class="data-table">
-    <thead><tr><th>IP</th><th>Seit</th><th></th></tr></thead>
+    <thead><tr><th>IP</th><th>Nutzer</th><th>Seit</th><th></th></tr></thead>
     <tbody>
       <?php foreach ($allowed as $a): ?>
       <tr>
-        <td><strong style="font-variant-numeric:tabular-nums"><?= h($a['ip']) ?></strong><?= $a['ip'] === $myIp ? ' <span class="tag tag-ok">du</span>' : '' ?></td>
-        <td class="muted"><?= h(substr($a['created_at'], 0, 16)) ?></td>
+        <td data-label="IP"><strong style="font-variant-numeric:tabular-nums"><?= h($a['ip']) ?></strong><?= $a['ip'] === $myIp ? ' <span class="tag tag-ok">du</span>' : '' ?></td>
+        <td data-label="Nutzer"><?= $ipUserCell($a['ip']) ?></td>
+        <td data-label="Seit" class="muted"><?= h(substr($a['created_at'], 0, 16)) ?></td>
         <td class="cell-actions"><form method="post"><input type="hidden" name="action" value="remove_allow_ip"><input type="hidden" name="ip" value="<?= h($a['ip']) ?>"><button class="btn btn-ghost btn-sm" type="submit">Entfernen</button></form></td>
       </tr>
       <?php endforeach; ?>
@@ -169,13 +177,14 @@ foreach ($allowed as $a) { if ($a['ip'] === $myIp) { $myAllowed = true; break; }
     <p class="muted">Keine gesperrten IPs.</p>
   <?php else: ?>
   <div class="table-card"><table class="data-table">
-    <thead><tr><th>IP</th><th>Notiz</th><th>Seit</th><th></th></tr></thead>
+    <thead><tr><th>IP</th><th>Nutzer</th><th>Notiz</th><th>Seit</th><th></th></tr></thead>
     <tbody>
       <?php foreach ($blocked as $b): ?>
       <tr>
-        <td><strong style="font-variant-numeric:tabular-nums"><?= h($b['ip']) ?></strong></td>
-        <td class="muted"><?= h($b['note'] ?: '–') ?></td>
-        <td class="muted"><?= h(substr($b['created_at'], 0, 16)) ?></td>
+        <td data-label="IP"><strong style="font-variant-numeric:tabular-nums"><?= h($b['ip']) ?></strong></td>
+        <td data-label="Nutzer"><?= $ipUserCell($b['ip']) ?></td>
+        <td data-label="Notiz" class="muted"><?= h($b['note'] ?: '–') ?></td>
+        <td data-label="Seit" class="muted"><?= h(substr($b['created_at'], 0, 16)) ?></td>
         <td class="cell-actions"><form method="post"><input type="hidden" name="action" value="unblock_ip"><input type="hidden" name="ip" value="<?= h($b['ip']) ?>"><button class="btn btn-ghost btn-sm" type="submit">Entsperren</button></form></td>
       </tr>
       <?php endforeach; ?>

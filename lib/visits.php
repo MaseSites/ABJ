@@ -19,9 +19,10 @@ function visit_log(): void {
     if (preg_match('#^/(admin|api)\b#', $path)) return;
     if (preg_match('#\.(css|js|mjs|map|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|json|txt)$#i', $path)) return;
     if (preg_match('#^/(css|js|img|assets|uploads)/#', $path)) return;
+    $accId = is_customer() ? (int)(current_customer()['id'] ?? 0) : 0;
     try {
-        db()->prepare("INSERT INTO visits (ip, path, user_agent) VALUES (?, ?, ?)")
-            ->execute([client_ip(), mb_substr($path, 0, 300), mb_substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 300)]);
+        db()->prepare("INSERT INTO visits (ip, path, user_agent, account_id) VALUES (?, ?, ?, ?)")
+            ->execute([client_ip(), mb_substr($path, 0, 300), mb_substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 300), $accId]);
         // gelegentlich alte Einträge aufräumen
         if (mt_rand(1, 80) === 1) {
             db()->exec("DELETE FROM visits WHERE created_at < datetime('now', '-60 days')");
@@ -67,11 +68,18 @@ function ip_is_allowed(string $ip): bool {
     } catch (\Throwable $e) { return false; }
 }
 
-function ip_allow_add(string $ip): bool {
+function ip_allow_add(string $ip, int $accountId = 0): bool {
     $ip = trim($ip);
     if (!filter_var($ip, FILTER_VALIDATE_IP)) return false;
-    try { db()->prepare("INSERT OR IGNORE INTO ip_allow (ip) VALUES (?)")->execute([$ip]); return true; }
-    catch (\Throwable $e) { return false; }
+    try {
+        db()->prepare("INSERT OR IGNORE INTO ip_allow (ip, account_id) VALUES (?, ?)")->execute([$ip, $accountId]);
+        // Falls die IP schon frei war, aber noch keinem Konto zugeordnet: nachtragen.
+        if ($accountId > 0) {
+            db()->prepare("UPDATE ip_allow SET account_id = ? WHERE ip = ? AND (account_id IS NULL OR account_id = 0)")
+                ->execute([$accountId, $ip]);
+        }
+        return true;
+    } catch (\Throwable $e) { return false; }
 }
 
 function ip_allow_remove(string $ip): void {
@@ -90,6 +98,41 @@ function visits_recent(int $limit = 60): array {
         $stmt->execute([max(1, $limit)]);
         return $stmt->fetchAll();
     } catch (\Throwable $e) { return []; }
+}
+
+/**
+ * Ordnet IP-Adressen einem Nutzer zu. Rückgabe: ['1.2.3.4' => ['name'=>, 'email'=>], …].
+ * Quelle: freigeschaltete IPs (ip_allow.account_id), sonst der letzte
+ * eingeloggte Besuch dieser IP (visits.account_id).
+ */
+function ip_user_map(array $ips): array {
+    $ips = array_values(array_unique(array_filter(array_map('trim', $ips))));
+    if (!$ips) return [];
+    $map = [];
+    try {
+        $ph = implode(',', array_fill(0, count($ips), '?'));
+        // 1) aus der Allowlist (direkte Zuordnung beim Freischalten)
+        $stmt = db()->prepare("SELECT al.ip, a.name, a.email FROM ip_allow al
+            JOIN accounts a ON a.id = al.account_id
+            WHERE al.account_id > 0 AND al.ip IN ($ph)");
+        $stmt->execute($ips);
+        foreach ($stmt->fetchAll() as $r) $map[$r['ip']] = ['name' => $r['name'], 'email' => $r['email']];
+
+        // 2) für den Rest: letzter eingeloggter Besuch dieser IP
+        $rest = array_values(array_diff($ips, array_keys($map)));
+        if ($rest) {
+            $ph2 = implode(',', array_fill(0, count($rest), '?'));
+            $stmt = db()->prepare("SELECT v.ip, a.name, a.email FROM visits v
+                JOIN accounts a ON a.id = v.account_id
+                WHERE v.account_id > 0 AND v.ip IN ($ph2)
+                  AND v.id IN (SELECT MAX(id) FROM visits WHERE account_id > 0 GROUP BY ip)");
+            $stmt->execute($rest);
+            foreach ($stmt->fetchAll() as $r) {
+                if (!isset($map[$r['ip']])) $map[$r['ip']] = ['name' => $r['name'], 'email' => $r['email']];
+            }
+        }
+    } catch (\Throwable $e) { return $map; }
+    return $map;
 }
 
 /** Pro IP zusammengefasst: Anzahl, erste/letzte Aktivität. */

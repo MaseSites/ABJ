@@ -63,7 +63,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     $owner = (int)($row['account_id'] ?? 0);
                     if ($owner > 0) account_set_referrer((int)$res['id'], $owner);
                     customer_login((int)$res['id'], trim($_POST['email'] ?? ''), trim($_POST['name'] ?? ''));
-                    ip_allow_add(client_ip());
+                    ip_allow_add(client_ip(), (int)$res['id']);
                     unset($_SESSION['gate_code']); session_write_close();
                     if (!headers_sent()) header('Location: ' . base_path() . '/');
                     exit;
@@ -82,7 +82,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     }
                     if ($assigned === 0) code_mark_used($code, $accId); // freien Code zuweisen
                     customer_login($accId, $acc['email'], $acc['name'] ?? '');
-                    ip_allow_add(client_ip());
+                    ip_allow_add(client_ip(), $accId);
                     unset($_SESSION['gate_code']); session_write_close();
                     if (!headers_sent()) header('Location: ' . base_path() . '/');
                     exit;

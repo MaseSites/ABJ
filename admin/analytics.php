@@ -312,6 +312,13 @@ $maxWd  = max(1, ...array_values($weekday));
 $ipSummary    = visits_ip_summary(80);
 $recentVisits = visits_recent(5);
 $myIp         = client_ip();
+$ipUsers      = ip_user_map(array_merge(array_column($ipSummary, 'ip'), array_column($recentVisits, 'ip')));
+$ipUserCell   = function (string $ip) use ($ipUsers): string {
+    $u = $ipUsers[$ip] ?? null;
+    if (!$u) return '<span class="muted">unbekannt</span>';
+    $name = trim((string)($u['name'] ?? ''));
+    return ($name !== '' ? '<strong>' . h($name) . '</strong> ' : '') . '<span class="muted">' . h($u['email'] ?? '') . '</span>';
+};
 
 function vis_when(string $ts): string {
     $t = strtotime($ts . ' UTC');
@@ -343,14 +350,15 @@ function vis_when(string $ts): string {
   <input type="search" class="admin-search" data-table-filter placeholder="IP filtern…" aria-label="IP filtern">
   <div class="table-card">
   <table class="data-table" data-filter-table>
-    <thead><tr><th>IP-Adresse</th><th>Aufrufe</th><th>Zuletzt</th><th>Letzte Seite</th></tr></thead>
+    <thead><tr><th>IP-Adresse</th><th>Nutzer</th><th>Aufrufe</th><th>Zuletzt</th><th>Letzte Seite</th></tr></thead>
     <tbody>
       <?php foreach ($ipSummary as $v): ?>
       <tr>
-        <td><strong style="font-variant-numeric:tabular-nums"><?= h($v['ip']) ?></strong><?= $v['ip'] === $myIp ? ' <span class="tag tag-new">du</span>' : '' ?></td>
-        <td><?= (int)$v['hits'] ?></td>
-        <td class="muted"><?= h(vis_when($v['last_seen'])) ?></td>
-        <td class="muted" style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= h($v['last_path']) ?></td>
+        <td data-label="IP-Adresse"><strong style="font-variant-numeric:tabular-nums"><?= h($v['ip']) ?></strong><?= $v['ip'] === $myIp ? ' <span class="tag tag-new">du</span>' : '' ?></td>
+        <td data-label="Nutzer"><?= $ipUserCell($v['ip']) ?></td>
+        <td data-label="Aufrufe"><?= (int)$v['hits'] ?></td>
+        <td data-label="Zuletzt" class="muted"><?= h(vis_when($v['last_seen'])) ?></td>
+        <td data-label="Letzte Seite" class="muted" style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= h($v['last_path']) ?></td>
       </tr>
       <?php endforeach; ?>
     </tbody>
@@ -367,13 +375,14 @@ function vis_when(string $ts): string {
   <?php else: ?>
   <div class="table-card">
   <table class="data-table">
-    <thead><tr><th>Zeit</th><th>IP</th><th>Seite</th></tr></thead>
+    <thead><tr><th>Zeit</th><th>IP</th><th>Nutzer</th><th>Seite</th></tr></thead>
     <tbody>
       <?php foreach ($recentVisits as $v): ?>
       <tr>
-        <td class="muted" style="white-space:nowrap"><?= h(vis_when($v['created_at'])) ?></td>
-        <td style="font-variant-numeric:tabular-nums"><?= h($v['ip']) ?></td>
-        <td><?= h($v['path']) ?></td>
+        <td data-label="Zeit" class="muted" style="white-space:nowrap"><?= h(vis_when($v['created_at'])) ?></td>
+        <td data-label="IP" style="font-variant-numeric:tabular-nums"><?= h($v['ip']) ?></td>
+        <td data-label="Nutzer"><?= $ipUserCell($v['ip']) ?></td>
+        <td data-label="Seite"><?= h($v['path']) ?></td>
       </tr>
       <?php endforeach; ?>
     </tbody>

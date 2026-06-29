@@ -240,6 +240,16 @@ function db_init(PDO $pdo): void {
         }
     }
 
+    // IP -> Nutzer-Zuordnung: account_id auf Besuchen und freigeschalteten IPs
+    foreach (['visits', 'ip_allow'] as $tbl) {
+        try {
+            $cols = array_column($pdo->query("PRAGMA table_info($tbl)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+            if (!in_array('account_id', $cols, true)) {
+                $pdo->exec("ALTER TABLE $tbl ADD COLUMN account_id INTEGER DEFAULT 0");
+            }
+        } catch (\Throwable $e) {}
+    }
+
     // Migrate: force currency to CHF if still set to old EUR default
     try { $pdo->exec("UPDATE settings SET value = 'CHF' WHERE key = 'currency' AND value = 'EUR'"); } catch (\Throwable $e) {}
 

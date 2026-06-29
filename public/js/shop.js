@@ -259,7 +259,7 @@
         fd.set('qty', 0);
         fetch(BASE_PATH + '/api/cart-update.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': CSRF, Accept: 'application/json' },
           body: fd.toString(),
         }).then((r) => r.json()).then((d) => {
           if (d.ok) { renderDrawer(d); toast('Artikel entfernt'); if ($('[data-cart-page]')) window.location.reload(); }

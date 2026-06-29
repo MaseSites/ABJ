@@ -216,6 +216,14 @@ function ko_render_order(array $o, string $currency): void {
 
       <?php if ($msg): ?><div class="alert alert-<?= $msgType === 'ok' ? 'ok' : 'error' ?>" style="margin-bottom:1.4rem"><?= h($msg) ?></div><?php endif; ?>
 
+      <?php if ($promoFlash): $toastOk = str_starts_with($promoFlash, 'Eingelöst'); ?>
+      <div class="promo-toast <?= $toastOk ? 'is-ok' : 'is-err' ?>" data-promo-toast role="status">
+        <span class="promo-toast-dot"></span>
+        <span class="promo-toast-text"><?= h($promoFlash) ?></span>
+        <button type="button" class="promo-toast-x" data-toast-close aria-label="Schließen">&times;</button>
+      </div>
+      <?php endif; ?>
+
       <!-- Übersicht -->
       <section class="acc-panel<?= $activeTab === 'overview' ? ' active' : '' ?>" data-panel="overview">
         <div class="acc-panel-head">
@@ -281,36 +289,30 @@ function ko_render_order(array $o, string $currency): void {
       <section class="acc-panel<?= $activeTab === 'promo' ? ' active' : '' ?>" data-panel="promo">
         <div class="acc-panel-head">
           <h1>Promo Code</h1>
-          <p class="muted">Lade Freunde mit deinem Code ein. Für jede Bestellung eines geworbenen Freundes bekommst du Promo-Punkte — gutgeschrieben, sobald die <strong>Zahlung bestätigt</strong> ist (<?= (int)$promoPer100 ?> Punkte je 100&nbsp;CHF Bestellwert). Punkte löst du im Promo Shop gegen Gutscheine ein.</p>
+          <p class="muted">Lade Freunde mit deinem Code ein. Für jede bezahlte Bestellung eines geworbenen Freundes bekommst du Punkte (<?= (int)$promoPer100 ?> je 100&nbsp;CHF) und löst sie unten gegen Gutscheine ein.</p>
         </div>
 
-        <?php if ($promoFlash): ?><div class="alert alert-<?= str_starts_with($promoFlash, 'Eingelöst') ? 'ok' : 'error' ?>" style="margin-bottom:1.2rem"><?= h($promoFlash) ?></div><?php endif; ?>
-
-        <div class="promo-top">
-          <div class="promo-points-card">
-            <span class="promo-points-num"><?= $promoPoints ?></span>
-            <span class="promo-points-label">Promo Punkte</span>
+        <!-- Hero: Punktestand -->
+        <div class="promo-hero">
+          <div class="promo-hero-main">
+            <span class="promo-hero-num"><?= $promoPoints ?></span>
+            <span class="promo-hero-label">Promo Punkte</span>
           </div>
-          <div class="promo-stats">
-            <div class="acc-stat"><strong><?= (int)$promoStats['referrals'] ?></strong><span>Geworbene Freunde</span></div>
-            <div class="acc-stat"><strong><?= (int)$promoStats['orders'] ?></strong><span>Bestellungen</span></div>
-            <div class="acc-stat"><strong><?= count($promoRedeemed) ?></strong><span>Eingelöste Prämien</span></div>
+          <div class="promo-hero-stats">
+            <div><strong><?= (int)$promoStats['referrals'] ?></strong><span>Geworbene Freunde</span></div>
+            <div><strong><?= (int)$promoStats['orders'] ?></strong><span>Bestellungen</span></div>
+            <div><strong><?= count($promoRedeemed) ?></strong><span>Eingelöste Prämien</span></div>
           </div>
         </div>
 
-        <div class="promo-steps">
-          <div class="promo-step"><span class="promo-step-no">1</span><div><strong>Code teilen</strong><p>Generiere einen Code und schick ihn einem Freund.</p></div></div>
-          <div class="promo-step"><span class="promo-step-no">2</span><div><strong>Freund registriert sich</strong><p>Mit deinem Code wird er deine Empfehlung.</p></div></div>
-          <div class="promo-step"><span class="promo-step-no">3</span><div><strong>Punkte sammeln</strong><p>Pro bezahlter Bestellung deines Freundes.</p></div></div>
-        </div>
-
-        <div class="acc-card promo-card" style="margin-top:1.4rem">
-          <div class="acc-section-head" style="margin-bottom:.9rem">
-            <h3 style="margin:0">Deine Codes</h3>
+        <!-- Deine Codes (weit oben) -->
+        <div class="promo-block">
+          <div class="promo-block-head">
+            <h2>Deine Codes</h2>
             <form method="post" action="<?= url('/konto.php') ?>"><input type="hidden" name="action" value="promo_gen"><button class="btn btn-primary btn-sm" type="submit">+ Neuen Code</button></form>
           </div>
           <?php if (empty($promoCodes)): ?>
-            <p class="muted" style="margin:0">Du hast noch keinen Code. Generiere einen und teile ihn mit einem Freund.</p>
+            <div class="promo-empty">Du hast noch keinen Code. Generiere einen und teile ihn mit einem Freund.</div>
           <?php else: ?>
             <div class="promo-codes">
               <?php foreach ($promoCodes as $pc):
@@ -340,39 +342,53 @@ function ko_render_order(array $o, string $currency): void {
           <?php endif; ?>
         </div>
 
-        <div class="acc-section-head" style="margin:2rem 0 1rem">
-          <h2 style="font-size:1.15rem;margin:0">Promo Shop</h2>
-          <span class="muted" style="font-size:.85rem">Du hast <strong><?= $promoPoints ?></strong> Punkte</span>
-        </div>
-        <div class="promo-shop">
-          <?php foreach ($promoRewards as $key => $r): $can = $promoPoints >= $r['cost']; $missing = $r['cost'] - $promoPoints; ?>
-          <div class="promo-reward<?= $can ? '' : ' is-locked' ?>">
-            <span class="promo-reward-label"><?= h($r['label']) ?></span>
-            <p class="promo-reward-desc"><?= h($r['desc']) ?></p>
-            <div class="promo-reward-foot">
-              <span class="promo-reward-cost"><?= (int)$r['cost'] ?> Punkte</span>
+        <!-- Prämien -->
+        <div class="promo-block">
+          <div class="promo-block-head">
+            <h2>Prämien einlösen</h2>
+            <span class="promo-balance"><?= $promoPoints ?> Punkte verfügbar</span>
+          </div>
+          <div class="promo-shop">
+            <?php foreach ($promoRewards as $key => $r): $can = $promoPoints >= $r['cost']; $missing = $r['cost'] - $promoPoints; ?>
+            <div class="promo-reward<?= $can ? ' is-ready' : ' is-locked' ?>">
+              <div class="promo-reward-head">
+                <span class="promo-reward-kicker">Prämie</span>
+                <span class="promo-reward-cost"><?= (int)$r['cost'] ?> Pkt.</span>
+              </div>
+              <div class="promo-reward-value"><?= h($r['short'] ?? $r['label']) ?></div>
+              <p class="promo-reward-desc"><?= h($r['desc']) ?></p>
               <form method="post" action="<?= url('/konto.php') ?>" onsubmit="return confirm('<?= (int)$r['cost'] ?> Punkte für „<?= h($r['label']) ?>" einlösen?')">
                 <input type="hidden" name="action" value="promo_redeem">
                 <input type="hidden" name="reward" value="<?= h($key) ?>">
-                <button class="btn btn-primary btn-sm" type="submit"<?= $can ? '' : ' disabled' ?>><?= $can ? 'Einlösen' : ('Noch ' . $missing . ' Pkt.') ?></button>
+                <button class="btn btn-block btn-sm <?= $can ? 'btn-primary' : 'btn-line' ?>" type="submit"<?= $can ? '' : ' disabled' ?>><?= $can ? 'Einlösen' : ('Noch ' . $missing . ' Punkte') ?></button>
               </form>
             </div>
+            <?php endforeach; ?>
           </div>
-          <?php endforeach; ?>
         </div>
 
         <?php if (!empty($promoRedeemed)): ?>
-        <h2 style="font-size:1.15rem;margin:2rem 0 1rem">Deine Gutscheine</h2>
-        <div class="table-card-light">
-          <?php foreach ($promoRedeemed as $rd): ?>
-          <div class="promo-voucher">
-            <div><strong><?= h($rd['reward']) ?></strong><span class="muted" style="margin-left:.6rem;font-size:.82rem"><?= h(substr($rd['created_at'],0,10)) ?></span></div>
-            <code class="promo-voucher-code" data-copy="<?= h($rd['code']) ?>"><?= h($rd['code']) ?></code>
+        <!-- Eingelöste Gutscheine -->
+        <div class="promo-block">
+          <div class="promo-block-head"><h2>Deine Gutscheine</h2></div>
+          <div class="promo-vouchers">
+            <?php foreach ($promoRedeemed as $rd): ?>
+            <div class="promo-voucher">
+              <div class="promo-voucher-info"><strong><?= h($rd['reward']) ?></strong><span><?= h(substr($rd['created_at'],0,10)) ?></span></div>
+              <code class="promo-voucher-code" data-copy="<?= h($rd['code']) ?>"><?= h($rd['code']) ?></code>
+            </div>
+            <?php endforeach; ?>
           </div>
-          <?php endforeach; ?>
-          <p class="muted" style="font-size:.8rem;margin:.6rem 0 0">Diese Codes gibst du beim Checkout im Feld „Rabattcode" ein.</p>
+          <p class="muted" style="font-size:.8rem;margin:.7rem 0 0">Diese Codes gibst du beim Checkout im Feld „Rabattcode" ein.</p>
         </div>
         <?php endif; ?>
+
+        <!-- So funktioniert's -->
+        <div class="promo-steps">
+          <div class="promo-step"><span class="promo-step-no">1</span><div><strong>Code teilen</strong><p>Generiere einen Code und schick ihn einem Freund.</p></div></div>
+          <div class="promo-step"><span class="promo-step-no">2</span><div><strong>Freund registriert sich</strong><p>Mit deinem Code wird er deine Empfehlung.</p></div></div>
+          <div class="promo-step"><span class="promo-step-no">3</span><div><strong>Punkte sammeln</strong><p>Pro bezahlter Bestellung deines Freundes.</p></div></div>
+        </div>
       </section>
 
       <!-- Profil & Adresse -->
@@ -478,6 +494,15 @@ function ko_render_order(array $o, string $currency): void {
     el.style.cursor = 'pointer'; el.title = 'Klicken zum Kopieren';
     el.addEventListener('click', function () { copy(el.getAttribute('data-copy'), el, el.getAttribute('data-copy')); });
   });
+  // Promo: Einlöse-Popup (Toast) oben einblenden und automatisch ausblenden
+  var toast = document.querySelector('[data-promo-toast]');
+  if (toast) {
+    requestAnimationFrame(function(){ toast.classList.add('show'); });
+    var hide = function () { toast.classList.remove('show'); setTimeout(function(){ if(toast.parentNode) toast.parentNode.removeChild(toast); }, 350); };
+    var timer = setTimeout(hide, 5000);
+    var x = toast.querySelector('[data-toast-close]');
+    if (x) x.addEventListener('click', function(){ clearTimeout(timer); hide(); });
+  }
 })();
 </script>
 <?php include __DIR__ . '/partials/footer.php'; ?>

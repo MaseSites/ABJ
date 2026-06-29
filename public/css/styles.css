@@ -1572,6 +1572,41 @@ body.no-scroll { overflow: hidden; }
 .sort-form select:hover, .shop-select:hover { border-color: rgba(184,156,103,.45); background-color: rgba(184,156,103,.06); }
 .sort-form select:focus, .shop-select:focus { outline: none; border-color: var(--accent-3); box-shadow: 0 0 0 3px rgba(184,156,103,.16); }
 .sort-form select option, .shop-select option { background: #15151a; color: var(--ink); }
+
+/* Elegantes Custom-Dropdown (ersetzt die native OS-Liste per JS) */
+.cselect { position: relative; display: inline-block; }
+.cselect-native { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.cselect-trigger {
+  display: inline-flex; align-items: center; gap: .7rem;
+  padding: .62em 1.1em; border: 1px solid var(--line-strong); border-radius: 999px;
+  background: var(--elev); color: var(--ink); font: inherit; font-size: .85rem; font-weight: 600;
+  cursor: pointer; transition: border-color .18s, background .18s, box-shadow .18s;
+}
+.cselect-trigger:hover { border-color: rgba(184,156,103,.45); background: rgba(184,156,103,.06); }
+.cselect.open .cselect-trigger { border-color: var(--accent-3); box-shadow: 0 0 0 3px rgba(184,156,103,.16); }
+.cselect-caret { width: 12px; height: 12px; color: var(--accent-3); transition: transform .2s ease; }
+.cselect.open .cselect-caret { transform: rotate(180deg); }
+.cselect-menu {
+  position: absolute; top: calc(100% + .5rem); left: 0; min-width: 100%; width: max-content; max-width: 78vw;
+  background: #14141a; border: 1px solid var(--line-strong); border-radius: 14px;
+  box-shadow: 0 22px 48px -20px rgba(0,0,0,.75), 0 2px 8px -4px rgba(0,0,0,.5);
+  padding: .4rem; z-index: 50; display: flex; flex-direction: column; gap: .12rem;
+  max-height: 320px; overflow-y: auto;
+  opacity: 0; transform: translateY(-6px) scale(.985); transform-origin: top; pointer-events: none;
+  transition: opacity .16s ease, transform .16s ease;
+}
+.cselect--right .cselect-menu { left: auto; right: 0; transform-origin: top right; }
+.cselect.open .cselect-menu { opacity: 1; transform: none; pointer-events: auto; }
+.cselect-option {
+  display: flex; align-items: center; gap: .6rem; text-align: left; white-space: nowrap;
+  background: none; border: none; cursor: pointer; color: var(--ink-soft);
+  padding: .62rem .8rem; border-radius: 10px; font: inherit; font-size: .86rem;
+  transition: background .12s, color .12s;
+}
+.cselect-option::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: transparent; flex: none; transition: background .12s; }
+.cselect-option:hover { background: rgba(255,255,255,.05); color: var(--ink); }
+.cselect-option.is-active { color: var(--accent-3); font-weight: 700; }
+.cselect-option.is-active::before { background: var(--accent-3); }
 .result-info { margin-bottom: 1.2rem; }
 .result-info a { color: var(--accent-3); }
 

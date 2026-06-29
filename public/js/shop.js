@@ -479,6 +479,69 @@
     const f = sortSelect.closest('form'); if (f) f.submit();
   });
 
+  /* ---------------- Elegante Custom-Dropdowns ---------------- */
+  // Wertet native <select> auf: gestyltes Menü statt der OS-Liste. Ohne JS
+  // bleibt das native Select voll funktionsfähig (Progressive Enhancement).
+  function enhanceSelect(sel) {
+    if (!sel || sel.dataset.enhanced) return;
+    sel.dataset.enhanced = '1';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'cselect';
+    if (sel.closest('.sort-form')) wrap.classList.add('cselect--right');
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+    sel.classList.add('cselect-native');
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'cselect-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.innerHTML = '<span class="cselect-value"></span>'
+      + '<svg class="cselect-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+    wrap.appendChild(trigger);
+
+    const menu = document.createElement('div');
+    menu.className = 'cselect-menu';
+    menu.setAttribute('role', 'listbox');
+    wrap.appendChild(menu);
+
+    const valEl = trigger.querySelector('.cselect-value');
+
+    Array.from(sel.options).forEach((opt, i) => {
+      const o = document.createElement('button');
+      o.type = 'button';
+      o.className = 'cselect-option';
+      o.setAttribute('role', 'option');
+      o.textContent = opt.textContent;
+      o.addEventListener('click', () => {
+        sel.selectedIndex = i;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+        sync();
+        close();
+      });
+      menu.appendChild(o);
+    });
+
+    function sync() {
+      const cur = sel.options[sel.selectedIndex];
+      valEl.textContent = cur ? cur.textContent : '';
+      Array.from(menu.children).forEach((el, i) => el.classList.toggle('is-active', i === sel.selectedIndex));
+    }
+    function open() { wrap.classList.add('open'); trigger.setAttribute('aria-expanded', 'true'); }
+    function close() { wrap.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); }
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      wrap.classList.contains('open') ? close() : open();
+    });
+    document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    sync();
+  }
+  $$('.shop-select, .sort-form select').forEach(enhanceSelect);
+
   /* ---------------- Bild-Lightbox ---------------- */
   const zoomable = $('[data-zoomable]');
   if (zoomable) {

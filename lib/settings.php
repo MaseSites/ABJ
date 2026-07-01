@@ -14,6 +14,11 @@ $SETTINGS_DEFAULTS = [
     // Sicherheitsmodus (Tarnseite + Zugangscode); standardmässig AUS
     'security_mode' => '0',
     'access_code'   => '',
+    // Getarnter 404 ("Seite nicht gefunden"); '0' = aus, 'all' = alle Besucher,
+    // 'selected' = nur die unten hinterlegten IPs/Konten. Standard: aus.
+    'notfound_mode'     => '0',
+    'notfound_ips'      => '',
+    'notfound_accounts' => '',
     // Promo-/Empfehlungsprogramm: Punkte je 100 CHF Bestellwert eines geworbenen Kunden
     'promo_points_per_100' => '10',
     'accent'                  => '#B89C67',

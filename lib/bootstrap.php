@@ -48,6 +48,7 @@ require_once __DIR__ . '/shipping.php';
 require_once __DIR__ . '/accounts.php';
 require_once __DIR__ . '/promo.php';
 require_once __DIR__ . '/visits.php';
+require_once __DIR__ . '/notfound.php';
 
 // HTTPS / Mixed-Content-Schutz: weist den Browser an, jede unsichere
 // http://-Subressource (Bilder, Skripte, Styles, Fonts, fetch) automatisch
@@ -85,6 +86,10 @@ if (PHP_SAPI !== 'cli' && strpos($__reqPath, '/admin') !== 0) {
         exit;
     }
     visit_log();
+
+    // Getarnter 404: Shop je nach Einstellung für alle oder nur für
+    // ausgewählte Besucher (IP/Konto) als "Seite nicht gefunden" ausblenden.
+    notfound_guard();
 
     // Sicherheitsmodus: Zugang nur für freigeschaltete IP-Adressen. Wer per
     // Zugangscode reinkommt (und sich anmeldet/registriert), dessen IP wird

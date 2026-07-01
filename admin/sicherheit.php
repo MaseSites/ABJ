@@ -8,6 +8,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_cap($action === 'gen_code' ? 'security.gen_code' : 'security.admin');
     if ($action === 'save_mode') {
         setting_set('security_mode', !empty($_POST['security_mode']) ? '1' : '0');
+    } elseif ($action === 'save_notfound') {
+        $nf = in_array($_POST['notfound_mode'] ?? '', ['all', 'selected'], true) ? $_POST['notfound_mode'] : '0';
+        setting_set('notfound_mode', $nf);
+        setting_set('notfound_ips', trim((string)($_POST['notfound_ips'] ?? '')));
+        setting_set('notfound_accounts', trim((string)($_POST['notfound_accounts'] ?? '')));
     } elseif ($action === 'gen_code') {
         code_generate();
     } elseif ($action === 'del_code') {
@@ -33,6 +38,9 @@ $adminTitle = 'Sicherheit';
 include __DIR__ . '/partials/admin-layout-top.php';
 
 $mode    = setting_get('security_mode') === '1';
+$nfMode  = setting_get('notfound_mode') ?: '0';
+$nfIps   = (string)(setting_get('notfound_ips') ?? '');
+$nfAcc   = (string)(setting_get('notfound_accounts') ?? '');
 $codes   = promo_codes_all();
 $myIp    = client_ip();
 $allowed = ip_allow_list();
@@ -78,6 +86,49 @@ $ipUserCell = function (string $ip) use ($ipUsers): string {
       </div>
     </label>
     <button class="btn btn-primary" type="submit">Speichern</button>
+  </form>
+</div>
+
+<!-- Getarnter 404 -->
+<div class="admin-section">
+  <h2>Seite als „404" tarnen</h2>
+  <p style="font-size:.84rem;color:#8a8a95;margin:0 0 1rem">
+    Zeigt statt des Shops eine komplett neutrale, weisse <strong>„Seite nicht gefunden"</strong>-Antwort
+    (HTTP&nbsp;404) — als gäbe es die Seite gar nicht. Kein Layout, kein Branding, keine Hinweise.
+    <strong>Für alle:</strong> der ganze Shop ist für jeden Besucher „verschwunden".
+    <strong>Nur ausgewählte:</strong> nur die unten hinterlegten IP-Adressen bzw. Konten sehen den 404,
+    alle anderen den normalen Shop. Angemeldete Admins und der Admin-Bereich sind <strong>nie</strong> betroffen.
+  </p>
+  <?php if ($nfMode === 'all'): ?>
+    <div class="alert alert-error" style="margin-bottom:1rem"><strong>Aktiv für ALLE Besucher:</strong> Der Shop zeigt aktuell für jeden ausser dir (Admin) einen 404.</div>
+  <?php elseif ($nfMode === 'selected'): ?>
+    <div class="alert alert-ok" style="margin-bottom:1rem"><strong>Aktiv für ausgewählte:</strong> Nur die unten hinterlegten IPs/Konten sehen einen 404.</div>
+  <?php endif; ?>
+  <form method="post">
+    <input type="hidden" name="action" value="save_notfound">
+    <label class="switch-row" style="margin-bottom:.6rem">
+      <input type="radio" name="notfound_mode" value="0" <?= $nfMode === '0' ? 'checked' : '' ?>>
+      <div><strong>Aus</strong><small>Shop ist normal erreichbar.</small></div>
+    </label>
+    <label class="switch-row" style="margin-bottom:.6rem">
+      <input type="radio" name="notfound_mode" value="all" <?= $nfMode === 'all' ? 'checked' : '' ?>>
+      <div><strong>Für alle Besucher</strong><small>Jeder sieht einen 404 – der Shop existiert für Besucher nicht mehr.</small></div>
+    </label>
+    <label class="switch-row" style="margin-bottom:1rem">
+      <input type="radio" name="notfound_mode" value="selected" <?= $nfMode === 'selected' ? 'checked' : '' ?>>
+      <div><strong>Nur für ausgewählte Konten / IP-Adressen</strong><small>Nur die unten Gelisteten sehen einen 404, alle anderen den Shop.</small></div>
+    </label>
+    <div style="display:grid;gap:1rem;grid-template-columns:1fr 1fr;max-width:640px">
+      <label class="field" style="margin:0">
+        <span>IP-Adressen <span class="muted">(eine pro Zeile)</span></span>
+        <textarea name="notfound_ips" rows="4" placeholder="203.0.113.5&#10;198.51.100.20"><?= h($nfIps) ?></textarea>
+      </label>
+      <label class="field" style="margin:0">
+        <span>Konten <span class="muted">(E-Mail, eine pro Zeile)</span></span>
+        <textarea name="notfound_accounts" rows="4" placeholder="kunde@beispiel.ch"><?= h($nfAcc) ?></textarea>
+      </label>
+    </div>
+    <button class="btn btn-primary" type="submit" style="margin-top:1rem">Speichern</button>
   </form>
 </div>
 

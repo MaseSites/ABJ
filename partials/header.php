@@ -4,9 +4,37 @@ $currentPath  = isset($currentPath) ? $currentPath : current_path();
 $announcement = setting_get('announcement') ?: '';
 $customer     = is_customer() ? current_customer() : null;
 $customerUnread = $customer ? account_messages_unread_count((int)$customer['id']) : 0;
+// Eingeschränktes Konto? -> gelber „Konto aktivieren"-Balken.
+$accountRestricted = false;
+if ($customer) {
+    $__acc = account_by_id((int)$customer['id']);
+    $accountRestricted = !account_is_activated($__acc);
+}
+$__hereUrl = $_SERVER['REQUEST_URI'] ?? '/konto.php';
 ?>
 <a class="skip-link" href="#main">Zum Inhalt springen</a>
 <div class="scroll-progress" data-progress aria-hidden="true"></div>
+
+<?php if ($accountRestricted && $currentPath !== '/konto-aktivieren'): ?>
+<div class="activate-banner">
+  <div class="container">
+    <details class="activate-details">
+      <summary>
+        <span class="activate-msg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          Dein Konto ist eingeschränkt. Bestellungen werden erst nach der Aktivierung bearbeitet.
+        </span>
+        <span class="activate-btn">Konto aktivieren</span>
+      </summary>
+      <form class="activate-form" method="post" action="<?= url('/konto-aktivieren.php') ?>">
+        <input type="hidden" name="weiter" value="<?= h($__hereUrl) ?>">
+        <input type="text" name="code" required maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Aktivierungscode" aria-label="Aktivierungscode">
+        <button type="submit">Aktivieren</button>
+      </form>
+    </details>
+  </div>
+</div>
+<?php endif; ?>
 
 <?php if ($announcement): ?>
 <div class="announce">

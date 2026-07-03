@@ -22,7 +22,7 @@ include __DIR__ . '/partials/header.php';
     <?php if ($isAnfrage): ?>
       <span class="confirm-pay-badge<?= (int)$order['total_cents'] > 0 ? ' is-paid' : '' ?>"><?= (int)$order['total_cents'] > 0 ? 'Preis steht' : 'In Prüfung' ?></span>
     <?php else: ?>
-      <span class="confirm-pay-badge<?= $order['payment_status'] === 'bezahlt' ? ' is-paid' : '' ?>"><?= h(payment_status_label($order['payment_status'])) ?></span>
+      <span class="confirm-pay-badge<?= $order['payment_status'] === 'bezahlt' ? ' is-paid' : '' ?>"><?= h(order_payment_label($order)) ?></span>
     <?php endif; ?>
   <?php endif; ?>
 
@@ -103,6 +103,10 @@ include __DIR__ . '/partials/header.php';
             <span>Gesamt</span>
             <span style="color:var(--gold)"><?= (int)$order['total_cents'] > 0 ? format_price((int)$order['total_cents'], $currency) : 'Preis folgt' ?></span>
           </div>
+          <?php if ((int)($order['amount_paid_cents'] ?? 0) > 0 && $order['payment_status'] !== 'bezahlt'): ?>
+          <div class="order-confirm-row"><span>Bereits bezahlt</span><span style="color:#a8e6b8">&minus;<?= format_price((int)$order['amount_paid_cents'], $currency) ?></span></div>
+          <div class="order-confirm-row" style="font-weight:700"><span>Noch offen</span><span style="color:#e6c37e"><?= format_price(order_amount_due($order), $currency) ?></span></div>
+          <?php endif; ?>
         </div>
 
         <?php if ($addr): ?>

@@ -271,7 +271,10 @@ function db_init(PDO $pdo): void {
 
     $acc_cols = array_column($pdo->query("PRAGMA table_info(accounts)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     foreach (['phone' => "TEXT DEFAULT ''", 'address' => "TEXT DEFAULT '{}'", 'access_code' => "TEXT DEFAULT ''",
-              'referred_by' => 'INTEGER', 'promo_points' => 'INTEGER DEFAULT 0'] as $col => $def) {
+              'referred_by' => 'INTEGER', 'promo_points' => 'INTEGER DEFAULT 0',
+              // 1 = freigeschaltet, 0 = eingeschränkt (Konto noch nicht aktiviert).
+              // Bestehende Konten bleiben freigeschaltet (Default 1).
+              'activated' => 'INTEGER DEFAULT 1'] as $col => $def) {
         if (!in_array($col, $acc_cols)) {
             try { $pdo->exec("ALTER TABLE accounts ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
@@ -312,6 +315,11 @@ function db_init(PDO $pdo): void {
         'discount_cents'           => 'INTEGER DEFAULT 0',
         'note'                     => "TEXT DEFAULT ''",
         'promo_awarded'            => 'INTEGER DEFAULT 0',
+        // Bereits erhaltene (Teil-)Zahlung in Rappen.
+        'amount_paid_cents'        => 'INTEGER DEFAULT 0',
+        // 1 = zurückgehalten, weil das Konto beim Bestellen noch nicht
+        // aktiviert war. Kommt erst nach der Aktivierung ins Admin-Dashboard.
+        'held'                     => 'INTEGER DEFAULT 0',
     ];
     foreach ($ord_add as $col => $def) {
         if (!in_array($col, $ord_cols)) {

@@ -52,6 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/admin/kunde.php?id=' . $id . '&err=msg');
     }
 
+    if ($action === 'activate') {
+        account_activate($id);
+        redirect('/admin/kunde.php?id=' . $id . '&saved=activated');
+    }
+
     if ($action === 'points') {
         $pts = max(0, (int)($_POST['points'] ?? 0));
         db()->prepare('UPDATE accounts SET promo_points=? WHERE id=?')->execute([$pts, $id]);
@@ -83,7 +88,7 @@ $points   = promo_points($id);
 $refStats = promo_referral_stats($id);
 $refBy    = !empty($acc['referred_by']) ? account_by_id((int)$acc['referred_by']) : null;
 
-$os = db()->prepare("SELECT reference, total_cents, payment_status, status, created_at
+$os = db()->prepare("SELECT reference, total_cents, amount_paid_cents, payment_status, status, created_at
                      FROM orders WHERE lower(email) = lower(?) ORDER BY created_at DESC");
 $os->execute([$acc['email']]);
 $custOrders = $os->fetchAll();
@@ -97,13 +102,14 @@ include __DIR__ . '/partials/admin-layout-top.php';
 ?>
 <p class="admin-kicker">Kunden</p>
 <div class="admin-head-row" style="margin-bottom:1.4rem">
-  <h1><?= h($acc['name'] ?: 'Unbenannt') ?></h1>
+  <h1><?= h($acc['name'] ?: 'Unbenannt') ?> <?php if (!account_is_activated($acc)): ?><span class="tag tag-partial" style="vertical-align:middle;font-size:.7rem">eingeschränkt</span><?php endif; ?></h1>
   <a class="btn btn-ghost" href="<?= url('/admin/kunden.php') ?>">← Zurück</a>
 </div>
 
 <?php if (($_GET['saved'] ?? '') === '1'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
 <?php if (($_GET['saved'] ?? '') === 'msg'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Nachricht gesendet.</div><?php endif; ?>
 <?php if (($_GET['saved'] ?? '') === 'msgdel'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Nachricht gelöscht.</div><?php endif; ?>
+<?php if (($_GET['saved'] ?? '') === 'activated'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Konto aktiviert. Zurückgehaltene Bestellungen wurden freigegeben.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'email'): ?><div class="alert alert-error" style="margin-bottom:1rem">E-Mail ungültig oder bereits vergeben.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'pw'): ?><div class="alert alert-error" style="margin-bottom:1rem">Passwort muss mindestens 8 Zeichen lang sein.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'msg'): ?><div class="alert alert-error" style="margin-bottom:1rem">Bitte eine Nachricht eingeben.</div><?php endif; ?>
@@ -180,6 +186,19 @@ include __DIR__ . '/partials/admin-layout-top.php';
       </form>
     </div>
 
+    <div class="admin-section" style="<?= account_is_activated($acc) ? '' : 'border-color:rgba(224,182,74,.4)' ?>">
+      <h2>Kontostatus</h2>
+      <?php if (account_is_activated($acc)): ?>
+        <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Dieses Konto ist <span class="tag tag-ok">freigeschaltet</span>. Bestellungen laufen normal ins Dashboard.</p>
+      <?php else: ?>
+        <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Dieses Konto ist <span class="tag tag-partial">eingeschränkt</span>. Bestellungen werden zurückgehalten, bis das Konto aktiviert ist. Beim Aktivieren laufen zurückgehaltene Bestellungen automatisch ein.</p>
+        <form method="post" data-cap="customers.manage" style="margin:0">
+          <input type="hidden" name="action" value="activate">
+          <button class="btn btn-primary" type="submit">Konto jetzt aktivieren</button>
+        </form>
+      <?php endif; ?>
+    </div>
+
     <div class="admin-section" style="border-color:rgba(226,96,76,.3)">
       <h2>Konto löschen</h2>
       <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Entfernt den Zugang. Bestellungen bleiben als Historie erhalten.</p>
@@ -229,7 +248,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
         <td data-label="Datum" class="muted"><?= h(substr($o['created_at'], 0, 16)) ?></td>
         <td data-label="Summe"><?= format_price((int)$o['total_cents'], $currency) ?></td>
         <td data-label="Status"><span class="tag"><?= h($o['status']) ?></span></td>
-        <td data-label="Zahlung"><span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span></td>
+        <td data-label="Zahlung"><span class="tag <?= order_payment_class($o) ?>"><?= h(order_payment_label($o)) ?></span></td>
         <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="<?= url('/admin/bestellung.php?ref=' . urlencode($o['reference'])) ?>">Details</a></td>
       </tr>
       <?php endforeach; ?>

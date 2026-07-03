@@ -133,8 +133,10 @@ if ($activeTab === 'inbox') {
     account_messages_mark_read((int)$cust['id']);
     $inbox = account_messages_by_account((int)$cust['id']);
 }
-$totalSpent = array_sum(array_map(fn($o) => $o['payment_status'] === 'bezahlt' ? (int)$o['total_cents'] : 0, $orders));
-$openPay    = array_sum(array_map(fn($o) => $o['payment_status'] !== 'bezahlt' && $o['status'] !== 'storniert' ? (int)$o['total_cents'] : 0, $orders));
+// Ausgegeben = voll bezahlte Bestellungen + bereits geleistete Teilzahlungen.
+$totalSpent = array_sum(array_map(fn($o) => $o['payment_status'] === 'bezahlt' ? (int)$o['total_cents'] : (int)($o['amount_paid_cents'] ?? 0), $orders));
+// Offen zu zahlen = Gesamt − bereits bezahlt (Teilzahlungen berücksichtigt), ohne stornierte.
+$openPay    = array_sum(array_map(fn($o) => $o['status'] !== 'storniert' ? order_amount_due($o) : 0, $orders));
 
 // Promo-Daten
 $promoPoints   = promo_points((int)$cust['id']);
@@ -185,7 +187,7 @@ function ko_render_order(array $o, string $currency): void {
         <?php if ($isReq && !$hasPrice): ?>
           <span class="tag tag-pending">In Prüfung</span>
         <?php else: ?>
-          <span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span>
+          <span class="tag <?= order_payment_class($o) ?>"><?= h(order_payment_label($o)) ?></span>
         <?php endif; ?>
         <span class="tag"><?= h(ko_status_label($o['status'])) ?></span>
       </div>
@@ -196,7 +198,7 @@ function ko_render_order(array $o, string $currency): void {
       <?php endforeach; ?>
     </div>
     <div class="acc-order-foot">
-      <strong><?= $hasPrice ? format_price((int)$o['total_cents'], $currency) : '<span class="muted" style="font-weight:500;font-size:.9rem">' . ($isReq ? 'Preis folgt' : '–') . '</span>' ?></strong>
+      <strong><?= $hasPrice ? format_price((int)$o['total_cents'], $currency) : '<span class="muted" style="font-weight:500;font-size:.9rem">' . ($isReq ? 'Preis folgt' : '–') . '</span>' ?><?php if (order_is_partial($o)): ?> <span class="muted" style="font-weight:600;font-size:.82rem;color:#e6c37e">· noch <?= format_price(order_amount_due($o), $currency) ?> offen</span><?php endif; ?></strong>
       <div class="acc-order-actions">
         <?php if (!$isReq): ?>
         <form method="post" action="<?= url('/konto.php') ?>" style="display:inline">

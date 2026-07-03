@@ -184,3 +184,33 @@ function payment_status_label(string $status): string {
 function payment_status_class(string $status): string {
     return $status === 'bezahlt' ? 'tag-ok' : 'tag-pending';
 }
+
+/** Noch offener Betrag einer Bestellung (Gesamt − bereits bezahlt), in Rappen. */
+function order_amount_due(array $o): int {
+    if (($o['payment_status'] ?? '') === 'bezahlt') return 0;
+    return max(0, (int)($o['total_cents'] ?? 0) - (int)($o['amount_paid_cents'] ?? 0));
+}
+
+/** Wurde nur ein Teil bezahlt (>0, aber weniger als der Gesamtbetrag)? */
+function order_is_partial(array $o): bool {
+    $paid  = (int)($o['amount_paid_cents'] ?? 0);
+    $total = (int)($o['total_cents'] ?? 0);
+    return ($o['payment_status'] ?? '') !== 'bezahlt' && $paid > 0 && $paid < $total;
+}
+
+/**
+ * Anzeige-Label für den Zahlungsstatus einer ganzen Bestellung – berücksichtigt
+ * Teilzahlungen. „Teilzahlung offen“, sobald ein Teil bezahlt wurde.
+ */
+function order_payment_label(array $o): string {
+    if (($o['payment_status'] ?? '') === 'bezahlt') return 'Bezahlt';
+    if (order_is_partial($o)) return 'Teilzahlung offen';
+    return 'Zahlung ausstehend';
+}
+
+/** Tag-CSS-Klasse passend zu order_payment_label(). */
+function order_payment_class(array $o): string {
+    if (($o['payment_status'] ?? '') === 'bezahlt') return 'tag-ok';
+    if (order_is_partial($o)) return 'tag-partial';
+    return 'tag-pending';
+}

@@ -12,6 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     redirect('/admin/kunden.php?deleted=1');
 }
 
+// Konto aktivieren (freischalten)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'activate_account') {
+    require_cap('customers.manage');
+    $aid = (int)($_POST['id'] ?? 0);
+    if ($aid) account_activate($aid);
+    redirect('/admin/kunden.php?activated=1');
+}
+
 // Registrierte Konten + Bestellstatistik (per E-Mail) zusammenführen.
 $accounts   = accounts_list();
 $orderStats = customers_list();
@@ -32,6 +40,7 @@ foreach ($accounts as $a) {
         'last_order_at' => $stat['last_order_at'] ?? '',
         'created_at'    => $a['created_at'] ?? '',
         'registered'    => true,
+        'activated'     => account_is_activated($a),
     ];
     unset($byEmail[$key]);
 }
@@ -46,6 +55,7 @@ foreach ($byEmail as $stat) {
         'last_order_at' => $stat['last_order_at'],
         'created_at'    => '',
         'registered'    => false,
+        'activated'     => true,
     ];
 }
 usort($rows, fn($a, $b) => strcmp(
@@ -96,6 +106,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 </div>
 
 <?php if (!empty($_GET['deleted'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Konto gelöscht.</div><?php endif; ?>
+<?php if (!empty($_GET['activated'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Konto aktiviert. Zurückgehaltene Bestellungen wurden freigegeben.</div><?php endif; ?>
 
 <div class="stat-grid" style="margin-bottom:1.6rem">
   <div class="stat-card stat-highlight"><span class="stat-num"><?= $registeredCount ?></span><span class="stat-label">Registrierte Konten</span></div>
@@ -125,6 +136,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
         <?php if ($c['registered']): ?>
           <a class="cust-name cust-name-link" href="<?= url('/admin/kunde.php?id=' . (int)$c['id']) ?>"><?= h($c['name'] ?: 'Unbenannt') ?></a>
           <span class="cust-badge cust-badge-acc">Konto</span>
+          <?php if (empty($c['activated'])): ?><span class="tag tag-partial" style="font-size:.66rem">eingeschränkt</span><?php endif; ?>
         <?php else: ?>
           <span class="cust-name"><?= h($c['name'] ?: 'Unbenannt') ?></span>
           <span class="cust-badge cust-badge-guest">Gast</span>
@@ -140,6 +152,13 @@ include __DIR__ . '/partials/admin-layout-top.php';
     </div>
     <div class="cust-actions">
       <?php if ($c['registered']): ?>
+      <?php if (empty($c['activated'])): ?>
+      <form method="post" style="display:inline">
+        <input type="hidden" name="action" value="activate_account">
+        <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">
+        <button class="btn btn-sm" type="submit" style="background:#e6b64a;border-color:#e6b64a;color:#241a04" title="Konto freischalten">Aktivieren</button>
+      </form>
+      <?php endif; ?>
       <a class="btn btn-ghost btn-sm" href="<?= url('/admin/kunde.php?id=' . (int)$c['id']) ?>">Bearbeiten</a>
       <form method="post" onsubmit="return confirm('Konto von <?= h($c['name'] ?: $c['email']) ?> wirklich löschen? Die Bestellhistorie bleibt erhalten.')">
         <input type="hidden" name="action" value="delete_account">

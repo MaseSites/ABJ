@@ -14,10 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prefill  = ['name' => $name, 'email' => $email];
 
     $promo = trim($_POST['promo'] ?? '');
-    $res = account_create($email, $password, $name);
+    // Gültiger Aktivierungs-/Promo-Code -> Konto sofort freigeschaltet.
+    // Ohne (gültigen) Code wird das Konto eingeschränkt angelegt und muss
+    // später über den gelben Balken „Konto aktivieren" freigeschaltet werden.
+    $hasValidCode = $promo !== '' && code_is_usable(code_find($promo));
+    $res = account_create($email, $password, $name, $hasValidCode);
     if ($res['ok']) {
-        // Promo-/Empfehlungscode verknüpfen (optional, einmalig verwendbar)
-        if ($promo !== '' && code_is_usable(code_find($promo))) {
+        if ($hasValidCode) {
             code_mark_used($promo, (int)$res['id']);
             $owner = promo_owner_of_code($promo);
             if ($owner) account_set_referrer((int)$res['id'], $owner);
@@ -53,9 +56,10 @@ include __DIR__ . '/partials/header.php';
       <label class="field"><span>Passwort * <small class="muted">(min. 8 Zeichen)</small></span>
         <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="••••••••">
       </label>
-      <label class="field"><span>Promo-Code <small class="muted">(optional)</small></span>
-        <input type="text" name="promo" value="<?= h($_GET['promo'] ?? '') ?>" maxlength="20" autocomplete="off" placeholder="Code eines Freundes" style="letter-spacing:.06em">
+      <label class="field"><span>Aktivierungscode <small class="muted">(Promo-Code)</small></span>
+        <input type="text" name="promo" value="<?= h($_GET['promo'] ?? '') ?>" maxlength="20" autocomplete="off" placeholder="Dein Aktivierungscode" style="letter-spacing:.06em">
       </label>
+      <p class="muted" style="font-size:.82rem;margin:-.4rem 0 .2rem">Ohne gültigen Code wird dein Konto <strong>eingeschränkt</strong> angelegt. Du kannst bestellen, aber deine Bestellungen werden erst nach der Aktivierung bearbeitet – den Code kannst du jederzeit oben über „Konto aktivieren" nachtragen.</p>
       <button class="btn btn-primary btn-block" type="submit">Konto erstellen</button>
     </form>
 

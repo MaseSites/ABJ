@@ -53,6 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&saved=1');
     }
 
+    // Teilzahlung / Zahlungseingang erfassen
+    if ($action === 'add_payment') {
+        $amount   = (int)round((float)str_replace(',', '.', trim($_POST['amount'] ?? '')) * 100);
+        $absolute = ($_POST['mode'] ?? 'add') === 'set';
+        $notify   = !empty($_POST['send_message']);
+        if ($amount !== 0 || $absolute) {
+            order_add_payment($ref, $amount, $absolute, $notify);
+        }
+        redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&saved=1');
+    }
+
     $newStatus = trim($_POST['status'] ?? 'neu');
     $newPay = trim($_POST['payment_status'] ?? 'offen');
     $sendMessage = !empty($_POST['send_message']);
@@ -184,9 +195,35 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
     </form>
   </div>
 
+  <?php
+    $paidCents = (int)($order['amount_paid_cents'] ?? 0);
+    $dueCents  = order_amount_due($order);
+  ?>
   <p><strong>Versand:</strong> <?= format_price((int)$order['shipping_cents'], $currency) ?></p>
   <p><strong>Gesamt:</strong> <?= (int)$order['total_cents'] > 0 ? format_price((int)$order['total_cents'], $currency) : '<span class="muted">noch offen</span>' ?></p>
-  <p><strong>Zahlung:</strong> <span class="tag <?= payment_status_class($order['payment_status']) ?>"><?= h(payment_status_label($order['payment_status'])) ?></span></p>
+  <p><strong>Bereits bezahlt:</strong> <?= format_price($paidCents, $currency) ?><?php if ($dueCents > 0 && (int)$order['total_cents'] > 0): ?> &nbsp;·&nbsp; <strong>Noch offen:</strong> <span style="color:#e3c07a"><?= format_price($dueCents, $currency) ?></span><?php endif; ?></p>
+  <p><strong>Zahlung:</strong> <span class="tag <?= order_payment_class($order) ?>"><?= h(order_payment_label($order)) ?></span></p>
+
+  <div class="admin-section" style="margin-bottom:1.5rem">
+    <h2 style="margin-top:0">Zahlung / Teilzahlung erfassen</h2>
+    <p class="muted" style="font-size:.84rem;margin-top:-.5rem">Trage einen erhaltenen Betrag ein. Sobald die Summe den Gesamtbetrag erreicht, wird die Bestellung automatisch auf „Bezahlt" gesetzt.</p>
+    <form method="post" data-cap="orders.manage" style="display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap">
+      <input type="hidden" name="action" value="add_payment">
+      <label class="field" style="max-width:180px"><span>Betrag (<?= h($currency) ?>)</span>
+        <input type="text" inputmode="decimal" name="amount" placeholder="z.B. 50.00">
+      </label>
+      <label class="field" style="max-width:220px"><span>Modus</span>
+        <select name="mode">
+          <option value="add">Zum Bezahlten addieren</option>
+          <option value="set">Bezahlten Betrag setzen</option>
+        </select>
+      </label>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <button class="btn btn-danger" type="submit" name="send_message" value="0">Stumm erfassen</button>
+        <button class="btn btn-primary" type="submit" name="send_message" value="1">Erfassen &amp; Kunde benachrichtigen</button>
+      </div>
+    </form>
+  </div>
 
   <form method="post" data-cap="orders.manage" style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
     <label class="field"><span>Status</span>

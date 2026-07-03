@@ -33,9 +33,6 @@ $dateStr = (function () {
     return $tage[(int)date('w')] . ', ' . (int)date('j') . '. ' . $monate[(int)date('n')] . ' ' . date('Y');
 })();
 
-function statusTagClass(string $status): string {
-    return $status === 'bezahlt' ? 'tag-ok' : 'tag-pending';
-}
 ?>
 
 <!-- Begrüßung -->
@@ -152,7 +149,7 @@ function statusTagClass(string $status): string {
             <td><strong><?= h($o['customer_name'] ?: '—') ?></strong></td>
             <td class="muted"><?= h(substr($o['created_at'], 0, 10)) ?></td>
             <td style="font-weight:700;color:#e0e2ea"><?= format_price($o['total_cents'], $currency) ?></td>
-            <td><span class="tag <?= statusTagClass($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span></td>
+            <td><span class="tag <?= order_payment_class($o) ?>"><?= h(order_payment_label($o)) ?></span></td>
           </tr>
           <?php endforeach; ?>
         </tbody>

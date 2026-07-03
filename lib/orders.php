@@ -2,8 +2,12 @@
 function order_create(array $data): string {
     $reference = 'ABJ-' . nano_id(8);
     $isPaid = in_array($data['payment_method'] ?? '', ['kreditkarte', 'paypal']);
-    $stmt = db()->prepare("INSERT INTO orders (reference,customer_name,email,phone,address,items,total_cents,shipping_cents,status,payment_status,payment_method,discount_code,discount_cents)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+    // Bestellungen von noch nicht aktivierten (eingeschränkten) Konten werden
+    // zurückgehalten und erscheinen erst nach der Aktivierung im Dashboard.
+    $acc  = account_by_email($data['email'] ?? '');
+    $held = ($acc && !account_is_activated($acc)) ? 1 : 0;
+    $stmt = db()->prepare("INSERT INTO orders (reference,customer_name,email,phone,address,items,total_cents,shipping_cents,status,payment_status,payment_method,discount_code,discount_cents,held)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
     $stmt->execute([
         $reference, $data['customer_name'] ?? '', $data['email'] ?? '',
         $data['phone'] ?? '',
@@ -13,15 +17,18 @@ function order_create(array $data): string {
         'neu', $isPaid ? 'bezahlt' : 'offen',
         $data['payment_method'] ?? '',
         $data['discount_code'] ?? '', (int)($data['discount_cents'] ?? 0),
+        $held,
     ]);
-    $acc = account_by_email($data['email'] ?? '');
     if ($acc) {
+        $body = $held
+            ? 'Vielen Dank für deine Bestellung ' . $reference . "!\n\nWir haben sie erhalten. Damit wir sie bearbeiten können, aktiviere bitte noch dein Konto mit deinem Aktivierungscode – klicke dazu oben auf „Konto aktivieren“. Danach läuft alles automatisch weiter."
+            : 'Vielen Dank für deine Bestellung ' . $reference . "!\n\nWir haben sie erhalten und kümmern uns sofort darum. Sobald sich etwas tut, melden wir uns hier in deinem Posteingang – versprochen.";
         account_message_create([
             'account_id' => (int)$acc['id'],
             'order_reference' => $reference,
             'sender_role' => 'system',
             'subject' => 'Danke für deine Bestellung! 🎉',
-            'body' => 'Vielen Dank für deine Bestellung ' . $reference . "!\n\nWir haben sie erhalten und kümmern uns sofort darum. Sobald sich etwas tut, melden wir uns hier in deinem Posteingang – versprochen.",
+            'body' => $body,
             'is_read' => 0,
         ]);
     }
@@ -29,7 +36,9 @@ function order_create(array $data): string {
 }
 
 function orders_list(): array {
-    $stmt = db()->query("SELECT * FROM orders WHERE COALESCE(merged_into, '') = '' ORDER BY created_at DESC LIMIT 500");
+    // Zurückgehaltene Bestellungen (Konto noch nicht aktiviert) werden erst nach
+    // der Freischaltung sichtbar – hier ausgeblendet.
+    $stmt = db()->query("SELECT * FROM orders WHERE COALESCE(merged_into, '') = '' AND COALESCE(held, 0) = 0 ORDER BY created_at DESC LIMIT 500");
     return array_map('order_parse', $stmt->fetchAll());
 }
 
@@ -83,6 +92,18 @@ function order_update_status(string $ref, string $status, string $paymentStatus,
     $stmt = db()->prepare('UPDATE orders SET status=?, payment_status=? WHERE reference=?');
     $stmt->execute([$status, $paymentStatus, $ref]);
     $ok = $stmt->rowCount() > 0;
+    // Erhaltenen Betrag mit dem Zahlungsstatus konsistent halten:
+    // „bezahlt“ = voll bezahlt; „offen“ setzt eine frühere Vollzahlung zurück,
+    // eine Teilzahlung bleibt aber erhalten.
+    if ($before) {
+        $total = (int)($before['total_cents'] ?? 0);
+        $paid  = (int)($before['amount_paid_cents'] ?? 0);
+        if ($paymentStatus === 'bezahlt') {
+            try { db()->prepare('UPDATE orders SET amount_paid_cents=? WHERE reference=?')->execute([$total, $ref]); } catch (\Throwable $e) {}
+        } elseif ($paymentStatus === 'offen' && $paid >= $total && $total > 0) {
+            try { db()->prepare('UPDATE orders SET amount_paid_cents=0 WHERE reference=?')->execute([$ref]); } catch (\Throwable $e) {}
+        }
+    }
     // Promo-Punkte erst gutschreiben, wenn die Zahlung bestätigt wurde (einmalig).
     if ($before && $paymentStatus === 'bezahlt'
         && ($before['payment_status'] ?? '') !== 'bezahlt'
@@ -127,6 +148,61 @@ function order_update_status(string $ref, string $status, string $paymentStatus,
         }
     }
     return $ok;
+}
+
+/**
+ * Erfasst eine (Teil-)Zahlung: erhöht den bereits bezahlten Betrag um $deltaCents
+ * (oder setzt ihn absolut, wenn $absolute=true). Erreicht/übersteigt die Summe den
+ * Gesamtbetrag, wird die Bestellung als „bezahlt“ markiert (löst Promo-Punkte aus).
+ * Legt einen Eintrag in der Bestell-Zeitleiste an und informiert den Kunden.
+ */
+function order_add_payment(string $ref, int $deltaCents, bool $absolute = false, bool $notifyCustomer = true): bool {
+    $order = order_by_ref($ref);
+    if (!$order) return false;
+    $total   = (int)($order['total_cents'] ?? 0);
+    $wasPaid = (int)($order['amount_paid_cents'] ?? 0);
+    $newPaid = $absolute ? max(0, $deltaCents) : max(0, $wasPaid + $deltaCents);
+    if ($total > 0) $newPaid = min($newPaid, $total);
+    if ($newPaid === $wasPaid) return false;
+
+    db()->prepare("UPDATE orders SET amount_paid_cents=?, updated_at=datetime('now') WHERE reference=?")
+        ->execute([$newPaid, $ref]);
+
+    $fullyPaid = $total > 0 && $newPaid >= $total;
+    // Bei Vollzahlung den Zahlungsstatus setzen (kümmert sich um Promo-Punkte etc.).
+    if ($fullyPaid && ($order['payment_status'] ?? '') !== 'bezahlt') {
+        $newStatus = ($order['status'] ?? '') === 'neu' ? 'in_bearbeitung' : ($order['status'] ?? 'neu');
+        order_update_status($ref, $newStatus, 'bezahlt', false);
+    }
+
+    $curr = setting_get('currency') ?: 'CHF';
+    $paidStr = number_format($newPaid / 100, 2, '.', '');
+    $dueStr  = number_format(max(0, $total - $newPaid) / 100, 2, '.', '');
+    $line = $fullyPaid
+        ? 'Zahlung vollständig erhalten (' . $paidStr . ' ' . $curr . ').'
+        : 'Teilzahlung erfasst: ' . $paidStr . ' ' . $curr . ' von ' . number_format($total / 100, 2, '.', '') . ' ' . $curr . ' – offen: ' . $dueStr . ' ' . $curr . '.';
+    order_message_create([
+        'order_reference' => $ref,
+        'author_role' => 'system', 'author_name' => 'System',
+        'subject' => $fullyPaid ? 'Zahlung erhalten' : 'Teilzahlung erfasst',
+        'body' => $line, 'is_system' => 1, 'is_read' => 0,
+    ]);
+    if ($notifyCustomer) {
+        $acc = account_by_email($order['email'] ?? '');
+        if ($acc) {
+            account_message_create([
+                'account_id' => (int)$acc['id'],
+                'order_reference' => $ref,
+                'sender_role' => 'system',
+                'subject' => $fullyPaid ? 'Zahlung erhalten' : 'Teilzahlung erhalten',
+                'body' => $fullyPaid
+                    ? 'Wir haben deine Zahlung für ' . $ref . ' vollständig erhalten. Vielen Dank!'
+                    : 'Wir haben eine Teilzahlung für ' . $ref . ' erhalten.' . "\n\nBezahlt: " . $paidStr . ' ' . $curr . "\nNoch offen: " . $dueStr . ' ' . $curr,
+                'is_read' => 0,
+            ]);
+        }
+    }
+    return true;
 }
 
 /**
@@ -301,8 +377,8 @@ function orders_top_products(int $limit = 5, int $days = 90): array {
 
 function orders_stats(int $days = 7): array {
     $pdo = db();
-    $totalRevenue = (int)$pdo->query("SELECT COALESCE(SUM(total_cents),0) AS c FROM orders WHERE payment_status='bezahlt'")->fetch()['c'];
-    $openCount = (int)$pdo->query("SELECT COUNT(*) AS n FROM orders WHERE payment_status != 'bezahlt'")->fetch()['n'];
+    $totalRevenue = (int)$pdo->query("SELECT COALESCE(SUM(total_cents),0) AS c FROM orders WHERE payment_status='bezahlt' AND COALESCE(held,0)=0")->fetch()['c'];
+    $openCount = (int)$pdo->query("SELECT COUNT(*) AS n FROM orders WHERE payment_status != 'bezahlt' AND COALESCE(held,0)=0 AND COALESCE(merged_into,'')=''")->fetch()['n'];
     $series = [];
     for ($i = $days - 1; $i >= 0; $i--) {
         $stmt = $pdo->prepare("SELECT COUNT(*) AS orders, COALESCE(SUM(total_cents),0) AS revenue FROM orders WHERE date(created_at) = date('now', ?)");

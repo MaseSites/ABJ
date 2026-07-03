@@ -110,7 +110,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
       <td data-label="Datum"><?= h(substr($o['created_at'], 0, 16)) ?></td>
       <td data-label="Summe"><?= format_price((int)$o['total_cents'], $currency) ?></td>
       <td data-label="Status"><span class="tag"><?= h($o['status']) ?></span></td>
-      <td data-label="Zahlung"><span class="tag <?= payment_status_class($o['payment_status']) ?>"><?= h(payment_status_label($o['payment_status'])) ?></span></td>
+      <td data-label="Zahlung"><span class="tag <?= order_payment_class($o) ?>"><?= h(order_payment_label($o)) ?></span></td>
       <td class="cell-actions">
         <form method="post" action="<?= url('/admin/bestellungen.php') ?>" data-cap="orders.manage">
           <input type="hidden" name="action" value="set_payment">

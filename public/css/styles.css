@@ -205,6 +205,44 @@ h1, h2, h3, h4 {
 }
 .announce .container { padding: .6em 1em; }
 
+/* Gelber „Konto aktivieren"-Balken für eingeschränkte Konten */
+.activate-banner {
+  background: linear-gradient(90deg, rgba(224,182,74,.22), rgba(224,182,74,.12));
+  border-bottom: 1px solid rgba(224,182,74,.4);
+  color: #f3dca0;
+  font-size: .82rem;
+}
+.activate-details { }
+.activate-details > summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: .8rem 1.2rem;
+  flex-wrap: wrap; padding: .6em 1em; text-align: center;
+}
+.activate-details > summary::-webkit-details-marker { display: none; }
+.activate-msg { display: inline-flex; align-items: center; gap: .5em; }
+.activate-msg svg { width: 16px; height: 16px; flex: none; color: #e6b64a; }
+.activate-btn {
+  display: inline-flex; align-items: center; gap: .4em;
+  background: #e6b64a; color: #241a04; font-weight: 700;
+  padding: .34em .95em; border-radius: 999px; white-space: nowrap;
+}
+.activate-details[open] > summary .activate-btn { background: #caa040; }
+.activate-form {
+  display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap;
+  padding: 0 1em .8em; margin: 0;
+}
+.activate-form input {
+  border: 1px solid rgba(224,182,74,.5); background: rgba(0,0,0,.25); color: #fff;
+  border-radius: 9px; padding: .55em .8em; font: inherit; letter-spacing: .1em;
+  text-transform: uppercase; min-width: 200px;
+}
+.activate-form input::placeholder { color: rgba(243,220,160,.6); text-transform: none; letter-spacing: normal; }
+.activate-form button {
+  border: none; background: #e6b64a; color: #241a04; font-weight: 700;
+  border-radius: 9px; padding: .55em 1.2em; cursor: pointer;
+}
+.activate-form button:hover { background: #f0c65e; }
+
 .site-header {
   position: sticky;
   top: 0;
@@ -1898,6 +1936,7 @@ body.no-scroll { overflow: hidden; }
 .acc-order-tags .tag { font-size: .72rem; padding: .22em .7em; border-radius: 999px; border: 1px solid var(--line); }
 .acc-order-tags .tag-ok { color: var(--ok); border-color: rgba(111,190,131,.35); background: rgba(111,190,131,.08); }
 .acc-order-tags .tag-pending { color: #ffb0a4; border-color: rgba(226,96,76,.4); background: rgba(226,96,76,.08); }
+.acc-order-tags .tag-partial { color: #e6c37e; border-color: rgba(212,168,99,.45); background: rgba(212,168,99,.1); }
 .acc-order-items { display: flex; flex-wrap: wrap; gap: .35rem .9rem; margin-bottom: .9rem; }
 .acc-order-item { font-size: .85rem; color: var(--ink-soft); }
 .acc-order-foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: .85rem; }
@@ -2049,6 +2088,7 @@ body.no-scroll { overflow: hidden; }
 .konto-order-tags .tag-ok  { color: var(--ok); border-color: rgba(111,190,131,.35); background: rgba(111,190,131,.08); }
 .konto-order-tags .tag-warn{ color: #d4af56; border-color: rgba(212,175,86,.35); background: rgba(212,175,86,.08); }
 .konto-order-tags .tag-pending { color: #ffb0a4; border-color: rgba(226,96,76,.4); background: rgba(226,96,76,.08); }
+.konto-order-tags .tag-partial { color: #e6c37e; border-color: rgba(212,168,99,.45); background: rgba(212,168,99,.1); }
 .konto-order-tags .tag-off { color: var(--ink-dim); }
 .konto-order-items { display: flex; flex-wrap: wrap; gap: .4rem .9rem; margin-bottom: .8rem; }
 .konto-order-item { font-size: .85rem; color: var(--ink-soft); }

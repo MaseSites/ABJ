@@ -17,7 +17,55 @@ function account_by_id(int $id): ?array {
 
 /** Alle registrierten Kundenkonten (neueste zuerst). */
 function accounts_list(): array {
-    return db()->query('SELECT id, email, name, access_code, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
+    return db()->query('SELECT id, email, name, access_code, activated, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
+}
+
+/** Ist das Konto freigeschaltet? Fehlende Spalte/Null gilt als freigeschaltet. */
+function account_is_activated(?array $acc): bool {
+    if (!$acc) return true;
+    return !array_key_exists('activated', $acc) || (int)$acc['activated'] === 1;
+}
+
+/**
+ * Schaltet ein eingeschränktes Konto frei: markiert es als aktiviert und lässt
+ * alle zurückgehaltenen Bestellungen "einlaufen" (held=0, wieder als neu markiert),
+ * damit der Admin sie im Dashboard sieht. Gibt true zurück, wenn etwas geändert wurde.
+ */
+function account_activate(int $id): bool {
+    $acc = account_by_id($id);
+    if (!$acc || account_is_activated($acc)) return false;
+    db()->prepare('UPDATE accounts SET activated = 1 WHERE id = ?')->execute([$id]);
+    // Zurückgehaltene Bestellungen dieses Kontos freigeben und als neu markieren.
+    try {
+        db()->prepare("UPDATE orders SET held = 0, is_seen = 0, updated_at = datetime('now')
+                       WHERE held = 1 AND lower(email) = lower(?)")->execute([$acc['email']]);
+    } catch (\Throwable $e) { /* Spalten evtl. noch nicht vorhanden */ }
+    account_message_create([
+        'account_id' => $id,
+        'sender_role' => 'system',
+        'subject' => 'Konto aktiviert ✅',
+        'body' => "Dein Konto ist jetzt freigeschaltet! Alle Funktionen stehen dir voll zur Verfügung und deine Bestellungen werden nun bearbeitet.",
+        'is_read' => 0,
+    ]);
+    return true;
+}
+
+/**
+ * Versucht, ein Konto mit einem (Aktivierungs-/Promo-)Code freizuschalten.
+ * Rückgabe: ['ok'=>bool, 'error'=>?].
+ */
+function account_activate_with_code(int $id, string $code): array {
+    $code = trim($code);
+    if ($code === '') return ['ok' => false, 'error' => 'Bitte gib einen Code ein.'];
+    $row = code_find($code);
+    if (!code_is_usable($row)) {
+        return ['ok' => false, 'error' => 'Dieser Code ist ungültig oder wurde bereits verwendet.'];
+    }
+    code_mark_used($code, $id);
+    $owner = promo_owner_of_code($code);
+    if ($owner) account_set_referrer($id, $owner);
+    account_activate($id);
+    return ['ok' => true];
 }
 
 // ---- Zugangs-/Promo-Codes: EIN System (Tabelle promo_codes) ----
@@ -72,8 +120,9 @@ function account_delete(int $id): bool {
 
 /**
  * Legt ein Konto an. Rückgabe: ['ok'=>bool, 'error'=>?, 'id'=>?].
+ * $activated=false legt ein eingeschränktes Konto an (muss noch aktiviert werden).
  */
-function account_create(string $email, string $password, string $name): array {
+function account_create(string $email, string $password, string $name, bool $activated = true): array {
     $email = trim($email);
     $name  = trim($name);
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -86,8 +135,8 @@ function account_create(string $email, string $password, string $name): array {
         return ['ok' => false, 'error' => 'Für diese E-Mail existiert bereits ein Konto. Bitte melde dich an.'];
     }
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    db()->prepare('INSERT INTO accounts (email, password_hash, name) VALUES (?, ?, ?)')
-       ->execute([$email, $hash, mb_substr($name, 0, 120)]);
+    db()->prepare('INSERT INTO accounts (email, password_hash, name, activated) VALUES (?, ?, ?, ?)')
+       ->execute([$email, $hash, mb_substr($name, 0, 120), $activated ? 1 : 0]);
     $id = (int)db()->lastInsertId();
     account_message_create([
         'account_id' => $id,

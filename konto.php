@@ -137,7 +137,6 @@ session_write_close();
 // Daten neu laden (nach evtl. Profiländerung)
 $account    = account_by_id((int)$cust['id']);
 $accountConfirmed = account_is_confirmed($account);
-$accountActivatedBy = (string)($account['confirmed_by'] ?? '');
 $savedAddr  = account_address($account);
 $orders     = orders_by_email($cust['email']);
 $inbox      = account_messages_by_account((int)$cust['id']);
@@ -196,10 +195,6 @@ function ko_render_order(array $o, string $currency): void {
       <div>
         <span class="acc-order-ref"><?= h($o['reference']) ?></span>
         <span class="acc-order-date"><?= h(substr($o['created_at'], 0, 10)) ?></span>
-      </div>
-      <div class="acc-order-tags">
-        <?php if ($isReq): ?><span class="tag tag-anfrage">Anfrage</span><?php endif; ?>
-        <?php if (($o['status'] ?? '') === 'wartet_auf_freigabe'): ?><span class="tag tag-warn">Wartet auf Freigabe</span><?php endif; ?>
         <?php if ($isReq && !$hasPrice): ?>
           <span class="tag tag-pending">In Prüfung</span>
         <?php else: ?>
@@ -319,7 +314,6 @@ function ko_render_order(array $o, string $currency): void {
           <div class="acc-stat"><strong><?= count($orders) ?></strong><span>Bestellungen</span></div>
           <div class="acc-stat"><strong><?= format_price($totalSpent, $currency) ?></strong><span>Ausgegeben</span></div>
           <div class="acc-stat"><strong style="color:<?= $openPay > 0 ? '#ffb0a4' : 'inherit' ?>"><?= format_price($openPay, $currency) ?></strong><span>Offen zu zahlen</span></div>
-          <div class="acc-stat"><strong><?= $accountConfirmed ? 'Ja' : 'Nein' ?></strong><span>Konto bestätigt</span></div>
           <div class="acc-stat"><strong><?= h(substr($account['created_at'] ?? '', 0, 10)) ?></strong><span>Mitglied seit</span></div>
         </div>
 

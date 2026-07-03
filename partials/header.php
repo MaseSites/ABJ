@@ -4,6 +4,8 @@ $currentPath  = isset($currentPath) ? $currentPath : current_path();
 $announcement = setting_get('announcement') ?: '';
 $customer     = is_customer() ? current_customer() : null;
 $customerUnread = $customer ? account_messages_unread_count((int)$customer['id']) : 0;
+$customerAccount = $customer ? account_by_id((int)$customer['id']) : null;
+$customerNeedsActivation = $customerAccount ? !account_is_confirmed($customerAccount) : false;
 ?>
 <a class="skip-link" href="#main">Zum Inhalt springen</a>
 <div class="scroll-progress" data-progress aria-hidden="true"></div>
@@ -11,6 +13,15 @@ $customerUnread = $customer ? account_messages_unread_count((int)$customer['id']
 <?php if ($announcement): ?>
 <div class="announce">
   <div class="container"><?= h($announcement) ?></div>
+</div>
+<?php endif; ?>
+
+<?php if ($customerNeedsActivation): ?>
+<div class="alert alert-warn" style="margin:0;border-radius:0">
+  <div class="container" style="display:flex;gap:.9rem;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-top:.85rem;padding-bottom:.85rem">
+    <div><strong>Achtung!</strong> Dein Konto ist noch nicht aktiviert. Du kannst den Shop nutzen, aber einige Funktionen bleiben eingeschränkt, bis du den Aktivierungscode eingibst oder wir dein Konto freischalten.</div>
+    <a class="btn btn-line btn-sm" href="<?= url('/konto.php?tab=overview') ?>">Konto aktivieren</a>
+  </div>
 </div>
 <?php endif; ?>
 

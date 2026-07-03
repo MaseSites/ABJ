@@ -20,6 +20,12 @@ if (!is_customer()) {
     json_response(['ok' => false, 'error' => 'Bitte melde dich an, um zu bestellen.', 'login_required' => true], 401);
 }
 
+// Eingeschränkte (nicht aktivierte) Konten dürfen noch nicht bestellen.
+$__acc = account_by_id((int)current_customer()['id']);
+if (!account_is_activated($__acc)) {
+    json_response(['ok' => false, 'error' => 'Dein Konto ist noch nicht aktiviert. Bitte aktiviere es zuerst mit deinem Aktivierungscode.', 'activation_required' => true], 403);
+}
+
 $currency = setting_get('currency') ?: 'CHF';
 
 // --- Validate required fields ---

@@ -54,6 +54,8 @@ $custLast  = ($custName && str_contains($custName, ' ')) ? trim(substr($custName
 
 // Gespeicherte Standard-Adresse des Kontos zum Vorausfüllen laden.
 $acc       = is_customer() ? account_by_id((int)current_customer()['id']) : null;
+// Eingeschränktes Konto? Dann darf noch nicht bestellt werden (Button gesperrt).
+$restricted = is_customer() && !account_is_activated($acc);
 $savedAddr = account_address($acc);
 $preFirst  = $savedAddr['firstname'] ?? $custFirst;
 $preLast   = $savedAddr['lastname']  ?? $custLast;
@@ -181,10 +183,24 @@ include __DIR__ . '/partials/header.php';
 
       <input type="hidden" name="discount_code" value="" data-discount-hidden>
 
+      <?php if ($restricted): ?>
+      <div class="pay-pending-note" style="border-color:rgba(224,182,74,.4);background:rgba(224,182,74,.08)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <div>
+          <strong>Konto noch nicht aktiviert</strong>
+          <p>Um zu bestellen, aktiviere bitte zuerst dein Konto mit deinem Aktivierungscode &mdash; oben über den gelben Balken oder <a href="<?= url('/konto-aktivieren.php?weiter=' . urlencode('/kasse.php')) ?>">hier</a>.</p>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block checkout-submit" type="submit" disabled aria-disabled="true">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>
+        <span class="checkout-submit-text">Konto aktivieren, um zu bestellen</span>
+      </button>
+      <?php else: ?>
       <button class="btn btn-primary btn-block checkout-submit" type="submit">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2 8 6 12 14 4"/></svg>
         <span class="checkout-submit-text">Bestellung aufgeben &middot; <span data-total-label><?= format_price($total, $currency) ?></span></span>
       </button>
+      <?php endif; ?>
 
       <ul class="checkout-trust">
         <li>

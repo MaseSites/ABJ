@@ -156,7 +156,13 @@ include __DIR__ . '/partials/header.php';
         <span>Gesamt</span>
         <strong><?= format_price($total, $currency) ?></strong>
       </div>
-      <a class="btn btn-primary" href="<?= url('/kasse.php') ?>">Zur Kasse</a>
+      <?php $wkRestricted = is_customer() && !account_is_activated(account_by_id((int)current_customer()['id'])); ?>
+      <?php if ($wkRestricted): ?>
+        <a class="btn btn-primary btn-block" href="<?= url('/konto-aktivieren.php?weiter=' . urlencode('/kasse.php')) ?>">Konto aktivieren, um zu bestellen</a>
+        <p class="muted" style="font-size:.82rem;text-align:center;margin:.6rem 0 0">Dein Konto ist eingeschränkt. Nach der Aktivierung kannst du bestellen.</p>
+      <?php else: ?>
+        <a class="btn btn-primary" href="<?= url('/kasse.php') ?>">Zur Kasse</a>
+      <?php endif; ?>
     </div>
   <?php endif; ?>
 </main>

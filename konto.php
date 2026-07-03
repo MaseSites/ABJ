@@ -118,25 +118,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'promo
     }
     $activeTab = 'promo'; $promoFlash = $res['error'] ?? 'Einlösen fehlgeschlagen.';
 }
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'activate_code') {
-  $code = trim($_POST['access_code'] ?? '');
-  $row  = $code !== '' ? access_code_find($code) : null;
-  if ($row && access_code_is_usable($row)) {
-    access_code_mark_used($code, (int)$cust['id']);
-    account_confirm((int)$cust['id'], 'code');
-    redirect('/konto.php?tab=overview&activated=1');
-  }
-  $activeTab = 'overview';
-  $msg = 'Der Freigabecode ist ungültig oder bereits verwendet.';
-  $msgType = 'error';
-}
 session_start_once();
 if (!empty($_SESSION['promo_flash'])) { $promoFlash = $_SESSION['promo_flash']; unset($_SESSION['promo_flash']); }
 session_write_close();
 
 // Daten neu laden (nach evtl. Profiländerung)
 $account    = account_by_id((int)$cust['id']);
-$accountConfirmed = account_is_confirmed($account);
 $savedAddr  = account_address($account);
 $orders     = orders_by_email($cust['email']);
 $inbox      = account_messages_by_account((int)$cust['id']);
@@ -146,8 +133,8 @@ if ($activeTab === 'inbox') {
     account_messages_mark_read((int)$cust['id']);
     $inbox = account_messages_by_account((int)$cust['id']);
 }
-$totalSpent = array_sum(array_map(fn($o) => (int)($o['paid_cents'] ?? 0), $orders));
-$openPay    = array_sum(array_map(fn($o) => max(0, (int)$o['total_cents'] - (int)($o['paid_cents'] ?? 0)), array_filter($orders, fn($o) => ($o['status'] ?? '') !== 'storniert')));
+$totalSpent = array_sum(array_map(fn($o) => $o['payment_status'] === 'bezahlt' ? (int)$o['total_cents'] : 0, $orders));
+$openPay    = array_sum(array_map(fn($o) => $o['payment_status'] !== 'bezahlt' && $o['status'] !== 'storniert' ? (int)$o['total_cents'] : 0, $orders));
 
 // Promo-Daten
 $promoPoints   = promo_points((int)$cust['id']);
@@ -175,7 +162,6 @@ $COUNTRIES = [
 ];
 
 if (!empty($_GET['saved'])) { $msg = 'Profil gespeichert.'; $msgType = 'ok'; }
-if (!empty($_GET['activated'])) { $msg = 'Konto freigeschaltet.'; $msgType = 'ok'; }
 
 $cartCount   = cart_count();
 $currentPath = '/konto';
@@ -187,8 +173,6 @@ include __DIR__ . '/partials/header.php';
 function ko_render_order(array $o, string $currency): void {
   $isReq   = order_is_request($o);
   $hasPrice = (int)$o['total_cents'] > 0;
-  $paidCents = (int)($o['paid_cents'] ?? 0);
-  $openCents = max(0, (int)$o['total_cents'] - $paidCents);
 ?>
   <article class="acc-order">
     <div class="acc-order-head">
@@ -198,7 +182,6 @@ function ko_render_order(array $o, string $currency): void {
       </div>
       <div class="acc-order-tags">
         <?php if ($isReq): ?><span class="tag tag-anfrage">Anfrage</span><?php endif; ?>
-        <?php if (($o['status'] ?? '') === 'wartet_auf_freigabe'): ?><span class="tag tag-warn">Wartet auf Freigabe</span><?php endif; ?>
         <?php if ($isReq && !$hasPrice): ?>
           <span class="tag tag-pending">In Prüfung</span>
         <?php else: ?>
@@ -214,7 +197,6 @@ function ko_render_order(array $o, string $currency): void {
     </div>
     <div class="acc-order-foot">
       <strong><?= $hasPrice ? format_price((int)$o['total_cents'], $currency) : '<span class="muted" style="font-weight:500;font-size:.9rem">' . ($isReq ? 'Preis folgt' : '–') . '</span>' ?></strong>
-      <?php if ($paidCents > 0): ?><span class="muted" style="display:block;font-size:.82rem">Bezahlt: <?= format_price($paidCents, $currency) ?> · Offen: <?= format_price($openCents, $currency) ?></span><?php endif; ?>
       <div class="acc-order-actions">
         <?php if (!$isReq): ?>
         <form method="post" action="<?= url('/konto.php') ?>" style="display:inline">
@@ -294,20 +276,6 @@ function ko_render_order(array $o, string $currency): void {
       </div>
       <?php endif; ?>
 
-      <?php if (!$accountConfirmed): ?>
-        <div class="alert alert-warn" style="margin-bottom:1rem">
-          Dein Konto ist noch nicht freigeschaltet. Du kannst Bestellungen aufgeben, sie werden aber erst aktiv, wenn wir dein Konto bestätigen oder du einen Freigabecode eingibst.
-        </div>
-        <form method="post" action="<?= url('/konto.php') ?>" class="acc-form" style="margin-bottom:1.4rem">
-          <input type="hidden" name="action" value="activate_code">
-          <div class="acc-card">
-            <h3>Konto freischalten</h3>
-            <label class="field" style="max-width:320px"><span>Freigabecode</span><input type="text" name="access_code" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="letter-spacing:.06em"></label>
-            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-start">Freischalten</button>
-          </div>
-        </form>
-      <?php endif; ?>
-
       <!-- Übersicht -->
       <section class="acc-panel<?= $activeTab === 'overview' ? ' active' : '' ?>" data-panel="overview">
         <div class="acc-panel-head">
@@ -318,7 +286,6 @@ function ko_render_order(array $o, string $currency): void {
           <div class="acc-stat"><strong><?= count($orders) ?></strong><span>Bestellungen</span></div>
           <div class="acc-stat"><strong><?= format_price($totalSpent, $currency) ?></strong><span>Ausgegeben</span></div>
           <div class="acc-stat"><strong style="color:<?= $openPay > 0 ? '#ffb0a4' : 'inherit' ?>"><?= format_price($openPay, $currency) ?></strong><span>Offen zu zahlen</span></div>
-          <div class="acc-stat"><strong><?= $accountConfirmed ? 'Ja' : 'Nein' ?></strong><span>Konto bestätigt</span></div>
           <div class="acc-stat"><strong><?= h(substr($account['created_at'] ?? '', 0, 10)) ?></strong><span>Mitglied seit</span></div>
         </div>
 

@@ -53,14 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&saved=1');
     }
 
-      if ($action === 'set_payment_amount') {
-        require_cap('orders.manage');
-        $paid = (int)round((float)str_replace(',', '.', trim($_POST['paid'] ?? '')) * 100);
-        $notifyCustomer = !empty($_POST['send_message']);
-        order_set_payment_amount($ref, max(0, $paid), $notifyCustomer, trim($_POST['note'] ?? ''));
-        redirect('/admin/bestellung.php?ref=' . urlencode($ref) . '&saved=payment');
-      }
-
     $newStatus = trim($_POST['status'] ?? 'neu');
     $newPay = trim($_POST['payment_status'] ?? 'offen');
     $sendMessage = !empty($_POST['send_message']);
@@ -106,8 +98,7 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
   <h1>Bestellung <?= h($ref) ?> <?php if ($isRequest): ?><span class="tag tag-new" style="vertical-align:middle">Produktanfrage</span><?php endif; ?></h1>
   <a href="<?= url('/admin/bestellungen.php') ?>" class="btn btn-ghost">← Zurück</a>
 </div>
-<?php if (($_GET['saved'] ?? '') === '1'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
-<?php if (($_GET['saved'] ?? '') === 'payment'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Zahlungsstand gespeichert.</div><?php endif; ?>
+<?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
 <?php if (!empty($_GET['merged'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Bestellungen wurden zusammengeführt.</div><?php endif; ?>
 <?php if (!empty($_GET['merge_failed'])): ?><div class="alert alert-error" style="margin-bottom:1rem">Zusammenführen nicht möglich – die ausgewählte Bestellung gehört zu einer anderen E-Mail oder wurde bereits zusammengeführt.</div><?php endif; ?>
 
@@ -195,29 +186,7 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
 
   <p><strong>Versand:</strong> <?= format_price((int)$order['shipping_cents'], $currency) ?></p>
   <p><strong>Gesamt:</strong> <?= (int)$order['total_cents'] > 0 ? format_price((int)$order['total_cents'], $currency) : '<span class="muted">noch offen</span>' ?></p>
-  <?php $paidCents = (int)($order['paid_cents'] ?? 0); $openCents = max(0, (int)$order['total_cents'] - $paidCents); ?>
   <p><strong>Zahlung:</strong> <span class="tag <?= payment_status_class($order['payment_status']) ?>"><?= h(payment_status_label($order['payment_status'])) ?></span></p>
-  <p><strong>Bereits bezahlt:</strong> <?= format_price($paidCents, $currency) ?></p>
-  <p><strong>Offen:</strong> <?= format_price($openCents, $currency) ?></p>
-
-  <div class="admin-section" style="margin-top:1.5rem">
-    <h2 style="margin-top:0">Teilzahlung erfassen</h2>
-    <p class="muted" style="font-size:.84rem;margin-top:-.5rem">Trage den bisher eingegangenen Betrag ein. Der Rest wird als offen angezeigt.</p>
-    <form method="post" data-cap="orders.manage" style="display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap">
-      <input type="hidden" name="action" value="set_payment_amount">
-      <label class="field" style="max-width:180px"><span>Betrag bezahlt (<?= h($currency) ?>)</span>
-        <input type="text" inputmode="decimal" name="paid" value="<?= $paidCents > 0 ? number_format($paidCents / 100, 2, '.', '') : '' ?>" placeholder="z.B. 50.00">
-      </label>
-      <label class="field" style="min-width:260px;flex:1">
-        <span>Nachricht für den Kunden</span>
-        <textarea name="note" rows="3" placeholder="Optionaler Text für die Inbox"></textarea>
-      </label>
-      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
-        <label class="switch-row" style="margin:0"><input type="checkbox" name="send_message" value="1" checked><div><strong>Kunde informieren</strong><small>Zeigt den neuen Zahlungsstand im Konto an.</small></div></label>
-        <button class="btn btn-primary" type="submit">Speichern</button>
-      </div>
-    </form>
-  </div>
 
   <form method="post" data-cap="orders.manage" style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
     <label class="field"><span>Status</span>

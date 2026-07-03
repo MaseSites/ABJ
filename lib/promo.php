@@ -22,15 +22,6 @@ function promo_codes_for(int $accountId): array {
     return $stmt->fetchAll();
 }
 
-function promo_code_find(string $code): ?array {
-    $code = trim($code);
-    if ($code === '') return null;
-    $stmt = db()->prepare('SELECT * FROM promo_codes WHERE upper(code) = upper(?)');
-    $stmt->execute([$code]);
-    $row = $stmt->fetch();
-    return $row ?: null;
-}
-
 /** Alle Promo-Codes mit Ersteller + Einlöser (für den Admin). */
 function promo_codes_all(): array {
     return db()->query("SELECT pc.*, a.email AS owner_email, a.name AS owner_name,
@@ -43,7 +34,7 @@ function promo_codes_all(): array {
 
 /** Werber-Konto-ID eines Codes (oder null; Admin-Codes haben account_id 0). */
 function promo_owner_of_code(string $code): ?int {
-    $row = promo_code_find($code);
+    $row = code_find($code);
     return ($row && (int)$row['account_id'] > 0) ? (int)$row['account_id'] : null;
 }
 
@@ -53,7 +44,7 @@ function promo_code_generate(int $accountId): string {
     do {
         $code = '';
         for ($i = 0; $i < 6; $i++) $code .= $chars[random_int(0, strlen($chars) - 1)];
-    } while (promo_code_find($code));
+    } while (code_find($code));
     db()->prepare('INSERT INTO promo_codes (account_id, code) VALUES (?, ?)')->execute([$accountId, $code]);
     return $code;
 }

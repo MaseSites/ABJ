@@ -13,15 +13,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $prefill  = ['name' => $name, 'email' => $email];
 
-  $accessCode = trim($_POST['access_code'] ?? '');
-  $promo = trim($_POST['promo'] ?? '');
-  $res = account_create($email, $password, $name, $accessCode);
+    $promo = trim($_POST['promo'] ?? '');
+    $res = account_create($email, $password, $name);
     if ($res['ok']) {
         // Promo-/Empfehlungscode verknüpfen (optional, einmalig verwendbar)
-        $promoRow = $promo !== '' ? promo_code_find($promo) : null;
-        if ($promoRow && empty($promoRow['used_by'])) {
-            db()->prepare('UPDATE promo_codes SET used_by = ?, used_at = datetime(\'now\') WHERE upper(code) = upper(?) AND used_by IS NULL')
-              ->execute([(int)$res['id'], trim($promo)]);
+        if ($promo !== '' && code_is_usable(code_find($promo))) {
+            code_mark_used($promo, (int)$res['id']);
             $owner = promo_owner_of_code($promo);
             if ($owner) account_set_referrer((int)$res['id'], $owner);
         }
@@ -41,7 +38,7 @@ include __DIR__ . '/partials/header.php';
   <div class="auth-card">
     <span class="section-title-label">Willkommen</span>
     <h1 class="auth-title">Konto erstellen</h1>
-    <p class="muted" style="margin:0 0 1.4rem">Erstelle ein Konto, um deine Bestellungen jederzeit einzusehen und schneller zu bestellen. Ohne Freigabecode kannst du trotzdem ein Konto anlegen, es bleibt dann zunächst eingeschränkt.</p>
+    <p class="muted" style="margin:0 0 1.4rem">Erstelle ein Konto, um deine Bestellungen jederzeit einzusehen und schneller zu bestellen.</p>
 
     <?php if ($error): ?><div class="alert alert-error"><?= h($error) ?></div><?php endif; ?>
 
@@ -55,9 +52,6 @@ include __DIR__ . '/partials/header.php';
       </label>
       <label class="field"><span>Passwort * <small class="muted">(min. 8 Zeichen)</small></span>
         <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="••••••••">
-      </label>
-      <label class="field"><span>Freigabecode <small class="muted">(optional)</small></span>
-        <input type="text" name="access_code" value="<?= h($_GET['access_code'] ?? '') ?>" maxlength="20" autocomplete="off" placeholder="Code zur Freischaltung" style="letter-spacing:.06em">
       </label>
       <label class="field"><span>Promo-Code <small class="muted">(optional)</small></span>
         <input type="text" name="promo" value="<?= h($_GET['promo'] ?? '') ?>" maxlength="20" autocomplete="off" placeholder="Code eines Freundes" style="letter-spacing:.06em">

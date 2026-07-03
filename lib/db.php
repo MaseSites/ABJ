@@ -82,7 +82,6 @@ function db_init(PDO $pdo): void {
             items TEXT DEFAULT '[]',
             total_cents INTEGER DEFAULT 0,
             shipping_cents INTEGER DEFAULT 0,
-            paid_cents INTEGER DEFAULT 0,
             status TEXT DEFAULT 'neu',
             payment_status TEXT DEFAULT 'offen',
             payment_method TEXT DEFAULT '',
@@ -175,7 +174,6 @@ function db_init(PDO $pdo): void {
             name TEXT DEFAULT '',
             phone TEXT DEFAULT '',
             address TEXT DEFAULT '{}',
-            confirmed_at TEXT DEFAULT '',
             created_at TEXT DEFAULT (datetime('now'))
         );
         CREATE TABLE IF NOT EXISTS account_messages (
@@ -273,12 +271,11 @@ function db_init(PDO $pdo): void {
 
     $acc_cols = array_column($pdo->query("PRAGMA table_info(accounts)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     foreach (['phone' => "TEXT DEFAULT ''", 'address' => "TEXT DEFAULT '{}'", 'access_code' => "TEXT DEFAULT ''",
-              'confirmed_at' => "TEXT DEFAULT ''", 'referred_by' => 'INTEGER', 'promo_points' => 'INTEGER DEFAULT 0'] as $col => $def) {
+              'referred_by' => 'INTEGER', 'promo_points' => 'INTEGER DEFAULT 0'] as $col => $def) {
         if (!in_array($col, $acc_cols)) {
             try { $pdo->exec("ALTER TABLE accounts ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
     }
-    try { $pdo->exec("UPDATE accounts SET confirmed_at = created_at WHERE COALESCE(confirmed_at, '') = ''"); } catch (\Throwable $e) {}
 
     $am_cols = array_column($pdo->query("PRAGMA table_info(account_messages)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     $am_add = [
@@ -315,14 +312,12 @@ function db_init(PDO $pdo): void {
         'discount_cents'           => 'INTEGER DEFAULT 0',
         'note'                     => "TEXT DEFAULT ''",
         'promo_awarded'            => 'INTEGER DEFAULT 0',
-        'paid_cents'               => 'INTEGER DEFAULT 0',
     ];
     foreach ($ord_add as $col => $def) {
         if (!in_array($col, $ord_cols)) {
             try { $pdo->exec("ALTER TABLE orders ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
     }
-    try { $pdo->exec("UPDATE orders SET paid_cents = CASE WHEN payment_status='bezahlt' THEN total_cents ELSE COALESCE(paid_cents, 0) END WHERE COALESCE(paid_cents, 0) = 0"); } catch (\Throwable $e) {}
 
     $req_cols = array_column($pdo->query("PRAGMA table_info(product_requests)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     $req_add = [

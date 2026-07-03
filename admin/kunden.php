@@ -124,7 +124,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
       <div class="cust-name-row">
         <?php if ($c['registered']): ?>
           <a class="cust-name cust-name-link" href="<?= url('/admin/kunde.php?id=' . (int)$c['id']) ?>"><?= h($c['name'] ?: 'Unbenannt') ?></a>
-          <span class="cust-badge cust-badge-acc"><?= !empty($c['confirmed_at']) ? 'Bestätigt' : 'Eingeschränkt' ?></span>
+          <span class="cust-badge cust-badge-acc">Konto</span>
         <?php else: ?>
           <span class="cust-name"><?= h($c['name'] ?: 'Unbenannt') ?></span>
           <span class="cust-badge cust-badge-guest">Gast</span>

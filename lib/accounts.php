@@ -17,7 +17,7 @@ function account_by_id(int $id): ?array {
 
 /** Alle registrierten Kundenkonten (neueste zuerst). */
 function accounts_list(): array {
-    return db()->query('SELECT id, email, name, confirmed_by, confirmed_at, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
+    return db()->query('SELECT id, email, name, confirmed_at, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
 }
 
 // ---- Zugangscodes zur Freigabe von Konten ----
@@ -71,7 +71,7 @@ function access_code_mark_used(string $code, int $userId): void {
 
 function account_is_confirmed(?array $account): bool {
     if (!$account) return false;
-    return !empty($account['confirmed_by']);
+    return !empty($account['confirmed_at']);
 }
 
 function account_release_pending_orders(int $accountId): int {
@@ -87,8 +87,7 @@ function account_confirm(int $accountId, string $method = 'admin'): bool {
     $acc = account_by_id($accountId);
     if (!$acc) return false;
     if (account_is_confirmed($acc)) return true;
-    $confirmedBy = $method === 'code' ? 'code' : 'admin';
-    db()->prepare("UPDATE accounts SET confirmed_by = ?, confirmed_at = datetime('now') WHERE id = ?")->execute([$confirmedBy, $accountId]);
+    db()->prepare("UPDATE accounts SET confirmed_at = datetime('now') WHERE id = ?")->execute([$accountId]);
     account_release_pending_orders($accountId);
     account_message_create([
         'account_id' => $accountId,

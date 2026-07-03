@@ -175,7 +175,6 @@ function db_init(PDO $pdo): void {
             name TEXT DEFAULT '',
             phone TEXT DEFAULT '',
             address TEXT DEFAULT '{}',
-            confirmed_by TEXT DEFAULT '',
             confirmed_at TEXT DEFAULT '',
             created_at TEXT DEFAULT (datetime('now'))
         );
@@ -275,15 +274,12 @@ function db_init(PDO $pdo): void {
 
     $acc_cols = array_column($pdo->query("PRAGMA table_info(accounts)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     foreach (['phone' => "TEXT DEFAULT ''", 'address' => "TEXT DEFAULT '{}'", 'access_code' => "TEXT DEFAULT ''",
-              'confirmed_by' => "TEXT DEFAULT ''", 'confirmed_at' => "TEXT DEFAULT ''", 'referred_by' => 'INTEGER', 'promo_points' => 'INTEGER DEFAULT 0'] as $col => $def) {
+              'confirmed_at' => "TEXT DEFAULT ''", 'referred_by' => 'INTEGER', 'promo_points' => 'INTEGER DEFAULT 0'] as $col => $def) {
         if (!in_array($col, $acc_cols)) {
             try { $pdo->exec("ALTER TABLE accounts ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
     }
-    try {
-        $pdo->exec("UPDATE accounts SET confirmed_by = 'code' WHERE id IN (SELECT used_by FROM access_codes WHERE COALESCE(used_by, 0) > 0)");
-        $pdo->exec("UPDATE accounts SET confirmed_by = '' WHERE COALESCE(confirmed_by, '') = '' AND id NOT IN (SELECT used_by FROM access_codes WHERE COALESCE(used_by, 0) > 0)");
-    } catch (\Throwable $e) {}
+    try { $pdo->exec("UPDATE accounts SET confirmed_at = created_at WHERE COALESCE(confirmed_at, '') = ''"); } catch (\Throwable $e) {}
 
     $am_cols = array_column($pdo->query("PRAGMA table_info(account_messages)")->fetchAll(PDO::FETCH_ASSOC), 'name');
     $am_add = [

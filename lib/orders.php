@@ -21,8 +21,8 @@ function order_create(array $data): string {
     ]);
     if ($acc) {
         $body = $held
-            ? 'Vielen Dank für deine Bestellung ' . $reference . "!\n\nWir haben sie erhalten. Damit wir sie bearbeiten können, aktiviere bitte noch dein Konto mit deinem Aktivierungscode – klicke dazu oben auf „Konto aktivieren“. Danach läuft alles automatisch weiter."
-            : 'Vielen Dank für deine Bestellung ' . $reference . "!\n\nWir haben sie erhalten und kümmern uns sofort darum. Sobald sich etwas tut, melden wir uns hier in deinem Posteingang – versprochen.";
+            ? 'Vielen Dank für deine Bestellung ' . $reference . "!\n\nWir haben sie erhalten. Damit wir sie bearbeiten können, aktiviere bitte noch dein Konto mit deinem Aktivierungscode - klicke dazu oben auf „Konto aktivieren“. Danach läuft alles automatisch weiter."
+            : 'Vielen Dank für deine Bestellung ' . $reference . "!\n\nWir haben sie erhalten und kümmern uns sofort darum. Sobald sich etwas tut, melden wir uns hier in deinem Posteingang - versprochen.";
         account_message_create([
             'account_id' => (int)$acc['id'],
             'order_reference' => $reference,
@@ -37,7 +37,7 @@ function order_create(array $data): string {
 
 function orders_list(): array {
     // Zurückgehaltene Bestellungen (Konto noch nicht aktiviert) werden erst nach
-    // der Freischaltung sichtbar – hier ausgeblendet.
+    // der Freischaltung sichtbar - hier ausgeblendet.
     $stmt = db()->query("SELECT * FROM orders WHERE COALESCE(merged_into, '') = '' AND COALESCE(held, 0) = 0 ORDER BY created_at DESC LIMIT 500");
     return array_map('order_parse', $stmt->fetchAll());
 }
@@ -180,7 +180,7 @@ function order_add_payment(string $ref, int $deltaCents, bool $absolute = false,
     $dueStr  = number_format(max(0, $total - $newPaid) / 100, 2, '.', '');
     $line = $fullyPaid
         ? 'Zahlung vollständig erhalten (' . $paidStr . ' ' . $curr . ').'
-        : 'Teilzahlung erfasst: ' . $paidStr . ' ' . $curr . ' von ' . number_format($total / 100, 2, '.', '') . ' ' . $curr . ' – offen: ' . $dueStr . ' ' . $curr . '.';
+        : 'Teilzahlung erfasst: ' . $paidStr . ' ' . $curr . ' von ' . number_format($total / 100, 2, '.', '') . ' ' . $curr . ' - offen: ' . $dueStr . ' ' . $curr . '.';
     order_message_create([
         'order_reference' => $ref,
         'author_role' => 'system', 'author_name' => 'System',
@@ -230,7 +230,7 @@ function order_cancel_by_customer(string $ref, string $email): bool {
         'order_reference' => $order['reference'],
         'author_role' => 'system', 'author_name' => 'System',
         'subject' => 'Vom Kunden storniert',
-        'body' => 'Der Kunde hat diese Bestellung storniert.' . ($wasPaid ? ' Bestellung war bereits bezahlt – Rückerstattung prüfen.' : ''),
+        'body' => 'Der Kunde hat diese Bestellung storniert.' . ($wasPaid ? ' Bestellung war bereits bezahlt - Rückerstattung prüfen.' : ''),
         'is_system' => 1, 'is_read' => 0,
     ]);
 
@@ -240,7 +240,7 @@ function order_cancel_by_customer(string $ref, string $email): bool {
         'email'   => $order['email'] ?? '',
         'subject' => 'Bestellung storniert: ' . $order['reference'],
         'message' => 'Der Kunde hat die Bestellung ' . $order['reference'] . ' storniert.'
-            . ($wasPaid ? "\n\nACHTUNG: Die Bestellung war bereits BEZAHLT – bitte Rückerstattung prüfen." : ''),
+            . ($wasPaid ? "\n\nACHTUNG: Die Bestellung war bereits BEZAHLT - bitte Rückerstattung prüfen." : ''),
     ]);
 
     // Bestätigung im Kunden-Posteingang
@@ -283,7 +283,7 @@ function order_merge(string $targetRef, string $sourceRef): bool {
     foreach ($sourceItems as $item) {
         $merged = false;
         foreach ($targetItems as &$tItem) {
-            // Gleiches Produkt + gleiche Grösse/Variante werden zusammengefasst –
+            // Gleiches Produkt + gleiche Grösse/Variante werden zusammengefasst -
             // auch wenn der Stückpreis abweicht (z.B. Sale-/Varianten-/Sonderpreis).
             $sameProduct = (int)($tItem['productId'] ?? 0) === (int)($item['productId'] ?? 0);
             $sameSize    = (string)($tItem['size'] ?? '') === (string)($item['size'] ?? '');
@@ -327,7 +327,7 @@ function order_merge(string $targetRef, string $sourceRef): bool {
             'order_reference' => $target['reference'],
             'sender_role' => 'system',
             'subject' => 'Deine Bestellungen wurden zusammengelegt',
-            'body' => 'Gute Nachricht: Wir haben deine Bestellungen ' . $target['reference'] . ' und ' . $source['reference'] . ' zu einer zusammengefasst – so sparst du beim Versand. 😊',
+            'body' => 'Gute Nachricht: Wir haben deine Bestellungen ' . $target['reference'] . ' und ' . $source['reference'] . ' zu einer zusammengefasst - so sparst du beim Versand. 😊',
             'is_read' => 0,
         ]);
     }

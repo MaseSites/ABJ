@@ -23,7 +23,7 @@ $activeCount = count(array_filter($products, fn($p) => $p['is_active']));
     <a class="btn btn-primary" href="<?= url('/admin/produkt/neu') ?>">+ Neues Produkt</a>
   </div>
 <?php else: ?>
-<input type="search" class="admin-search" data-product-filter placeholder="Produkte filtern… (Name, Kategorie)" aria-label="Produkte filtern">
+<input type="search" class="admin-search" data-product-filter placeholder="Produkte filtern... (Name, Kategorie)" aria-label="Produkte filtern">
 
 <div class="table-card">
 <table class="data-table" data-filter-table>

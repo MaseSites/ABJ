@@ -142,7 +142,7 @@ function account_create(string $email, string $password, string $name, bool $act
         'account_id' => $id,
         'sender_role' => 'system',
         'subject' => 'Herzlich willkommen bei ABJ 🎉',
-        'body' => "Schön, dass du da bist! Dein Konto ist startklar.\n\nStöbere in Ruhe durch unsere Produkte – und falls du etwas Bestimmtes suchst, das du nicht findest, stell einfach eine Produktanfrage. Wir freuen uns auf dich!",
+        'body' => "Schön, dass du da bist! Dein Konto ist startklar.\n\nStöbere in Ruhe durch unsere Produkte - und falls du etwas Bestimmtes suchst, das du nicht findest, stell einfach eine Produktanfrage. Wir freuen uns auf dich!",
         'is_read' => 0,
     ]);
     return ['ok' => true, 'id' => $id];
@@ -152,7 +152,7 @@ function account_create(string $email, string $password, string $name, bool $act
  * Setzt das Admin-Passwort aus einer Umgebungsvariable/.env durch, FALLS gesetzt.
  * So ist das Passwort ausserhalb des Codes ablegbar. Aus Performancegründen wird
  * höchstens einmal pro Stunde geprüft (bcrypt ist teuer). Ist die Variable leer,
- * passiert nichts – die bestehende Anmeldung bleibt unverändert.
+ * passiert nichts - die bestehende Anmeldung bleibt unverändert.
  */
 function admin_apply_env_password(string $username, string $envKey): void {
     $pw = (string)(function_exists('env_get') ? env_get($envKey) : getenv($envKey));

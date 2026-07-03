@@ -11,7 +11,7 @@ $tiktok       = setting_get('tiktok_url') ?: '';
       <div class="newsletter-wrap">
         <span class="newsletter-badge">Newsletter</span>
         <h2 class="newsletter-heading">Erster bei den nächsten Drops.</h2>
-        <p class="newsletter-sub">Neue Kollektionen &amp; exklusive Rabatte — direkt in dein Postfach. Kein Spam, jederzeit abbestellbar.</p>
+        <p class="newsletter-sub">Neue Kollektionen &amp; exklusive Rabatte - direkt in dein Postfach. Kein Spam, jederzeit abbestellbar.</p>
         <form class="newsletter-form" action="<?= url('/newsletter.php') ?>" method="post" data-newsletter>
           <input type="email" name="email" placeholder="deine@email.ch" required maxlength="200" aria-label="E-Mail-Adresse">
           <button class="btn btn-primary" type="submit">Anmelden</button>

@@ -31,7 +31,7 @@ $currency = setting_get('currency') ?: 'CHF';
 // --- Validate required fields ---
 $firstname = trim($_POST['firstname'] ?? '');
 $lastname  = trim($_POST['lastname']  ?? '');
-// E-Mail ist die des eingeloggten Kontos – so erscheint die Bestellung im Konto.
+// E-Mail ist die des eingeloggten Kontos - so erscheint die Bestellung im Konto.
 $email     = trim(current_customer()['email'] ?? '');
 $phone     = trim($_POST['phone']     ?? '');
 $street    = trim($_POST['street']    ?? '');
@@ -133,7 +133,7 @@ $reference = order_create($orderData + ['payment_method' => '']);
 inv_deduct_stock($lineItems);
 if ($discountCode) discount_redeem($discountCode);
 // Promo-Punkte werden erst gutgeschrieben, wenn der Admin die Zahlung
-// bestätigt (siehe order_update_status) – nicht schon bei der Bestellung.
+// bestätigt (siehe order_update_status) - nicht schon bei der Bestellung.
 cart_set([]);
 last_order_set($reference);
 json_response(['ok' => true, 'redirect' => url('/bestellung.php?ref=' . urlencode($reference))]);

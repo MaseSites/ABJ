@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $value = $type === 'percent' ? (int)$valueRaw : (int)round((float)$valueRaw * 100);
         $minRaw = str_replace(',', '.', trim($_POST['min_order'] ?? '0'));
         if (!preg_match('/^[A-Z0-9\-_]{2,40}$/', $code)) {
-            $err = 'Code: nur Buchstaben, Zahlen, - und _ (2–40 Zeichen).';
+            $err = 'Code: nur Buchstaben, Zahlen, - und _ (2-40 Zeichen).';
         } elseif (discount_by_code($code)) {
             $err = 'Dieser Code existiert bereits.';
         } elseif ($type === 'percent' && ($value < 1 || $value > 100)) {
@@ -94,9 +94,9 @@ function discount_value_label(array $c, string $currency): string {
       <tr>
         <td><strong style="letter-spacing:.06em"><?= h($c['code']) ?></strong></td>
         <td><?= h(discount_value_label($c, $currency)) ?></td>
-        <td><?= (int)$c['min_order_cents'] > 0 ? format_price((int)$c['min_order_cents'], $currency) : '–' ?></td>
+        <td><?= (int)$c['min_order_cents'] > 0 ? format_price((int)$c['min_order_cents'], $currency) : '-' ?></td>
         <td><?= (int)$c['used_count'] ?><?= (int)$c['max_uses'] > 0 ? ' / ' . (int)$c['max_uses'] : '' ?></td>
-        <td><?= $c['valid_until'] ? h(substr($c['valid_until'], 0, 10)) : '–' ?></td>
+        <td><?= $c['valid_until'] ? h(substr($c['valid_until'], 0, 10)) : '-' ?></td>
         <td><span class="tag <?= $c['is_active'] ? 'tag-ok' : 'tag-off' ?>"><?= $c['is_active'] ? 'aktiv' : 'inaktiv' ?></span></td>
         <td style="white-space:nowrap;display:flex;gap:.4rem">
           <form method="post" data-cap="discounts.manage">

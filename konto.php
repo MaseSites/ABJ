@@ -194,11 +194,11 @@ function ko_render_order(array $o, string $currency): void {
     </div>
     <div class="acc-order-items">
       <?php foreach ($o['items'] as $it): ?>
-        <span class="acc-order-item"><?= (int)($it['qty'] ?? 1) > 1 ? (int)$it['qty'] . '× ' : '' ?><?= h($it['name'] ?? '') ?><?= !empty($it['size']) ? ' · ' . h($it['size']) : '' ?></span>
+        <span class="acc-order-item"><?= (int)($it['qty'] ?? 1) > 1 ? (int)$it['qty'] . '× ' : '' ?><?= h($it['name'] ?? '') ?><?= !empty($it['size']) ? ' - ' . h($it['size']) : '' ?></span>
       <?php endforeach; ?>
     </div>
     <div class="acc-order-foot">
-      <strong><?= $hasPrice ? format_price((int)$o['total_cents'], $currency) : '<span class="muted" style="font-weight:500;font-size:.9rem">' . ($isReq ? 'Preis folgt' : '–') . '</span>' ?><?php if (order_is_partial($o)): ?> <span class="muted" style="font-weight:600;font-size:.82rem;color:#e6c37e">· noch <?= format_price(order_amount_due($o), $currency) ?> offen</span><?php endif; ?></strong>
+      <strong><?= $hasPrice ? format_price((int)$o['total_cents'], $currency) : '<span class="muted" style="font-weight:500;font-size:.9rem">' . ($isReq ? 'Preis folgt' : '-') . '</span>' ?><?php if (order_is_partial($o)): ?> <span class="muted" style="font-weight:600;font-size:.82rem;color:#e6c37e">- noch <?= format_price(order_amount_due($o), $currency) ?> offen</span><?php endif; ?></strong>
       <div class="acc-order-actions">
         <?php if (!$isReq): ?>
         <form method="post" action="<?= url('/konto.php') ?>" style="display:inline">
@@ -347,7 +347,7 @@ function ko_render_order(array $o, string $currency): void {
           <p class="muted">Alle Nachrichten zu deinem Konto und deinen Bestellungen an einem Ort.</p>
         </div>
         <?php if (!empty($_GET['deleted'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Nachricht gelöscht.</div><?php endif; ?>
-        <?php if (!empty($_GET['declined'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Danke für deine Rückmeldung – wir haben sie erhalten.</div><?php endif; ?>
+        <?php if (!empty($_GET['declined'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Danke für deine Rückmeldung - wir haben sie erhalten.</div><?php endif; ?>
         <?php if (empty($inbox)): ?>
           <div class="cart-empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="52" height="52"><path d="M21 15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6h18v9z"/><path d="M3 8l9 6 9-6"/></svg>
@@ -436,7 +436,7 @@ function ko_render_order(array $o, string $currency): void {
                   <?php if ($used): ?>
                     <span class="promo-code-status used">Eingelöst<?= $who ? ' von ' . h($who) : '' ?></span>
                   <?php else: ?>
-                    <span class="promo-code-status free">Frei · einmal verwendbar</span>
+                    <span class="promo-code-status free">Frei - einmal verwendbar</span>
                   <?php endif; ?>
                 </div>
                 <?php if ($used): ?>
@@ -514,7 +514,7 @@ function ko_render_order(array $o, string $currency): void {
             <h3>Persönliche Daten</h3>
             <div class="form-row-2">
               <label class="field"><span>Name</span><input type="text" name="name" maxlength="120" value="<?= h($cust['name'] ?? '') ?>" placeholder="Max Muster"></label>
-              <label class="field"><span>Telefon</span><input type="tel" name="phone" maxlength="40" value="<?= h($account['phone'] ?? '') ?>" placeholder="+41 79 …"></label>
+              <label class="field"><span>Telefon</span><input type="tel" name="phone" maxlength="40" value="<?= h($account['phone'] ?? '') ?>" placeholder="+41 79 ..."></label>
             </div>
             <label class="field"><span>E-Mail</span><input type="email" value="<?= h($cust['email']) ?>" disabled><small class="muted" style="font-size:.75rem">Die E-Mail-Adresse kann nicht geändert werden.</small></label>
           </div>

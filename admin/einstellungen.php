@@ -57,8 +57,8 @@ $s = settings_all();
     </div>
     <label class="field"><span>Ankündigungstext (Header-Banner, leer = ausblenden)</span><input type="text" name="announcement" value="<?= h($s['announcement']) ?>"></label>
     <div class="form-row-2">
-      <label class="field"><span>Instagram-URL</span><input type="url" name="instagram_url" value="<?= h($s['instagram_url'] ?? '') ?>" placeholder="https://instagram.com/…"></label>
-      <label class="field"><span>TikTok-URL</span><input type="url" name="tiktok_url" value="<?= h($s['tiktok_url'] ?? '') ?>" placeholder="https://tiktok.com/@…"></label>
+      <label class="field"><span>Instagram-URL</span><input type="url" name="instagram_url" value="<?= h($s['instagram_url'] ?? '') ?>" placeholder="https://instagram.com/..."></label>
+      <label class="field"><span>TikTok-URL</span><input type="url" name="tiktok_url" value="<?= h($s['tiktok_url'] ?? '') ?>" placeholder="https://tiktok.com/@..."></label>
     </div>
   </div>
 

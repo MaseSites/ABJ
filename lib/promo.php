@@ -13,7 +13,7 @@ function promo_add_points(int $accountId, int $delta): void {
        ->execute([$delta, $accountId]);
 }
 
-/** Eigene Promo-Codes eines Kontos – inkl. „eingelöst von" (Name/E-Mail). */
+/** Eigene Promo-Codes eines Kontos - inkl. „eingelöst von" (Name/E-Mail). */
 function promo_codes_for(int $accountId): array {
     $stmt = db()->prepare("SELECT pc.*, u.email AS used_email, u.name AS used_name
         FROM promo_codes pc LEFT JOIN accounts u ON u.id = pc.used_by

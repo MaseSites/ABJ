@@ -118,10 +118,10 @@ include __DIR__ . '/partials/admin-layout-top.php';
 <?php if (empty($rows)): ?>
   <div class="cust-empty">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" width="48" height="48"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c.6-3.6 3.2-5.4 6.5-5.4s5.9 1.8 6.5 5.4"/><path d="M16 8.2a3 3 0 010 5.4M18.5 14.5c1.7.8 2.9 2.4 3.2 4.8"/></svg>
-    <p>Noch keine Kunden — sobald sich jemand registriert oder bestellt, erscheint er hier.</p>
+    <p>Noch keine Kunden - sobald sich jemand registriert oder bestellt, erscheint er hier.</p>
   </div>
 <?php else: ?>
-<input type="search" class="admin-search" data-cust-filter placeholder="Kunden suchen… (Name, E-Mail)" aria-label="Kunden suchen" style="margin-bottom:1.1rem">
+<input type="search" class="admin-search" data-cust-filter placeholder="Kunden suchen... (Name, E-Mail)" aria-label="Kunden suchen" style="margin-bottom:1.1rem">
 
 <div class="cust-list">
   <?php foreach ($rows as $c):
@@ -148,7 +148,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
     <div class="cust-stats">
       <div class="cust-stat"><strong><?= (int)$c['order_count'] ?></strong><span>Bestellungen</span></div>
       <div class="cust-stat"><strong><?= format_price((int)$c['revenue_cents'], $currency) ?></strong><span>Umsatz</span></div>
-      <div class="cust-stat"><strong><?= h($c['registered'] ? (substr($c['created_at'], 0, 10) ?: '—') : '—') ?></strong><span>Konto seit</span></div>
+      <div class="cust-stat"><strong><?= h($c['registered'] ? (substr($c['created_at'], 0, 10) ?: '-') : '-') ?></strong><span>Konto seit</span></div>
     </div>
     <div class="cust-actions">
       <?php if ($c['registered']): ?>

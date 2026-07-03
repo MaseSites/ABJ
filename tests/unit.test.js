@@ -59,7 +59,7 @@ test('placeholder erzeugt sichere SVG-data-URI', () => {
 });
 
 // ---------------------------------------------------------------------------
-// inventory.js – Bestandslogik (in-memory, nutzt die In-Memory-DB für Tests)
+// inventory.js - Bestandslogik (in-memory, nutzt die In-Memory-DB für Tests)
 // ---------------------------------------------------------------------------
 
 let testProductId;
@@ -195,7 +195,7 @@ test('upsertMany speichert mehrere Varianten', () => {
 });
 
 // ---------------------------------------------------------------------------
-// products.js – Produkte & Sichtbarkeit
+// products.js - Produkte & Sichtbarkeit
 // ---------------------------------------------------------------------------
 
 test('Inaktives Produkt erscheint nicht in listPublic', () => {

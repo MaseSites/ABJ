@@ -93,7 +93,7 @@ include __DIR__ . '/partials/header.php';
   <?php elseif ($freeFrom > 0 && $total >= $freeFrom): ?>
   <div class="free-shipping-hint">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
-    <span><strong>Kostenloser Versand</strong> — dein Bestellwert qualifiziert sich.</span>
+    <span><strong>Kostenloser Versand</strong> - dein Bestellwert qualifiziert sich.</span>
   </div>
   <?php endif; ?>
 
@@ -116,9 +116,9 @@ include __DIR__ . '/partials/header.php';
             <?php if ($it['size']): ?><span class="muted">Grösse: <?= h($it['size']) ?></span><?php endif; ?>
             <span class="muted"><?= format_price($it['unitCents'], $currency) ?> / Stück</span>
             <?php if ($it['isSoldOut']): ?>
-              <span class="cart-soldout-label">Ausverkauft – wird beim Checkout entfernt</span>
+              <span class="cart-soldout-label">Ausverkauft - wird beim Checkout entfernt</span>
             <?php elseif ($it['isBackOrder']): ?>
-              <span class="cart-backorder-label">Nicht an Lager – ca. 2 Wochen Lieferzeit</span>
+              <span class="cart-backorder-label">Nicht an Lager - ca. 2 Wochen Lieferzeit</span>
             <?php elseif ($it['wasReduced']): ?>
               <span class="cart-reduced-warning">Menge auf <?= $it['qty'] ?> reduziert (max. verfügbar)</span>
             <?php endif; ?>

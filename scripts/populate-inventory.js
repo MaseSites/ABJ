@@ -5,7 +5,7 @@
 // die Summe exakt dem ursprünglichen Bestand entspricht). Produkte ohne Grössen
 // erhalten eine einzige Zeile (size='').
 //
-// Die Werte sind ein Startpunkt – die genaue Aufteilung pro Grösse passt der
+// Die Werte sind ein Startpunkt - die genaue Aufteilung pro Grösse passt der
 // Admin anschliessend im Dashboard unter /admin/lager/[ID] an.
 //
 // Idempotent: Produkte, die bereits Lager-Zeilen haben, bleiben unberührt.
@@ -37,12 +37,12 @@ for (const p of all) {
   createdRows += batch.length;
   console.log(
     `  #${p.id} ${p.name}: ${total} → ` +
-      batch.map((b) => `${b.size || '—'}:${b.stock}`).join('  ')
+      batch.map((b) => `${b.size || '-'}:${b.stock}`).join('  ')
   );
 }
 
 if (touched === 0) {
-  console.log('✓ Alle Produkte haben bereits Lager-Zeilen – nichts zu tun.');
+  console.log('✓ Alle Produkte haben bereits Lager-Zeilen - nichts zu tun.');
 } else {
   console.log(`\n✓ ${touched} Produkt(e) befüllt, ${createdRows} Lager-Zeilen angelegt.`);
   console.log('Feinjustierung pro Grösse: Dashboard → Lager → Produkt wählen.');

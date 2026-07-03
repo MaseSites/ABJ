@@ -196,7 +196,7 @@ function visits_recent(int $limit = 60): array {
 }
 
 /**
- * Ordnet IP-Adressen einem Nutzer zu. Rückgabe: ['1.2.3.4' => ['name'=>, 'email'=>], …].
+ * Ordnet IP-Adressen einem Nutzer zu. Rückgabe: ['1.2.3.4' => ['name'=>, 'email'=>], ...].
  * Quelle: freigeschaltete IPs (ip_allow.account_id), sonst der letzte
  * eingeloggte Besuch dieser IP (visits.account_id).
  */

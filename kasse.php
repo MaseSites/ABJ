@@ -175,7 +175,7 @@ include __DIR__ . '/partials/header.php';
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
           <div>
             <strong>Zahlung ausstehend</strong>
-            <p>Du gibst deine Bestellung ohne sofortige Zahlung auf. Wir melden uns mit den Zahlungsdetails — du findest den Zahlungsstatus jederzeit in deinem Konto.</p>
+            <p>Du gibst deine Bestellung ohne sofortige Zahlung auf. Wir melden uns mit den Zahlungsdetails - du findest den Zahlungsstatus jederzeit in deinem Konto.</p>
           </div>
         </div>
 
@@ -313,7 +313,7 @@ include __DIR__ . '/partials/header.php';
       dApply.disabled = false;
       if (!d.ok) { showDiscountMsg(d.error || 'Code ungültig.', false); return; }
       if (dHidden) dHidden.value = d.code;
-      if (dCodeLbl) dCodeLbl.textContent = d.code + ' · ' + d.discountText;
+      if (dCodeLbl) dCodeLbl.textContent = d.code + ' - ' + d.discountText;
       if (dApplied) dApplied.hidden = false;
       if (dRow) dRow.hidden = true;
       if (dSummary) { dSummary.hidden = false; if (dLabel) dLabel.textContent = d.discountText; }
@@ -346,7 +346,7 @@ include __DIR__ . '/partials/header.php';
     if (!submitBtn) return;
     submitBtn.disabled = on;
     var span = submitBtn.querySelector('.checkout-submit-text');
-    if (span) span.textContent = on ? 'Wird verarbeitet…' : origText;
+    if (span) span.textContent = on ? 'Wird verarbeitet...' : origText;
   }
 
   function showError(msg) {

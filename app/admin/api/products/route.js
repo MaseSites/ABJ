@@ -136,7 +136,7 @@ export async function POST(request) {
     inventory.syncVariants(product.id, invRows);
   } catch (e) {
     console.error('[products POST] inventory sync error:', e);
-    // Produkt wurde gespeichert – nur Lager-Sync fehlgeschlagen
+    // Produkt wurde gespeichert - nur Lager-Sync fehlgeschlagen
     return Response.json({ ok: true, id: product.id, warn: 'Lager-Sync fehlgeschlagen: ' + (e?.message || e) });
   }
 

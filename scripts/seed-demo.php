@@ -5,7 +5,7 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 
 $count = (int)db()->query('SELECT COUNT(*) AS n FROM products')->fetch()['n'];
 if ($count > 0) {
-    echo "Es existieren bereits $count Produkte – nichts zu tun.\n";
+    echo "Es existieren bereits $count Produkte - nichts zu tun.\n";
     exit;
 }
 
@@ -22,7 +22,7 @@ $demo = [
 
 foreach ($demo as [$name, $cat, $price, $sale, $sizes, $bestseller]) {
     $p = product_create([
-        'name' => $name, 'description' => "<p>Authentifiziertes Piece in sehr gutem Zustand. $name – geprüft und versandbereit.</p>",
+        'name' => $name, 'description' => "<p>Authentifiziertes Piece in sehr gutem Zustand. $name - geprüft und versandbereit.</p>",
         'category' => $cat, 'price_cents' => $price, 'sale_price_cents' => $sale,
         'sizes' => $sizes, 'option_groups' => [], 'images' => [],
         'stock' => 10, 'is_bestseller' => $bestseller, 'is_active' => 1,

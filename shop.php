@@ -52,7 +52,7 @@ include __DIR__ . '/partials/header.php';
 
   <?php if ($q): ?>
   <p class="muted result-info">
-    <strong><?= count($all) ?></strong> Treffer für „<?= h($q) ?>" ·
+    <strong><?= count($all) ?></strong> Treffer für „<?= h($q) ?>" -
     <a href="<?= url('/shop.php') ?>">Suche zurücksetzen</a>
   </p>
   <?php endif; ?>
@@ -76,7 +76,7 @@ include __DIR__ . '/partials/header.php';
         <option value=""          <?= $sort === ''          ? 'selected' : '' ?>>Neueste</option>
         <option value="preis-auf" <?= $sort === 'preis-auf' ? 'selected' : '' ?>>Preis aufsteigend</option>
         <option value="preis-ab"  <?= $sort === 'preis-ab'  ? 'selected' : '' ?>>Preis absteigend</option>
-        <option value="name"      <?= $sort === 'name'      ? 'selected' : '' ?>>Name (A–Z)</option>
+        <option value="name"      <?= $sort === 'name'      ? 'selected' : '' ?>>Name (A-Z)</option>
       </select>
     </form>
   </div>
@@ -114,7 +114,7 @@ include __DIR__ . '/partials/header.php';
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="34" height="34"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M11 8v3M11 14h.01"/></svg>
       <div class="find-cta-text">
         <h2>Dein Produkt nicht gefunden?</h2>
-        <p>Kein Problem — schick uns dein Wunschprodukt und wir schauen, ob wir es noch auf Lager haben.</p>
+        <p>Kein Problem - schick uns dein Wunschprodukt und wir schauen, ob wir es noch auf Lager haben.</p>
       </div>
       <a class="btn btn-primary" href="<?= url('/anfrage.php') ?>">Schau ob wir es haben</a>
     </div>

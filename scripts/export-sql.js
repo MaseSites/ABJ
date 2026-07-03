@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ABJ Store – SQL-Export
+ * ABJ Store - SQL-Export
  * Erzeugt scripts/schema.sql und scripts/data.sql aus der aktuellen Datenbank.
  * Ausführen: node scripts/export-sql.js
  */
@@ -38,7 +38,7 @@ const schemaRows = db.prepare(
 const schemaMap = {};
 for (const r of schemaRows) schemaMap[r.name] = r.sql;
 
-let schema = '-- ABJ Store – Datenbankschema\n';
+let schema = '-- ABJ Store - Datenbankschema\n';
 schema += '-- Generiert: ' + new Date().toISOString() + '\n\n';
 schema += 'PRAGMA journal_mode = WAL;\n';
 schema += 'PRAGMA foreign_keys = ON;\n\n';
@@ -59,7 +59,7 @@ for (const { name, sql } of schemaRows) {
 }
 
 // ── Daten ────────────────────────────────────────────────────────────────────
-let data = '-- ABJ Store – Datenbankinhalt\n';
+let data = '-- ABJ Store - Datenbankinhalt\n';
 data += '-- Generiert: ' + new Date().toISOString() + '\n\n';
 data += 'PRAGMA foreign_keys = OFF;\n\n';
 

@@ -4,16 +4,16 @@
  *
  * Anders als die IP-Sperre ("Zugriff gesperrt") oder die Tarnseite des
  * Sicherheitsmodus zeigt dieser Schalter eine komplett neutrale, weisse
- * "Seite nicht gefunden"-Antwort mit HTTP-Status 404 – als gäbe es die
+ * "Seite nicht gefunden"-Antwort mit HTTP-Status 404 - als gäbe es die
  * Seite gar nicht. Kein Shop-Layout, kein Branding, keine Hinweise.
  *
  * Zwei Modi (im Admin unter Sicherheit einstellbar):
- *   'all'      – jeder Besucher sieht den 404 (Shop ist "verschwunden").
- *   'selected' – nur die hinterlegten IP-Adressen bzw. Konten (per E-Mail)
+ *   'all'      - jeder Besucher sieht den 404 (Shop ist "verschwunden").
+ *   'selected' - nur die hinterlegten IP-Adressen bzw. Konten (per E-Mail)
  *                sehen den 404; alle anderen sehen den Shop ganz normal.
  *
  * Der Admin-Bereich ist nie betroffen, und angemeldete Admins sehen auch im
- * Shop immer die echte Seite – sonst könnte man den Schalter nicht mehr
+ * Shop immer die echte Seite - sonst könnte man den Schalter nicht mehr
  * bedienen. Aufgerufen wird das Ganze in bootstrap.php nur für Shop-Seiten.
  */
 
@@ -79,7 +79,7 @@ function notfound_render_and_exit(): void {
 function notfound_guard(): void {
     $mode = setting_get('notfound_mode') ?: '0';
     if ($mode === '0') return;
-    // Admins sehen den Shop immer – damit der Schalter bedienbar bleibt.
+    // Admins sehen den Shop immer - damit der Schalter bedienbar bleibt.
     if (function_exists('is_admin') && is_admin()) return;
 
     if ($mode === 'all') {

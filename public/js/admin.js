@@ -236,7 +236,7 @@
         fileEl.addEventListener('change', async () => {
           const file = fileEl.files[0];
           if (!file) return;
-          upBtn.disabled = true; upBtn.textContent = 'Lädt…';
+          upBtn.disabled = true; upBtn.textContent = 'Lädt...';
           try {
             const fd = new FormData(); fd.append('image', file);
             const res = await fetch(BASE_PATH + '/admin/api/upload.php', { method: 'POST', body: fd });
@@ -392,11 +392,11 @@
 
       const submit = form.querySelector('button[type="submit"]');
       const oldText = submit?.textContent || 'Speichern';
-      if (submit) { submit.disabled = true; submit.textContent = 'Lädt hoch…'; }
+      if (submit) { submit.disabled = true; submit.textContent = 'Lädt hoch...'; }
 
       await uploadPendingFiles();
 
-      if (submit) submit.textContent = 'Speichert…';
+      if (submit) submit.textContent = 'Speichert...';
 
       const formData = new FormData(form);
       formData.delete('_csrf');

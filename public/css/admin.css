@@ -1,5 +1,5 @@
 /* ============================================================
-   ABJ Admin – Clean Sidebar Layout
+   ABJ Admin - Clean Sidebar Layout
    ============================================================ */
 
 /* ---------- Shell: Sidebar + Content nebeneinander ---------- */
@@ -137,7 +137,7 @@
 .admin-main.narrow { max-width: 860px; }
 .admin-main.wide   { max-width: 100%; }
 
-/* Neue/ungelesene Bestellungen – dezente Markierung */
+/* Neue/ungelesene Bestellungen - dezente Markierung */
 .order-row-new td { background: rgba(126,139,184,.05); }
 .order-row-new td:first-child { box-shadow: inset 3px 0 0 #7e8bb8; }
 
@@ -662,7 +662,7 @@ input[type="checkbox"] { width: auto; accent-color: #7e8bb8; }
 .dash-quick a:hover { border-color: rgba(126,139,184,.4); color: #e8eaf1; background: rgba(126,139,184,.06); }
 @media (max-width: 1000px) { .dash-cols { grid-template-columns: 1fr; } }
 
-/* Kunden – professionelle Karten */
+/* Kunden - professionelle Karten */
 .cust-list { display: flex; flex-direction: column; gap: .65rem; }
 .cust-card {
   display: grid; grid-template-columns: auto minmax(0, 1.4fr) auto auto; gap: 1.1rem; align-items: center;
@@ -715,7 +715,7 @@ input[type="checkbox"] { width: auto; accent-color: #7e8bb8; }
 .fin-line-total span { color: #e8eaf2; }
 @media (max-width: 760px) { .fin-grid { grid-template-columns: 1fr; } }
 
-/* Lager – nach Produkt gruppiert, aufklappbar */
+/* Lager - nach Produkt gruppiert, aufklappbar */
 .lager-list { display: flex; flex-direction: column; gap: .6rem; }
 .lager-product { border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.015); overflow: hidden; }
 .lager-product > summary { display: flex; align-items: center; gap: .8rem; padding: .85rem 1rem; cursor: pointer; list-style: none; user-select: none; }
@@ -931,7 +931,7 @@ input[type="checkbox"] { width: auto; accent-color: #7e8bb8; }
     color: #6b6f82; font-size: .68rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: .06em;
   }
-  /* Aktionen (Bearbeiten/Löschen …) immer voll erreichbar & breit */
+  /* Aktionen (Bearbeiten/Löschen ...) immer voll erreichbar & breit */
   .table-card .data-table td.cell-actions {
     flex-wrap: wrap; gap: .5rem; margin-top: .7rem; justify-content: stretch;
   }

@@ -59,7 +59,7 @@ $dateStr = (function () {
     </div>
     <div class="kpi-body">
       <span class="kpi-value"><?= format_price($rev30, $currency) ?></span>
-      <span class="kpi-label">Umsatz · 30 Tage</span>
+      <span class="kpi-label">Umsatz - 30 Tage</span>
     </div>
     <?php if ($trend !== 0): ?>
       <span class="kpi-trend <?= $trend >= 0 ? 'up' : 'down' ?>"><?= $trend >= 0 ? '▲' : '▼' ?> <?= abs($trend) ?>%</span>
@@ -82,7 +82,7 @@ $dateStr = (function () {
     </div>
     <div class="kpi-body">
       <span class="kpi-value"><?= $orders30 ?></span>
-      <span class="kpi-label">Bestellungen · 30 Tage</span>
+      <span class="kpi-label">Bestellungen - 30 Tage</span>
     </div>
   </div>
 
@@ -146,7 +146,7 @@ $dateStr = (function () {
           <?php foreach ($recentOrders as $o): ?>
           <tr class="<?= empty($o['is_seen']) ? 'order-row-new' : '' ?>">
             <td><a href="<?= url('/admin/bestellung.php?ref=' . urlencode($o['reference'])) ?>" style="color:#b89c67;font-weight:700"><?= h($o['reference']) ?></a></td>
-            <td><strong><?= h($o['customer_name'] ?: '—') ?></strong></td>
+            <td><strong><?= h($o['customer_name'] ?: '-') ?></strong></td>
             <td class="muted"><?= h(substr($o['created_at'], 0, 10)) ?></td>
             <td style="font-weight:700;color:#e0e2ea"><?= format_price($o['total_cents'], $currency) ?></td>
             <td><span class="tag <?= order_payment_class($o) ?>"><?= h(order_payment_label($o)) ?></span></td>
@@ -167,14 +167,14 @@ $dateStr = (function () {
       <?php if (empty($lowStock)): ?>
         <p class="dash-allgood">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>
-          Alles gut — keine niedrigen Bestände.
+          Alles gut - keine niedrigen Bestände.
         </p>
       <?php else: ?>
         <ul class="dash-low">
           <?php foreach ($lowStock as $ls): $avail = max(0, $ls['stock'] - $ls['reserved']); ?>
           <li>
             <a href="<?= url('/admin/lager-edit.php?id=' . (int)$ls['id']) ?>">
-              <span class="dash-low-name"><?= h($ls['product_name']) ?><?= $ls['size'] ? ' · ' . h($ls['size']) : '' ?></span>
+              <span class="dash-low-name"><?= h($ls['product_name']) ?><?= $ls['size'] ? ' - ' . h($ls['size']) : '' ?></span>
               <span class="tag <?= $avail <= 0 ? 'tag-off' : 'tag-warn' ?>"><?= $avail ?> Stk.</span>
             </a>
           </li>

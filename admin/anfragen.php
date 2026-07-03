@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'account_id' => (int)$req['account_id'],
                 'sender_role' => 'system',
                 'subject' => 'Rückmeldung zu deiner Anfrage',
-                'body' => $note !== '' ? $note : 'Leider können wir diese Anfrage diesmal nicht erfüllen. Danke für dein Verständnis – schau gerne wieder bei uns vorbei!',
+                'body' => $note !== '' ? $note : 'Leider können wir diese Anfrage diesmal nicht erfüllen. Danke für dein Verständnis - schau gerne wieder bei uns vorbei!',
                 'is_read' => 0,
             ]);
         }

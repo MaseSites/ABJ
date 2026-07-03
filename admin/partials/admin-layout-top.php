@@ -1,6 +1,6 @@
 <?php
 require_admin();
-$adminPageTitle = isset($adminTitle) ? $adminTitle . ' – Admin' : 'Admin – ABJ Store';
+$adminPageTitle = isset($adminTitle) ? $adminTitle . ' - Admin' : 'Admin - ABJ Store';
 $_cur = strtolower(basename($_SERVER['PHP_SELF'], '.php'));
 
 // Badges

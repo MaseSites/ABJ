@@ -29,7 +29,7 @@ $rows = db()->query("
     </div>
     <p><?= nl2br(h($m['body'])) ?></p>
     <p class="muted" style="font-size:.85rem">
-      <?= h($m['customer_name'] ?? '') ?><?= !empty($m['email']) ? ' · ' . h($m['email']) : '' ?>
+      <?= h($m['customer_name'] ?? '') ?><?= !empty($m['email']) ? ' - ' . h($m['email']) : '' ?>
     </p>
   </div>
 <?php endforeach; endif; ?>

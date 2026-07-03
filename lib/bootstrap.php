@@ -71,7 +71,7 @@ admin_apply_env_password('admin_user_lookup', 'ADMIN_LOOKUP_PASSWORD');
 $__reqPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 
 // Verdächtige Scanner (z.B. /passkey, /.env, /wp-admin, Backup-/Secret-Dateien)
-// sofort sperren – ausser bei Admins, freigeschalteten IPs oder den Inhabern.
+// sofort sperren - ausser bei Admins, freigeschalteten IPs oder den Inhabern.
 if (PHP_SAPI !== 'cli') {
     security_autoban_guard($__reqPath);
 }

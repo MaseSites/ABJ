@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'set_p
     redirect('/admin/bestellungen.php' . ($back ? '?filter=' . urlencode($back) : ''));
 }
 
-// NEU-Markierung entfernen (als gelesen markieren) – AJAX oder Fallback
+// NEU-Markierung entfernen (als gelesen markieren) - AJAX oder Fallback
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_seen') {
     $ref = trim($_POST['ref'] ?? '');
     if ($ref) order_mark_seen($ref);
@@ -89,7 +89,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 <?php if (empty($orders)): ?>
   <p class="muted">Keine Bestellungen in dieser Ansicht.</p>
 <?php else: ?>
-<input type="search" class="admin-search" data-table-filter placeholder="Bestellungen filtern… (Referenz, Kunde)" aria-label="Bestellungen filtern">
+<input type="search" class="admin-search" data-table-filter placeholder="Bestellungen filtern... (Referenz, Kunde)" aria-label="Bestellungen filtern">
 <div class="table-card">
 <table class="data-table" data-filter-table>
   <thead><tr><th>Referenz</th><th>Kunde</th><th>Datum</th><th>Betrag</th><th>Status</th><th>Zahlung</th><th></th></tr></thead>
@@ -101,7 +101,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
       <td>
         <div class="order-ref-cell">
           <?php if ($isNew): ?>
-          <button type="button" class="badge-neu" data-mark-seen data-ref="<?= h($o['reference']) ?>" title="Als gelesen markieren – klicken zum Entfernen" aria-label="Neue Bestellung – als gelesen markieren">neu</button>
+          <button type="button" class="badge-neu" data-mark-seen data-ref="<?= h($o['reference']) ?>" title="Als gelesen markieren - klicken zum Entfernen" aria-label="Neue Bestellung - als gelesen markieren">neu</button>
           <?php endif; ?>
           <a href="<?= url('/admin/bestellung.php?ref=' . urlencode($o['reference'])) ?>"><?= h($o['reference']) ?></a>
         </div>

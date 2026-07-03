@@ -1,5 +1,5 @@
 /**
- * Test-Setup – wird VOR allen Tests ausgeführt.
+ * Test-Setup - wird VOR allen Tests ausgeführt.
  *
  * Ziele:
  * - Isolierte In-Memory-SQLite-DB für Tests (keine Live-DB-Pollution)

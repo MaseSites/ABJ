@@ -60,7 +60,7 @@ test('Admin-API ohne Login ist gesperrt', async () => {
 });
 
 test('Admin-Dashboard ohne Login ist gesperrt', async () => {
-  // Auch nach dem Gate – ohne Admin-Login kein /admin
+  // Auch nach dem Gate - ohne Admin-Login kein /admin
   const agent = request.agent(app);
   await gateSession(agent);
   const res = await agent.get('/admin');
@@ -102,7 +102,7 @@ test('Rechtsseiten sind erst nach Gate erreichbar', async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Shop – nach Gate
+// Shop - nach Gate
 // ---------------------------------------------------------------------------
 
 test('Startseite lädt nach Gate', async () => {
@@ -159,7 +159,7 @@ test('404 für nicht existierende Seite', async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Warenkorb – Bestandsprüfung
+// Warenkorb - Bestandsprüfung
 // ---------------------------------------------------------------------------
 
 test('Produkt mit Bestand 0 kann nicht in Warenkorb gelegt werden (AJAX)', async () => {
@@ -232,7 +232,7 @@ test('Gleiche Grösse zählt als ein Cart-Item', async () => {
   assert.equal(mItems[0].qty, 4);
 });
 
-// Diesen Test überspringen – er nutzt denselben Agent wie Test 20
+// Diesen Test überspringen - er nutzt denselben Agent wie Test 20
 // und supertest.agent verliert die Session zwischen separaten Tests.
 // Die Logik ist durch den Inventory-Model-Unit-Test und Test 20 abgedeckt.
 test('Verschiedene Grössen: Inventory-Modell gibt korrekte Bestände', () => {
@@ -246,7 +246,7 @@ test('Verschiedene Grössen: Inventory-Modell gibt korrekte Bestände', () => {
   // M und L sind getrennte Varianten
   assert.equal(inventory.stockForVariant(p2.id, 'M', ''), 8);
   assert.equal(inventory.stockForVariant(p2.id, 'L', ''), 4);
-  // Kein Mischen – L-Bestand ändert M nicht
+  // Kein Mischen - L-Bestand ändert M nicht
   assert.equal(inventory.stockForVariant(p2.id, 'M', ''), 8);
   // validateCart prüft je Variante getrennt
   const issues = inventory.validateCart([
@@ -280,7 +280,7 @@ test('Checkout leitet zu Warenkorb wenn leer', async () => {
   await gateSession(agent);
   const res = await agent.get('/kasse');
   assert.equal(res.status, 302, 'Leerer Warenkorb soll weiterleiten');
-  // Kann auf /warenkorb oder zurück auf /gate weiterleiten – Hauptsache kein 200
+  // Kann auf /warenkorb oder zurück auf /gate weiterleiten - Hauptsache kein 200
   assert.ok(['/warenkorb', '/gate'].includes(res.headers.location),
     `Redirect zu ${res.headers.location} erwartet`);
 });
@@ -309,7 +309,7 @@ test('Bestand-API liefert Daten nach Gate', async () => {
   // Wenn 302 -> Gate-Session verloren, das bedeutet die Route ist ordnungsgemäß geschützt.
   // Bei 200 prüfen wir die Daten.
   if (res.status === 302) {
-    // Route ist hinter Gate – OK, kein Fehler, Gate-Session lief ab
+    // Route ist hinter Gate - OK, kein Fehler, Gate-Session lief ab
     assert.equal(res.headers.location, '/gate');
   } else {
     assert.equal(res.status, 200);

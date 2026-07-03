@@ -21,7 +21,7 @@
     if (ok(btn)) return;
     btn.disabled = true;
     btn.classList.add('is-locked');
-    if (!btn.title) btn.title = 'Keine Berechtigung – nur Lesezugriff';
+    if (!btn.title) btn.title = 'Keine Berechtigung - nur Lesezugriff';
   });
 })();
 </script>

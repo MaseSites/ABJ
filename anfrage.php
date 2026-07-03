@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $account = account_by_id((int)$cust['id']);
         $addr    = account_address($account);
         $title   = $desc !== '' ? $desc : 'Produktanfrage (Screenshot)';
-        if ($link !== '') $title .= ' — ' . $link;
+        if ($link !== '') $title .= ' - ' . $link;
 
         $item = [
             'name'      => mb_substr($title, 0, 300),
@@ -68,7 +68,7 @@ include __DIR__ . '/partials/header.php';
     <span class="section-title-label">Nichts gefunden?</span>
     <h1 class="section-title" style="margin-bottom:.4rem">Produkt anfragen</h1>
     <p class="muted" style="margin:0;max-width:520px">
-      Sag uns, welches Produkt du suchst — beschreibe es oder lade einen Screenshot hoch.
+      Sag uns, welches Produkt du suchst - beschreibe es oder lade einen Screenshot hoch.
       Wir prüfen die Verfügbarkeit, setzen den Preis und du siehst die Anfrage in deinem
       <a href="<?= url('/konto.php?tab=orders') ?>" style="color:var(--accent-3)">Profil</a>.
     </p>
@@ -84,7 +84,7 @@ include __DIR__ . '/partials/header.php';
 
     <label class="field">
       <span>Link <small class="muted">(optional)</small></span>
-      <input type="url" name="link" maxlength="400" placeholder="https://… (Online-Shop, Insta, …)" value="<?= h($_POST['link'] ?? '') ?>">
+      <input type="url" name="link" maxlength="400" placeholder="https://... (Online-Shop, Insta, ...)" value="<?= h($_POST['link'] ?? '') ?>">
     </label>
 
     <div class="field">
@@ -94,14 +94,14 @@ include __DIR__ . '/partials/header.php';
         <div class="anfrage-drop-inner" data-drop-inner>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="30" height="30"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/><path d="M12 3v13M7 8l5-5 5 5"/></svg>
           <span><strong>Bild auswählen</strong> oder hierher ziehen</span>
-          <small class="muted">JPG, PNG, WEBP · max. 6 MB</small>
+          <small class="muted">JPG, PNG, WEBP - max. 6 MB</small>
         </div>
         <img class="anfrage-preview" data-preview hidden alt="Vorschau">
       </label>
     </div>
 
     <button class="btn btn-primary btn-block" type="submit">Anfrage absenden</button>
-    <p class="muted" style="font-size:.8rem;text-align:center;margin:.2rem 0 0">Unverbindlich · kostenlos · du entscheidest später, ob du bestellst.</p>
+    <p class="muted" style="font-size:.8rem;text-align:center;margin:.2rem 0 0">Unverbindlich - kostenlos - du entscheidest später, ob du bestellst.</p>
   </form>
 </main>
 

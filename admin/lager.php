@@ -51,7 +51,7 @@ foreach ($inventory as $row) {
 <?php if (empty($groups)): ?>
   <p class="muted">Noch keine Produkte angelegt.</p>
 <?php else: ?>
-<input type="search" class="admin-search" data-lager-filter placeholder="Lager filtern… (Produkt)" aria-label="Lager filtern">
+<input type="search" class="admin-search" data-lager-filter placeholder="Lager filtern... (Produkt)" aria-label="Lager filtern">
 
 <div class="lager-list">
   <?php foreach ($groups as $pid => $g):
@@ -88,7 +88,7 @@ foreach ($inventory as $row) {
         ?>
         <tr class="<?= $row['is_out'] ? 'row-danger' : ($row['is_low'] ? 'row-warn' : '') ?>" data-stock-row data-id="<?= (int)$row['id'] ?>">
           <td><?= h($row['size'] ?: 'Standard') ?></td>
-          <td class="muted"><?= h($row['sku'] ?: '—') ?></td>
+          <td class="muted"><?= h($row['sku'] ?: '-') ?></td>
           <td>
             <div class="stock-stepper" data-stock-stepper>
               <button type="button" class="qty-btn" data-stock-minus aria-label="Bestand verringern">&minus;</button>

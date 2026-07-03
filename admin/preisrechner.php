@@ -38,7 +38,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
   Gib <strong>Preis (USD)</strong> und <strong>Gewicht (Gramm)</strong> ein. Daraus werden
   <strong>Verkaufspreis</strong> und <strong>Minimumpreis</strong> berechnet:
   <br><code style="color:#9aa6cf">Kosten = (Preis × <?= h(pr_num($rate)) ?>) + (Gewicht/1000 × <?= h(pr_num($shipKg)) ?> × <?= h(pr_num($rate)) ?>) + <?= h(pr_num($flat)) ?></code>
-  <br><code style="color:#9aa6cf">VK = Kosten × <?= h(pr_num($vkFactor)) ?>&nbsp;&nbsp;·&nbsp;&nbsp;Minimum = Kosten × <?= h(pr_num($minFactor)) ?></code>
+  <br><code style="color:#9aa6cf">VK = Kosten × <?= h(pr_num($vkFactor)) ?>&nbsp;&nbsp;-&nbsp;&nbsp;Minimum = Kosten × <?= h(pr_num($minFactor)) ?></code>
 </p>
 
 <div class="calc-grid" data-calc>
@@ -77,21 +77,21 @@ include __DIR__ . '/partials/admin-layout-top.php';
     <div class="calc-two">
       <div class="calc-out calc-out-vk">
         <span class="calc-out-label">Verkaufspreis</span>
-        <span class="calc-out-value" data-out-vk>—</span>
-        <span class="calc-out-sub">gerundet: <strong data-out-vk-round>—</strong></span>
+        <span class="calc-out-value" data-out-vk>-</span>
+        <span class="calc-out-sub">gerundet: <strong data-out-vk-round>-</strong></span>
       </div>
       <div class="calc-out calc-out-min">
         <span class="calc-out-label">Minimumpreis</span>
-        <span class="calc-out-value" data-out-min>—</span>
-        <span class="calc-out-sub">gerundet: <strong data-out-min-round>—</strong></span>
+        <span class="calc-out-value" data-out-min>-</span>
+        <span class="calc-out-sub">gerundet: <strong data-out-min-round>-</strong></span>
       </div>
     </div>
 
     <div class="calc-lines" style="margin-top:1.3rem">
-      <div class="calc-line"><span>Warenwert (Preis × Kurs)</span><strong data-out-goods>—</strong></div>
-      <div class="calc-line"><span>Versand</span><strong data-out-ship>—</strong></div>
-      <div class="calc-line"><span>Pauschale</span><strong data-out-flat>—</strong></div>
-      <div class="calc-line calc-line-total"><span>= Kosten</span><strong data-out-cost>—</strong></div>
+      <div class="calc-line"><span>Warenwert (Preis × Kurs)</span><strong data-out-goods>-</strong></div>
+      <div class="calc-line"><span>Versand</span><strong data-out-ship>-</strong></div>
+      <div class="calc-line"><span>Pauschale</span><strong data-out-flat>-</strong></div>
+      <div class="calc-line calc-line-total"><span>= Kosten</span><strong data-out-cost>-</strong></div>
     </div>
   </div>
 </div>

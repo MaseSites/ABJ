@@ -10,7 +10,7 @@ $heroSubtitle = setting_get('hero_subtitle') ?: 'Kuratierte, authentifizierte Pi
 $membersCount = (int)(setting_get('members_count') ?: 20000);
 $ratingsCount = (int)(setting_get('ratings_count') ?: 1000);
 
-// Bestseller – Fallback auf neueste Produkte, damit die Startseite nie leer ist
+// Bestseller - Fallback auf neueste Produkte, damit die Startseite nie leer ist
 $featured = products_bestsellers(8);
 if (count($featured) < 4) {
     $featured = array_slice(products_list_public(), 0, 8);
@@ -19,7 +19,7 @@ $featured = array_slice($featured, 0, 8);
 
 $categories = products_categories();
 // Kategorie-Kacheln mit Bild des neuesten Produkts der Kategorie.
-// Alle Kategorien anzeigen – der horizontale Scroller fasst beliebig viele.
+// Alle Kategorien anzeigen - der horizontale Scroller fasst beliebig viele.
 $catTiles = [];
 foreach ($categories as $c) {
     $ps = products_list_public($c);
@@ -36,7 +36,7 @@ $REVIEWS = [
 ];
 $FAQ = [
     ['q' => 'Sind alle Artikel authentisch?', 'a' => 'Ja. Jedes Piece wird vor dem Verkauf von uns geprüft und authentifiziert. Wir verkaufen ausschliesslich Originalware.'],
-    ['q' => 'Wie lange dauert der Versand?', 'a' => 'Innerhalb der Schweiz 2–4 Werktage, international 5–10 Werktage. Du erhältst eine Versandbestätigung per E-Mail.'],
+    ['q' => 'Wie lange dauert der Versand?', 'a' => 'Innerhalb der Schweiz 2-4 Werktage, international 5-10 Werktage. Du erhältst eine Versandbestätigung per E-Mail.'],
     ['q' => 'Kann ich Artikel zurückgeben?', 'a' => 'Ja, du hast 14 Tage Rückgaberecht ab Erhalt der Ware. Die Artikel müssen ungetragen und im Originalzustand sein.'],
     ['q' => 'Welche Zahlungsmethoden gibt es?', 'a' => 'Kredit-/Debitkarte (Visa, Mastercard, Amex) sowie Banküberweisung (Vorkasse).'],
 ];
@@ -71,7 +71,7 @@ include __DIR__ . '/partials/header.php';
           </div>
           <div class="hero-rating">
             <span class="stars" aria-hidden="true">★★★★★</span>
-            <span><?= number_format($ratingsCount, 0, '.', '\'') ?>+ Bewertungen · <?= number_format($membersCount, 0, '.', '\'') ?>+ Kunden</span>
+            <span><?= number_format($ratingsCount, 0, '.', '\'') ?>+ Bewertungen - <?= number_format($membersCount, 0, '.', '\'') ?>+ Kunden</span>
           </div>
         </div>
 
@@ -99,28 +99,6 @@ include __DIR__ . '/partials/header.php';
       <?php endforeach; endfor; ?>
     </div>
   </section>
-
-  <!-- Trust / USP -->
-  <div class="container">
-    <div class="trust-strip">
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-        <div><strong>Authentizität geprüft</strong><span>Jedes Piece wird vor dem Versand verifiziert.</span></div>
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="6" width="15" height="12" rx="2"/><path d="M16 10h4l3 3v5h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="19" cy="18" r="2"/></svg>
-        <div><strong>Versicherter Versand</strong><span>Schnell &amp; sicher — in der Schweiz und international.</span></div>
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-        <div><strong>14 Tage Rückgabe</strong><span>Unkompliziert zurückgeben, wenn etwas nicht passt.</span></div>
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <div><strong>Sichere Zahlung</strong><span>SSL-verschlüsselt — Karte oder Überweisung.</span></div>
-      </div>
-    </div>
-  </div>
 
   <?php if (!empty($catTiles)): ?>
   <!-- Kategorien -->

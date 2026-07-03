@@ -31,7 +31,7 @@ if (!function_exists('gate_block_and_exit')) {
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (isset($_POST['beleg'])) {
-        // Stufe 1 – Code muss existieren (frei ODER bereits vergeben).
+        // Stufe 1 - Code muss existieren (frei ODER bereits vergeben).
         $code = trim((string)$_POST['beleg']);
         $row  = code_find($code);
         if ($row === null) {
@@ -107,7 +107,7 @@ if (!headers_sent()) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Zugang · Anmeldung erforderlich</title>
+<title>Zugang - Anmeldung erforderlich</title>
 <style>
   :root { --bd:#e6e9f0; --mut:#697086; --ink:#1c2333; --pri:#3551d1; --pri-d:#2940ad; --tint:#eef1fb; --bg:#f1f3f8; }
   * { box-sizing:border-box; }
@@ -171,7 +171,7 @@ if (!headers_sent()) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="4"/><path d="M3 21c0-3.6 3-5.5 6-5.5"/><path d="M17 10.5v6M14 13.5h6"/></svg>
       </div>
       <h1>Konto erstellen</h1>
-      <p class="lead">Nur noch ein Schritt: Richte dein Konto ein, um den Zugang abzuschliessen — oder melde dich an, falls du bereits eines hast.</p>
+      <p class="lead">Nur noch ein Schritt: Richte dein Konto ein, um den Zugang abzuschliessen - oder melde dich an, falls du bereits eines hast.</p>
       <form method="post" action="" data-form="register">
         <input type="hidden" name="gate_action" value="register">
         <label>Name <span class="opt">(optional)</span></label>
@@ -230,7 +230,7 @@ if (!headers_sent()) {
       </div>
     </div>
 <?php endif; ?>
-    <p class="foot">Geschützter Zugang · Anmeldung erforderlich</p>
+    <p class="foot">Geschützter Zugang - Anmeldung erforderlich</p>
   </div>
 </body>
 </html>

@@ -1,7 +1,7 @@
 <?php
 $shopName  = setting_get('shop_name') ?: 'ABJ Store';
 $tagline   = setting_get('tagline') ?: '';
-$pageTitle = isset($pageTitle) ? $pageTitle . ' – ' . $shopName : $shopName . ($tagline ? ' – ' . $tagline : '');
+$pageTitle = isset($pageTitle) ? $pageTitle . ' - ' . $shopName : $shopName . ($tagline ? ' - ' . $tagline : '');
 ?>
 <!DOCTYPE html>
 <html lang="de" data-base-path="<?= h(base_path()) ?>">

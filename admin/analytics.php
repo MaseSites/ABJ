@@ -86,7 +86,7 @@ function chart_bars(array $series, int $maxVal, string $key, int $W, int $H, int
         $x = $pad + $i * $gap + ($gap - $bw) / 2;
         $y = $H - $pad - $hgt;
         $day = (new DateTime())->modify('-' . ($d['dayOffset'] ?? ($n - 1 - $i)) . ' days');
-        $title = $day->format('d.m.') . ' · ' . ($isMoney ? 'CHF ' . number_format($val / 100, 2) : $val . ' Bestellungen');
+        $title = $day->format('d.m.') . ' - ' . ($isMoney ? 'CHF ' . number_format($val / 100, 2) : $val . ' Bestellungen');
         $out .= '<g><title>' . h($title) . '</title>';
         $out .= '<rect x="' . round($x, 1) . '" y="' . round($y, 1) . '" width="' . round($bw, 1) . '" height="' . $hgt . '" rx="3" class="bar"/>';
         if ($i % $labelEvery === 0) {
@@ -140,17 +140,17 @@ $maxWd  = max(1, ...array_values($weekday));
 <!-- 3 Hero-Kacheln (wichtigste KPIs) -->
 <div class="hero-stat-grid">
   <div class="hero-stat">
-    <span class="hero-stat-label">Umsatz · <?= $days ?> Tage</span>
+    <span class="hero-stat-label">Umsatz - <?= $days ?> Tage</span>
     <span class="hero-stat-num"><?= format_price($revPeriod, $currency) ?></span>
     <span class="hero-stat-sub">Gesamt bezahlt: <?= format_price($revTotal, $currency) ?></span>
   </div>
   <div class="hero-stat">
-    <span class="hero-stat-label">Bestellungen · <?= $days ?> Tage</span>
+    <span class="hero-stat-label">Bestellungen - <?= $days ?> Tage</span>
     <span class="hero-stat-num"><?= $ordPeriod ?></span>
     <span class="hero-stat-sub">Ø <?= $avgItems ?> Artikel pro Bestellung</span>
   </div>
   <div class="hero-stat">
-    <span class="hero-stat-label">Ø Bestellwert · <?= $days ?> Tage</span>
+    <span class="hero-stat-label">Ø Bestellwert - <?= $days ?> Tage</span>
     <span class="hero-stat-num"><?= format_price($avgPeriod, $currency) ?></span>
     <span class="hero-stat-sub"><?= count($emailCounts) ?> Kunden gesamt</span>
   </div>
@@ -299,7 +299,7 @@ $maxWd  = max(1, ...array_values($weekday));
     <div class="hbar-list">
       <?php foreach ($topProducts as $tp): ?>
       <div class="hbar-row">
-        <div class="hbar-meta"><span><?= h($tp['name']) ?></span><strong><?= (int)$tp['qty'] ?>× · <?= format_price((int)$tp['revenue'], $currency) ?></strong></div>
+        <div class="hbar-meta"><span><?= h($tp['name']) ?></span><strong><?= (int)$tp['qty'] ?>× - <?= format_price((int)$tp['revenue'], $currency) ?></strong></div>
         <div class="hbar-track"><div class="hbar-fill" style="width:<?= round($tp['qty'] / $maxQty * 100, 1) ?>%"></div></div>
       </div>
       <?php endforeach; ?>
@@ -335,7 +335,7 @@ function vis_when(string $ts): string {
 
 <div class="stat-grid stat-grid-4" style="margin-bottom:1.2rem">
   <div class="stat-card"><span class="stat-num"><?= count($ipSummary) ?></span><span class="stat-label">Eindeutige IPs (Log)</span></div>
-  <div class="stat-card"><span class="stat-num"><?= (int)db()->query("SELECT COUNT(*) n FROM visits WHERE created_at >= datetime('now','-1 day')")->fetch()['n'] ?></span><span class="stat-label">Aufrufe · 24 h</span></div>
+  <div class="stat-card"><span class="stat-num"><?= (int)db()->query("SELECT COUNT(*) n FROM visits WHERE created_at >= datetime('now','-1 day')")->fetch()['n'] ?></span><span class="stat-label">Aufrufe - 24 h</span></div>
   <div class="stat-card"><span class="stat-num"><?= (int)db()->query("SELECT COUNT(*) n FROM visits")->fetch()['n'] ?></span><span class="stat-label">Aufrufe gesamt</span></div>
   <div class="stat-card"><span class="stat-num" style="font-size:1rem;word-break:break-all"><?= h($myIp) ?></span><span class="stat-label">Deine IP</span></div>
 </div>
@@ -347,7 +347,7 @@ function vis_when(string $ts): string {
     <p class="muted">Noch keine erfassten Besuche.</p>
   <?php else: ?>
   <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">IP-Adressen sperren oder freischalten kannst du unter <a href="<?= url('/admin/sicherheit.php') ?>" style="color:#7e8bb8">Sicherheit</a>.</p>
-  <input type="search" class="admin-search" data-table-filter placeholder="IP filtern…" aria-label="IP filtern">
+  <input type="search" class="admin-search" data-table-filter placeholder="IP filtern..." aria-label="IP filtern">
   <div class="table-card">
   <table class="data-table" data-filter-table>
     <thead><tr><th>IP-Adresse</th><th>Nutzer</th><th>Aufrufe</th><th>Zuletzt</th><th>Letzte Seite</th></tr></thead>

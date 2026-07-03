@@ -1,4 +1,4 @@
-// ABJ Store – Shop-Frontend. Keine Inline-Skripte (CSP-konform).
+// ABJ Store - Shop-Frontend. Keine Inline-Skripte (CSP-konform).
 (function () {
   'use strict';
 
@@ -131,7 +131,7 @@
         hiddenSize.value = variant ? (variant.key || variant.size || variant.title || '') : '';
       }
 
-      // Bestes Match für die aktuelle (ggf. unvollständige) Auswahl – damit
+      // Bestes Match für die aktuelle (ggf. unvollständige) Auswahl - damit
       // z.B. nach der Farbwahl schon das passende Bild erscheint.
       function findVariantForImage() {
         const full = findVariantBySelection();
@@ -243,7 +243,7 @@
         '<div class="drawer-item-info">' +
           '<a href="' + it.url + '">' + esc(it.name) + '</a>' +
           (it.size ? '<span class="muted">Größe: ' + esc(it.sizeLabel || it.size) + '</span>' : '') +
-          '<span class="muted">' + it.qty + '× · ' + it.lineText + '</span>' +
+          '<span class="muted">' + it.qty + '× - ' + it.lineText + '</span>' +
         '</div>' +
         '<button class="drawer-remove" data-drawer-remove data-id="' + it.productId + '" data-size="' + esc(it.size || '') + '" aria-label="Entfernen" title="Entfernen">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M6 6l12 12M18 6 6 18"/></svg>' +
@@ -293,7 +293,7 @@
   }
 
   // Quick-Add auf Karten. Ein gemeinsamer Handler + Event-Delegation, damit
-  // ALLE Karten funktionieren – auch dynamisch nachgeladene (z. B. „zuletzt
+  // ALLE Karten funktionieren - auch dynamisch nachgeladene (z. B. „zuletzt
   // angesehen") und ohne doppelte/fehlende Bindungen.
   function quickAdd(btn) {
     if (!btn) return;
@@ -417,11 +417,11 @@
       loadCatalog().then((items) => {
         const hits = items.filter((p) => (p.name + ' ' + p.category + ' ' + (p.tags || '')).toLowerCase().includes(q)).slice(0, 6);
         searchResults.innerHTML = hits.length
-          ? hits.map((p) => '<a class="search-hit" href="' + p.url + '"><img src="' + (p.image || fallbackImg(p.name)) + '" alt=""><span><strong>' + esc(p.name) + '</strong><small>' + esc(p.category) + ' · ' + p.priceText + '</small></span></a>').join('')
+          ? hits.map((p) => '<a class="search-hit" href="' + p.url + '"><img src="' + (p.image || fallbackImg(p.name)) + '" alt=""><span><strong>' + esc(p.name) + '</strong><small>' + esc(p.category) + ' - ' + p.priceText + '</small></span></a>').join('')
           : '<div class="search-none">'
             + '<div class="search-none-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M11 8v3M11 14h.01"/></svg></div>'
             + '<p class="search-none-title">Nichts gefunden für „' + esc(q) + '"</p>'
-            + '<p class="search-none-sub">Kein Problem — sag uns, was du suchst, und wir schauen, ob wir es besorgen können.</p>'
+            + '<p class="search-none-sub">Kein Problem - sag uns, was du suchst, und wir schauen, ob wir es besorgen können.</p>'
             + '<a class="btn btn-primary btn-block search-none-btn" href="' + BASE_PATH + '/anfrage.php"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Produkt anfragen</a>'
             + '</div>';
       });
@@ -654,7 +654,7 @@
   }
 
   // Buttons in dynamisch gerenderten Karten verdrahten.
-  // Quick-Add läuft über den globalen delegierten Handler (siehe oben) – hier
+  // Quick-Add läuft über den globalen delegierten Handler (siehe oben) - hier
   // nur noch die Wunschlisten-Buttons verdrahten.
   function wireCardButtons(container) {
     $$('[data-wish]', container).forEach((btn) => {

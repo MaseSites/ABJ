@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ABJ Store – Datenbank-Migration
+ * ABJ Store - Datenbank-Migration
  * Ausführen: node scripts/migrate.js
  */
 
@@ -23,7 +23,7 @@ function run(sql, label) {
     db.exec(sql);
     if (label) console.log('  ✓', label);
   } catch (e) {
-    if (label) console.log('  – ', label, '(übersprungen:', e.message, ')');
+    if (label) console.log('  - ', label, '(übersprungen:', e.message, ')');
   }
 }
 

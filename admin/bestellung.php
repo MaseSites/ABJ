@@ -111,7 +111,7 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
 </div>
 <?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
 <?php if (!empty($_GET['merged'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Bestellungen wurden zusammengeführt.</div><?php endif; ?>
-<?php if (!empty($_GET['merge_failed'])): ?><div class="alert alert-error" style="margin-bottom:1rem">Zusammenführen nicht möglich – die ausgewählte Bestellung gehört zu einer anderen E-Mail oder wurde bereits zusammengeführt.</div><?php endif; ?>
+<?php if (!empty($_GET['merge_failed'])): ?><div class="alert alert-error" style="margin-bottom:1rem">Zusammenführen nicht möglich - die ausgewählte Bestellung gehört zu einer anderen E-Mail oder wurde bereits zusammengeführt.</div><?php endif; ?>
 
 <div class="admin-form" style="max-width:700px">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem">
@@ -149,12 +149,12 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
         <td style="width:64px">
           <?php if (!empty($itemImg)): ?>
             <a href="<?= h($itemImg) ?>" target="_blank" rel="noopener"><img src="<?= h($itemImg) ?>" alt="" style="width:54px;height:54px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.1)"></a>
-          <?php else: ?>—<?php endif; ?>
+          <?php else: ?>-<?php endif; ?>
         </td>
         <td><?= h($item['name']) ?></td>
-        <td><?= h($item['size'] ?: '—') ?></td>
+        <td><?= h($item['size'] ?: '-') ?></td>
         <td><?= (int)$item['qty'] ?></td>
-        <td><?= (int)$item['lineCents'] > 0 ? format_price((int)$item['lineCents'], $currency) : '—' ?></td>
+        <td><?= (int)$item['lineCents'] > 0 ? format_price((int)$item['lineCents'], $currency) : '-' ?></td>
       </tr>
       <?php endforeach; ?>
     </tbody>
@@ -201,7 +201,7 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
   ?>
   <p><strong>Versand:</strong> <?= format_price((int)$order['shipping_cents'], $currency) ?></p>
   <p><strong>Gesamt:</strong> <?= (int)$order['total_cents'] > 0 ? format_price((int)$order['total_cents'], $currency) : '<span class="muted">noch offen</span>' ?></p>
-  <p><strong>Bereits bezahlt:</strong> <?= format_price($paidCents, $currency) ?><?php if ($dueCents > 0 && (int)$order['total_cents'] > 0): ?> &nbsp;·&nbsp; <strong>Noch offen:</strong> <span style="color:#e3c07a"><?= format_price($dueCents, $currency) ?></span><?php endif; ?></p>
+  <p><strong>Bereits bezahlt:</strong> <?= format_price($paidCents, $currency) ?><?php if ($dueCents > 0 && (int)$order['total_cents'] > 0): ?> &nbsp;-&nbsp; <strong>Noch offen:</strong> <span style="color:#e3c07a"><?= format_price($dueCents, $currency) ?></span><?php endif; ?></p>
   <p><strong>Zahlung:</strong> <span class="tag <?= order_payment_class($order) ?>"><?= h(order_payment_label($order)) ?></span></p>
 
   <div class="admin-section" style="margin-bottom:1.5rem">
@@ -248,7 +248,7 @@ $otherOrders = array_values(array_filter(orders_by_email($order['email'] ?? ''),
       <span>Mit anderer Bestellung zusammenführen</span>
       <select name="source_ref">
         <?php foreach ($otherOrders as $o): ?>
-          <option value="<?= h($o['reference']) ?>"><?= h($o['reference']) ?> · <?= h(substr($o['created_at'], 0, 16)) ?> · <?= format_price((int)$o['total_cents'], $currency) ?></option>
+          <option value="<?= h($o['reference']) ?>"><?= h($o['reference']) ?> - <?= h(substr($o['created_at'], 0, 16)) ?> - <?= format_price((int)$o['total_cents'], $currency) ?></option>
         <?php endforeach; ?>
       </select>
     </label>

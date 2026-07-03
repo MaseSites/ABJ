@@ -59,7 +59,7 @@ include __DIR__ . '/partials/header.php';
       <label class="field"><span>Aktivierungscode <small class="muted">(Promo-Code)</small></span>
         <input type="text" name="promo" value="<?= h($_GET['promo'] ?? '') ?>" maxlength="20" autocomplete="off" placeholder="Dein Aktivierungscode" style="letter-spacing:.06em">
       </label>
-      <p class="muted" style="font-size:.82rem;margin:-.4rem 0 .2rem">Ohne gültigen Code wird dein Konto <strong>eingeschränkt</strong> angelegt. Du kannst bestellen, aber deine Bestellungen werden erst nach der Aktivierung bearbeitet – den Code kannst du jederzeit oben über „Konto aktivieren" nachtragen.</p>
+      <p class="muted" style="font-size:.82rem;margin:-.4rem 0 .2rem">Ohne gültigen Code wird dein Konto <strong>eingeschränkt</strong> angelegt. Du kannst bestellen, aber deine Bestellungen werden erst nach der Aktivierung bearbeitet - den Code kannst du jederzeit oben über „Konto aktivieren" nachtragen.</p>
       <button class="btn btn-primary btn-block" type="submit">Konto erstellen</button>
     </form>
 

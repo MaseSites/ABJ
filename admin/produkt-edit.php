@@ -3,7 +3,7 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $p  = $id ? product_by_id($id) : null;
-if ($id && !$p) { http_response_code(404); echo '404 – Produkt nicht gefunden'; exit; }
+if ($id && !$p) { http_response_code(404); echo '404 - Produkt nicht gefunden'; exit; }
 
 $isNew = !$p;
 $adminTitle = $isNew ? 'Neues Produkt' : ($p['name'] ?? 'Produkt bearbeiten');
@@ -61,7 +61,7 @@ $invRows          = $id ? inv_by_product($id) : [];
 $optionGroups     = pe_build_option_groups($p ?? [], $invRows);
 $existingVariants = pe_build_variants($invRows);
 // Neue Produkte starten einfach (ein Gesamtbestand). Varianten nur, wenn das
-// Produkt bereits welche hat – so entstehen keine versehentlichen 0-Bestände.
+// Produkt bereits welche hat - so entstehen keine versehentlichen 0-Bestände.
 $hasVariants      = $isNew ? false
     : (count($invRows) > 1
        || (count($invRows) === 1 && ($invRows[0]['size'] || $invRows[0]['color'])));
@@ -122,7 +122,7 @@ $currency   = setting_get('currency') ?: 'CHF';
         <label class="field span-2">
           <span>Beschreibung</span>
           <textarea name="description" rows="4" maxlength="8000"
-                    placeholder="Produktbeschreibung…"><?= h($p['description'] ?? '') ?></textarea>
+                    placeholder="Produktbeschreibung..."><?= h($p['description'] ?? '') ?></textarea>
         </label>
 
         <label class="field span-2">
@@ -182,7 +182,7 @@ $currency   = setting_get('currency') ?: 'CHF';
           </div>
           <div class="vb-chips" id="vb-sizes"></div>
           <div class="vb-add-row">
-            <input type="text" id="vb-size-input" placeholder="Größe eingeben…" maxlength="40">
+            <input type="text" id="vb-size-input" placeholder="Größe eingeben..." maxlength="40">
             <button type="button" class="btn btn-ghost btn-sm" data-vb-add-size>Hinzufügen</button>
           </div>
           <div class="vb-quick">
@@ -211,7 +211,7 @@ $currency   = setting_get('currency') ?: 'CHF';
       <span class="step-num">3</span>
       <div>
         <h2>Bilder</h2>
-        <p>Bis zu 8 Bilder — das erste wird als Hauptbild angezeigt</p>
+        <p>Bis zu 8 Bilder - das erste wird als Hauptbild angezeigt</p>
       </div>
     </div>
     <div class="form-step">
@@ -219,7 +219,7 @@ $currency   = setting_get('currency') ?: 'CHF';
       <p class="img-hint muted">Das erste Bild ist das Hauptbild. Reihenfolge mit den Pfeilen ändern, × entfernt ein Bild.</p>
       <div class="image-input-grid">
         <label class="field">
-          <span>Bilder hochladen <small class="muted">(JPG, PNG, WEBP – max. 5 MB)</small></span>
+          <span>Bilder hochladen <small class="muted">(JPG, PNG, WEBP - max. 5 MB)</small></span>
           <input type="file" name="images" accept="image/*" multiple data-file-input>
         </label>
         <label class="field">

@@ -4,7 +4,7 @@ require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    // Lookup-Konto darf NUR Zugangscodes generieren – alles andere ist Root.
+    // Lookup-Konto darf NUR Zugangscodes generieren - alles andere ist Root.
     require_cap($action === 'gen_code' ? 'security.gen_code' : 'security.admin');
     if ($action === 'save_mode') {
         setting_set('security_mode', !empty($_POST['security_mode']) ? '1' : '0');
@@ -94,7 +94,7 @@ $ipUserCell = function (string $ip) use ($ipUsers): string {
   <h2>Seite als „404" tarnen</h2>
   <p style="font-size:.84rem;color:#8a8a95;margin:0 0 1rem">
     Zeigt statt des Shops eine komplett neutrale, weisse <strong>„Seite nicht gefunden"</strong>-Antwort
-    (HTTP&nbsp;404) — als gäbe es die Seite gar nicht. Kein Layout, kein Branding, keine Hinweise.
+    (HTTP&nbsp;404) - als gäbe es die Seite gar nicht. Kein Layout, kein Branding, keine Hinweise.
     <strong>Für alle:</strong> der ganze Shop ist für jeden Besucher „verschwunden".
     <strong>Nur ausgewählte:</strong> nur die unten hinterlegten IP-Adressen bzw. Konten sehen den 404,
     alle anderen den normalen Shop. Angemeldete Admins und der Admin-Bereich sind <strong>nie</strong> betroffen.
@@ -112,7 +112,7 @@ $ipUserCell = function (string $ip) use ($ipUsers): string {
     </label>
     <label class="switch-row" style="margin-bottom:.6rem">
       <input type="radio" name="notfound_mode" value="all" <?= $nfMode === 'all' ? 'checked' : '' ?>>
-      <div><strong>Für alle Besucher</strong><small>Jeder sieht einen 404 – der Shop existiert für Besucher nicht mehr.</small></div>
+      <div><strong>Für alle Besucher</strong><small>Jeder sieht einen 404 - der Shop existiert für Besucher nicht mehr.</small></div>
     </label>
     <label class="switch-row" style="margin-bottom:1rem">
       <input type="radio" name="notfound_mode" value="selected" <?= $nfMode === 'selected' ? 'checked' : '' ?>>
@@ -141,10 +141,10 @@ $ipUserCell = function (string $ip) use ($ipUsers): string {
   <p style="font-size:.82rem;color:#8a8a95;margin:0 0 1rem">
     Ein Code bringt eine Person in den Shop (Sicherheitsmodus) und ist <strong>einmal verwendbar</strong>.
     Codes erstellst <strong>du selbst</strong> oder <strong>Kunden in ihrem Profil</strong> (Promo-Code). Wer sich mit
-    dem Code eines Kunden neu registriert, wird dessen Empfehlung — der Kunde bekommt dann Promo-Punkte pro Bestellung.
+    dem Code eines Kunden neu registriert, wird dessen Empfehlung - der Kunde bekommt dann Promo-Punkte pro Bestellung.
   </p>
   <?php if (empty($codes)): ?>
-    <p class="muted">Noch keine Codes. Klicke auf „Code generieren" — oder Kunden generieren eigene.</p>
+    <p class="muted">Noch keine Codes. Klicke auf „Code generieren" - oder Kunden generieren eigene.</p>
   <?php else: ?>
   <div class="table-card"><table class="data-table">
     <thead><tr><th>Code</th><th>Erstellt von</th><th>Status</th><th>Erstellt</th><th></th></tr></thead>
@@ -234,7 +234,7 @@ $ipUserCell = function (string $ip) use ($ipUsers): string {
       <tr>
         <td data-label="IP"><strong style="font-variant-numeric:tabular-nums"><?= h($b['ip']) ?></strong></td>
         <td data-label="Nutzer"><?= $ipUserCell($b['ip']) ?></td>
-        <td data-label="Notiz" class="muted"><?= h($b['note'] ?: '–') ?></td>
+        <td data-label="Notiz" class="muted"><?= h($b['note'] ?: '-') ?></td>
         <td data-label="Seit" class="muted"><?= h(substr($b['created_at'], 0, 16)) ?></td>
         <td class="cell-actions"><form method="post"><input type="hidden" name="action" value="unblock_ip"><input type="hidden" name="ip" value="<?= h($b['ip']) ?>"><button class="btn btn-ghost btn-sm" type="submit">Entsperren</button></form></td>
       </tr>

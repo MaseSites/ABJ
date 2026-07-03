@@ -72,7 +72,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
       <label class="field">
         <span>Investiert (<?= h($currency) ?>)</span>
         <input type="text" name="invested" inputmode="decimal" value="<?= h(fin_input($investedCents)) ?>" placeholder="0.00">
-        <small style="color:#8a8a95;font-size:.75rem">Gesamtbetrag, den du in den Shop gesteckt hast (Ware, Kosten …).</small>
+        <small style="color:#8a8a95;font-size:.75rem">Gesamtbetrag, den du in den Shop gesteckt hast (Ware, Kosten ...).</small>
       </label>
       <button class="btn btn-primary" type="submit" style="align-self:flex-start">Speichern</button>
     </form>

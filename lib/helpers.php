@@ -1,6 +1,6 @@
 <?php
 /**
- * Liest eine Umgebungsvariable – zuerst aus echten Env-Variablen (getenv),
+ * Liest eine Umgebungsvariable - zuerst aus echten Env-Variablen (getenv),
  * dann aus einer optionalen .env-Datei im Projektordner. So lassen sich
  * Geheimnisse (z.B. Admin-Passwort) ausserhalb des Codes/Git ablegen.
  */
@@ -155,7 +155,7 @@ function str_has(string $haystack, string $needle): bool {
 
 /**
  * Speichert ein hochgeladenes Bild sicher in public/uploads und gibt den
- * öffentlichen Pfad (/uploads/…) zurück, oder null bei Fehler.
+ * öffentlichen Pfad (/uploads/...) zurück, oder null bei Fehler.
  */
 function save_uploaded_image(?array $file, string &$error = ''): ?string {
     if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) { $error = 'Upload fehlgeschlagen.'; return null; }
@@ -199,7 +199,7 @@ function order_is_partial(array $o): bool {
 }
 
 /**
- * Anzeige-Label für den Zahlungsstatus einer ganzen Bestellung – berücksichtigt
+ * Anzeige-Label für den Zahlungsstatus einer ganzen Bestellung - berücksichtigt
  * Teilzahlungen. „Teilzahlung offen“, sobald ein Teil bezahlt wurde.
  */
 function order_payment_label(array $o): string {

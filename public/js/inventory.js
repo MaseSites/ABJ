@@ -1,4 +1,4 @@
-// ABJ Admin – Lager-Tab (Bestandsverwaltung)
+// ABJ Admin - Lager-Tab (Bestandsverwaltung)
 // CSP-konform: kein eval, kein Inline-Script
 (function () {
   'use strict';
@@ -82,7 +82,7 @@
       if (alertEl) alertEl.hidden = true;
       if (okEl) okEl.hidden = true;
       saveBtn.disabled = true;
-      saveBtn.textContent = 'Speichern…';
+      saveBtn.textContent = 'Speichern...';
 
       const rows = Array.from(tbody.querySelectorAll('tr')).map((tr) => {
         const g = (name) => {

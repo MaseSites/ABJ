@@ -27,7 +27,7 @@ include __DIR__ . '/partials/header.php';
   <span class="section-title-label">Wir helfen gern</span>
   <h1 class="section-title">Kontakt</h1>
   <p class="muted" style="margin-bottom:1.6rem">
-    Fragen zu einer Bestellung, einem Produkt oder etwas anderem? Schreib uns — wir melden uns
+    Fragen zu einer Bestellung, einem Produkt oder etwas anderem? Schreib uns - wir melden uns
     in der Regel innerhalb von 24 Stunden.
     <?php if ($contactEmail): ?>
       <br>Direkt per E-Mail: <a href="mailto:<?= h($contactEmail) ?>" style="color:var(--accent-3)"><?= h($contactEmail) ?></a>
@@ -47,7 +47,7 @@ include __DIR__ . '/partials/header.php';
         <label class="field"><span>E-Mail *</span><input type="email" name="email" required maxlength="200" placeholder="name@beispiel.ch"></label>
       </div>
       <label class="field"><span>Betreff</span><input type="text" name="subject" maxlength="200" placeholder="Worum geht es?"></label>
-      <label class="field"><span>Nachricht *</span><textarea name="message" required minlength="5" maxlength="2000" rows="6" placeholder="Deine Nachricht…"></textarea></label>
+      <label class="field"><span>Nachricht *</span><textarea name="message" required minlength="5" maxlength="2000" rows="6" placeholder="Deine Nachricht..."></textarea></label>
       <button class="btn btn-primary" type="submit" style="align-self:flex-start">Nachricht senden</button>
     </form>
   <?php endif; ?>

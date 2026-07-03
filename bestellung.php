@@ -61,7 +61,7 @@ include __DIR__ . '/partials/header.php';
 
     <?php if ($order): ?>
       <?php if ($isAnfrage): ?>
-        <p class="muted">Wir prüfen die Verfügbarkeit und setzen den Preis. Du findest die Anfrage in deinem <a href="<?= url('/konto.php?tab=orders') ?>" style="color:var(--accent-3)">Profil</a> — sobald der Preis steht, kannst du bestellen.</p>
+        <p class="muted">Wir prüfen die Verfügbarkeit und setzen den Preis. Du findest die Anfrage in deinem <a href="<?= url('/konto.php?tab=orders') ?>" style="color:var(--accent-3)">Profil</a> - sobald der Preis steht, kannst du bestellen.</p>
       <?php elseif ($order['payment_status'] === 'bezahlt'): ?>
         <p class="muted">Zahlung erfolgreich &mdash; deine Bestellung wird bearbeitet.</p>
       <?php else: ?>
@@ -153,7 +153,7 @@ include __DIR__ . '/partials/header.php';
               <div style="flex:1">
                 <strong><?= h($m['subject'] ?: ($m['is_system'] ? 'System' : 'Nachricht')) ?></strong>
                 <div class="muted" style="font-size:.78rem;margin:.2rem 0 .4rem">
-                  <?= h($m['author_name'] ?: $m['author_role']) ?> · <?= h(substr($m['created_at'], 0, 16)) ?>
+                  <?= h($m['author_name'] ?: $m['author_role']) ?> - <?= h(substr($m['created_at'], 0, 16)) ?>
                 </div>
                 <div style="white-space:pre-line;font-size:.9rem;color:var(--ink-soft)"><?= h($m['body']) ?></div>
               </div>

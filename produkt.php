@@ -103,7 +103,7 @@ include __DIR__ . '/partials/header.php';
       <?php if ($ratingInfo['count'] > 0): ?>
       <div class="product-rating-row">
         <span class="stars" aria-hidden="true"><?= str_repeat('★', (int)round($ratingInfo['avg'])) . str_repeat('☆', 5 - (int)round($ratingInfo['avg'])) ?></span>
-        <a href="#bewertungen"><?= h((string)$ratingInfo['avg']) ?> · <?= $ratingInfo['count'] ?> <?= $ratingInfo['count'] === 1 ? 'Bewertung' : 'Bewertungen' ?></a>
+        <a href="#bewertungen"><?= h((string)$ratingInfo['avg']) ?> - <?= $ratingInfo['count'] ?> <?= $ratingInfo['count'] === 1 ? 'Bewertung' : 'Bewertungen' ?></a>
       </div>
       <?php endif; ?>
 
@@ -120,7 +120,7 @@ include __DIR__ . '/partials/header.php';
       <?php if ($totalAvail > 0 && $totalAvail <= 5): ?>
         <span class="stock-urgency">Nur noch <?= $totalAvail ?> verfügbar</span>
       <?php elseif ($isBackOrder): ?>
-        <span class="stock-backorder">Nicht an Lager – Lieferzeit ca. 2 Wochen</span>
+        <span class="stock-backorder">Nicht an Lager - Lieferzeit ca. 2 Wochen</span>
       <?php endif; ?>
 
       <?php if ($errorMsg): ?>
@@ -162,8 +162,8 @@ include __DIR__ . '/partials/header.php';
         <details>
           <summary>Versand &amp; Lieferung</summary>
           <div class="acc-body">
-            Versand innerhalb der Schweiz: <?= format_price($shipCh, $currency) ?> (2–4 Werktage).<br>
-            International: 5–10 Werktage.
+            Versand innerhalb der Schweiz: <?= format_price($shipCh, $currency) ?> (2-4 Werktage).<br>
+            International: 5-10 Werktage.
             <?php if ($freeFrom > 0): ?><br>Ab <?= format_price($freeFrom, $currency) ?> Bestellwert liefern wir kostenlos.<?php endif; ?>
           </div>
         </details>
@@ -189,7 +189,7 @@ include __DIR__ . '/partials/header.php';
     <span class="section-title-label">Bewertungen</span>
     <h2 class="section-title">
       <?= $ratingInfo['count'] > 0
-          ? h((string)$ratingInfo['avg']) . ' von 5 · ' . $ratingInfo['count'] . ' ' . ($ratingInfo['count'] === 1 ? 'Bewertung' : 'Bewertungen')
+          ? h((string)$ratingInfo['avg']) . ' von 5 - ' . $ratingInfo['count'] . ' ' . ($ratingInfo['count'] === 1 ? 'Bewertung' : 'Bewertungen')
           : 'Noch keine Bewertungen' ?>
     </h2>
 

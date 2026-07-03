@@ -95,12 +95,6 @@ h1, h2, h3, h4 {
   border-radius: 999px;
   background: rgba(255,255,255,.02);
 }
-.section-title-label::before {
-  content: '';
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--gold);
-}
 .section-head-row {
   display: flex;
   align-items: flex-end;
@@ -454,7 +448,6 @@ h1, h2, h3, h4 {
   align-items: center;
   gap: .5em;
 }
-.hero-cd-label::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 1.6s ease infinite; }
 @keyframes pulse { 50% { opacity: .35; } }
 .hero-countdown { display: flex; align-items: center; gap: .45rem; }
 .cd-box {

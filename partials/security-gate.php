@@ -2,10 +2,11 @@
 /**
  * Tarnseite + 2-Stufen-Zugang für den Sicherheitsmodus.
  *
- * Stufe 1: Besucher gibt seinen Freigabecode ein. Unbekannt -> Fehler.
- * Stufe 2: Registrieren oder Anmelden.
- *   - Der Code ist optional und schaltet ein frisches Konto frei.
- *   - Bereits aktivierte Konten können sich auch ohne neuen Code anmelden.
+ * Stufe 1: Besucher gibt seinen Zugangscode ein. Unbekannt -> Fehler (getarnt).
+ * Stufe 2: Registrieren (freier Code) oder Anmelden.
+ *   - Ein freier Code wird beim Registrieren/Anmelden fest dem Konto zugewiesen.
+ *   - Ein bereits zugewiesener Code lässt NUR das zugehörige Konto wieder rein
+ *     (z. B. neues Gerät). Wer damit ein NEUES/fremdes Konto nutzt -> IP-Sperre.
  *
  * Die Oberfläche ist neutral gehalten (Einladungs-/Zugangsportal) und gibt
  * keinerlei Hinweis darauf, dass dahinter ein Shop liegt.
@@ -32,7 +33,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (isset($_POST['beleg'])) {
         // Stufe 1 – Code muss existieren (frei ODER bereits vergeben).
         $code = trim((string)$_POST['beleg']);
-      $row  = access_code_find($code);
+        $row  = code_find($code);
         if ($row === null) {
             $gateError = 'Dieser Code ist ungültig. Bitte prüfe ihn und versuche es erneut.';
         } else {
@@ -44,14 +45,23 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     } elseif (isset($_POST['gate_action'])) {
         // Stufe 2
         $code = $_SESSION['gate_code'] ?? '';
-      $row  = $code ? access_code_find($code) : null;
+        $row  = $code ? code_find($code) : null;
         if ($row === null) {
             unset($_SESSION['gate_code']);
             $gateError = 'Bitte gib deinen Zugangscode erneut ein.';
         } else {
+            $assigned = (int)($row['used_by'] ?? 0); // 0 = frei, sonst Konto-ID
+
             if ($_POST['gate_action'] === 'register') {
-          $res = account_create(trim($_POST['email'] ?? ''), $_POST['password'] ?? '', trim($_POST['name'] ?? ''), $code);
+                if ($assigned > 0) {
+                    // Vergebener Code + neues Konto -> Missbrauch -> sperren
+                    gate_block_and_exit();
+                }
+                $res = account_create(trim($_POST['email'] ?? ''), $_POST['password'] ?? '', trim($_POST['name'] ?? ''));
                 if (!empty($res['ok'])) {
+                    code_mark_used($code, (int)$res['id']);            // Code fest zuweisen
+                    $owner = (int)($row['account_id'] ?? 0);
+                    if ($owner > 0) account_set_referrer((int)$res['id'], $owner);
                     customer_login((int)$res['id'], trim($_POST['email'] ?? ''), trim($_POST['name'] ?? ''));
                     ip_allow_add(client_ip(), (int)$res['id']);
                     unset($_SESSION['gate_code']); session_write_close();
@@ -66,9 +76,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     $gateError = 'E-Mail oder Passwort ist falsch.';
                 } else {
                     $accId = (int)$acc['id'];
-            if ($code !== '') {
-              access_code_mark_used($code, $accId);
-            }
+                    if ($assigned > 0 && $assigned !== $accId) {
+                        // Vergebener Code + fremdes Konto -> Missbrauch -> sperren
+                        gate_block_and_exit();
+                    }
+                    if ($assigned === 0) code_mark_used($code, $accId); // freien Code zuweisen
                     customer_login($accId, $acc['email'], $acc['name'] ?? '');
                     ip_allow_add(client_ip(), $accId);
                     unset($_SESSION['gate_code']); session_write_close();
@@ -81,9 +93,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 }
 
 $gateCode = $_SESSION['gate_code'] ?? '';
-$gateRow  = $gateCode ? access_code_find($gateCode) : null;
+$gateRow  = $gateCode ? code_find($gateCode) : null;
 if ($gateRow === null) { unset($_SESSION['gate_code']); }
-$codeUsed = $gateRow && !empty($gateRow['used_by']);
+$codeUsed = $gateRow && !empty($gateRow['used_by']); // vergebener Code -> nur Login
 if (!headers_sent()) {
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: no-store, no-cache, must-revalidate');
@@ -133,12 +145,13 @@ if (!headers_sent()) {
 <body>
   <div class="shell">
 <?php if ($gateRow && $codeUsed): ?>
+    <!-- Stufe 2b: vergebener Code -> nur Anmeldung des zugehörigen Kontos -->
     <div class="card">
       <div class="badge">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg>
       </div>
       <h1>Willkommen zurück</h1>
-      <p class="lead">Melde dich mit deinem Konto an, um fortzufahren.</p>
+      <p class="lead">Melde dich mit deinem Konto an, um den Zugang auf diesem Gerät freizuschalten.</p>
       <form method="post" action="">
         <input type="hidden" name="gate_action" value="login">
         <label>E-Mail-Adresse</label>
@@ -146,18 +159,19 @@ if (!headers_sent()) {
         <label>Passwort</label>
         <input type="password" name="password" required autocomplete="current-password" placeholder="••••••••">
         <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
-        <div class="note">Wenn du bereits ein Konto hast, melde dich einfach an. Ohne Code kannst du weiterhin ein eingeschränktes Konto erstellen.</div>
+        <div class="note">Dieser Code gehört zu einem Konto. Bitte melde dich mit genau diesem Konto an.</div>
         <button class="btn" type="submit">Anmelden</button>
       </form>
     </div>
 
 <?php elseif ($gateRow): ?>
+    <!-- Stufe 2a: freier Code -> Registrieren (oder Anmelden) -->
     <div class="card">
       <div class="badge">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="4"/><path d="M3 21c0-3.6 3-5.5 6-5.5"/><path d="M17 10.5v6M14 13.5h6"/></svg>
       </div>
       <h1>Konto erstellen</h1>
-      <p class="lead">Du kannst jetzt ein Konto erstellen oder dich mit einem bestehenden Konto anmelden.</p>
+      <p class="lead">Nur noch ein Schritt: Richte dein Konto ein, um den Zugang abzuschliessen — oder melde dich an, falls du bereits eines hast.</p>
       <form method="post" action="" data-form="register">
         <input type="hidden" name="gate_action" value="register">
         <label>Name <span class="opt">(optional)</span></label>
@@ -166,8 +180,6 @@ if (!headers_sent()) {
         <input type="email" name="email" required autocomplete="email" placeholder="du@beispiel.ch">
         <label>Passwort <span class="opt">(min. 8 Zeichen)</span></label>
         <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="••••••••">
-        <label>Freigabecode <span class="opt">(optional)</span></label>
-        <input type="text" name="access_code" autocomplete="off" placeholder="Code zur Freischaltung" style="text-transform:uppercase;letter-spacing:.18em">
         <?php if ($gateError): ?><div class="err"><?= h($gateError) ?></div><?php endif; ?>
         <button class="btn" type="submit">Konto erstellen</button>
       </form>
@@ -199,12 +211,13 @@ if (!headers_sent()) {
     </script>
 
 <?php else: ?>
+    <!-- Stufe 1: Zugangscode eingeben -->
     <div class="card">
       <div class="badge">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="11" width="16" height="10" rx="2.2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></svg>
       </div>
-      <h1>Freigabecode eingeben</h1>
-      <p class="lead">Gib einen Freigabecode ein, um dein Konto zu aktivieren oder dein bestehendes Konto zu nutzen.</p>
+      <h1>Zugangscode eingeben</h1>
+      <p class="lead">Dieser Bereich ist nur mit Einladung zugänglich. Gib den Zugangscode ein, den du erhalten hast, um fortzufahren.</p>
       <form method="post" action="">
         <label for="beleg">Zugangscode</label>
         <input type="text" id="beleg" name="beleg" autocomplete="off" autocapitalize="characters" spellcheck="false" class="code-input" maxlength="16" placeholder="z. B. AB12CD" value="<?= h(trim((string)($_POST['beleg'] ?? ''))) ?>" autofocus>

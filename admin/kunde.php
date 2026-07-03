@@ -94,7 +94,6 @@ $os->execute([$acc['email']]);
 $custOrders = $os->fetchAll();
 $ordRevenue = 0;
 foreach ($custOrders as $o) $ordRevenue += (int)($o['paid_cents'] ?? 0);
-$confirmed = account_is_confirmed($acc);
 
 $inbox = account_messages_by_account($id);
 
@@ -125,7 +124,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 <div class="admin-2col">
   <div class="admin-section">
     <h2>Profil &amp; Adresse</h2>
-    <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Konto-Status: <strong><?= $confirmed ? 'Bestätigt' : 'Eingeschränkt' ?></strong></p>
+    <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Konto-Status: <strong><?= account_is_confirmed($acc) ? 'Bestätigt' : 'Eingeschränkt' ?></strong></p>
     <form method="post" data-cap="customers.manage" class="admin-form">
       <input type="hidden" name="action" value="profile">
       <div class="form-row-2">
@@ -154,7 +153,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
       </label>
       <button class="btn btn-primary" type="submit" style="align-self:flex-start">Speichern</button>
     </form>
-    <?php if (!$confirmed): ?>
+    <?php if (!account_is_confirmed($acc)): ?>
     <form method="post" data-cap="customers.manage" style="margin-top:1rem">
       <input type="hidden" name="action" value="confirm_account">
       <button class="btn btn-primary" type="submit">Konto freischalten</button>

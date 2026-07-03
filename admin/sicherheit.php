@@ -5,9 +5,6 @@ require_admin();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
   require_cap($action === 'gen_code' ? 'security.gen_code' : 'security.admin');
-  if ($action === 'save_mode') {
-        setting_set('security_mode', !empty($_POST['security_mode']) ? '1' : '0');
-    }
   if ($action === 'save_notfound') {
         $nf = in_array($_POST['notfound_mode'] ?? '', ['all', 'selected'], true) ? $_POST['notfound_mode'] : '0';
         setting_set('notfound_mode', $nf);
@@ -37,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $adminTitle = 'Sicherheit';
 include __DIR__ . '/partials/admin-layout-top.php';
 
-$mode    = setting_get('security_mode') === '1';
 $nfMode  = setting_get('notfound_mode') ?: '0';
 $nfIps   = (string)(setting_get('notfound_ips') ?? '');
 $nfAcc   = (string)(setting_get('notfound_accounts') ?? '');
@@ -58,27 +54,6 @@ $ipUserCell = function (string $ip) use ($ipUsers): string {
 <p class="admin-kicker">System</p>
 <div class="admin-head-row" style="margin-bottom:1.4rem"><h1>Sicherheit</h1></div>
 <?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
-
-<!-- Sicherheitsmodus -->
-<div class="admin-section">
-  <h2>Sicherheitsmodus</h2>
-  <p style="font-size:.84rem;color:#8a8a95;margin:0 0 1rem">
-    Ist der Modus <strong>an</strong>, sehen Besucher wieder die alte Gate-Seite.
-    Dort geben sie einen <strong>Freigabecode</strong> ein, um ein Konto zu erstellen oder sich anzumelden.
-    Ohne Code bleibt ein Konto bis zur Admin-Freigabe eingeschränkt.
-  </p>
-  <form method="post">
-    <input type="hidden" name="action" value="save_mode">
-    <label class="switch-row" style="margin-bottom:1rem">
-      <input type="checkbox" name="security_mode" value="1" <?= $mode ? 'checked' : '' ?>>
-      <div>
-        <strong>Sicherheitsmodus aktivieren</strong>
-        <small>Wenn an, erscheint die Gate-Seite vor dem Shop.</small>
-      </div>
-    </label>
-    <button class="btn btn-primary" type="submit">Speichern</button>
-  </form>
-</div>
 
 <!-- Getarnter 404 -->
 <div class="admin-section">

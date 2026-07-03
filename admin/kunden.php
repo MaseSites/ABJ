@@ -31,7 +31,6 @@ foreach ($accounts as $a) {
         'revenue_cents' => (int)($stat['revenue_cents'] ?? 0),
         'last_order_at' => $stat['last_order_at'] ?? '',
         'created_at'    => $a['created_at'] ?? '',
-        'confirmed_at'  => $a['confirmed_at'] ?? '',
         'registered'    => true,
     ];
     unset($byEmail[$key]);
@@ -46,7 +45,6 @@ foreach ($byEmail as $stat) {
         'revenue_cents' => (int)$stat['revenue_cents'],
         'last_order_at' => $stat['last_order_at'],
         'created_at'    => '',
-        'confirmed_at'  => '',
         'registered'    => false,
     ];
 }

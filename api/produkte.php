@@ -18,6 +18,7 @@ function api_product_lite(array $p): array {
         'sale_price_cents' => $sale,
         'image'            => $p['images'][0]['src'] ?? ($p['image'] ?? null),
         'stock'            => inv_total_stock((int)$p['id']),
+        'hasSizes'         => (!empty($p['sizes']) || inv_has_variants((int)$p['id'])),
         'url'              => url('/produkt.php?slug=' . urlencode($p['slug'])),
         'priceText'        => html_entity_decode(format_price($sale ?: (int)$p['price_cents'], $currency)),
         'oldPriceText'     => $sale ? html_entity_decode(format_price((int)$p['price_cents'], $currency)) : null,

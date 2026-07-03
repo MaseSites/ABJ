@@ -292,21 +292,31 @@
     }).then((r) => r.json().then((d) => ({ ok: r.ok, d })));
   }
 
-  // Quick-Add auf Karten
-  $$('[data-quick-add]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (btn.getAttribute('data-has-sizes') === '1') {
-        window.location.href = BASE_PATH + '/produkt.php?slug=' + encodeURIComponent(btn.getAttribute('data-slug'));
-        return;
-      }
-      btn.classList.add('loading');
-      addToCart(btn.getAttribute('data-id'), '', 1).then(({ ok, d }) => {
-        btn.classList.remove('loading');
-        if (ok && d.ok) { renderDrawer(d); toast('„' + d.added + '" hinzugefügt ✓'); }
-        else toast(d.error || 'Konnte nicht hinzufügen', 'err');
-      }).catch(() => { btn.classList.remove('loading'); toast('Netzwerkfehler', 'err'); });
-    });
+  // Quick-Add auf Karten. Ein gemeinsamer Handler + Event-Delegation, damit
+  // ALLE Karten funktionieren – auch dynamisch nachgeladene (z. B. „zuletzt
+  // angesehen") und ohne doppelte/fehlende Bindungen.
+  function quickAdd(btn) {
+    if (!btn) return;
+    const slug = btn.getAttribute('data-slug') || '';
+    const productUrl = BASE_PATH + '/produkt.php?slug=' + encodeURIComponent(slug);
+    // Produkt mit Grösse/Variante -> direkt zur Produktseite zum Auswählen.
+    if (btn.getAttribute('data-has-sizes') === '1') { window.location.href = productUrl; return; }
+    if (btn.classList.contains('loading')) return; // Doppelklick abfangen
+    btn.classList.add('loading');
+    addToCart(btn.getAttribute('data-id'), '', 1).then(({ ok, d }) => {
+      btn.classList.remove('loading');
+      if (ok && d && d.ok) { renderDrawer(d); toast('„' + d.added + '" hinzugefügt ✓'); return; }
+      // Produkt braucht doch eine Variante -> auf die Produktseite leiten (statt stiller Fehler).
+      if (d && d.error === 'variant') { window.location.href = productUrl; return; }
+      if (d && d.error === 'soldout') { toast('Leider ausverkauft', 'err'); return; }
+      toast((d && d.error) || 'Konnte nicht hinzufügen', 'err');
+    }).catch(() => { btn.classList.remove('loading'); toast('Netzwerkfehler', 'err'); });
+  }
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest('[data-quick-add]');
+    if (!btn) return;
+    e.preventDefault();
+    quickAdd(btn);
   });
 
   // AJAX auf der Produktdetailseite
@@ -628,7 +638,7 @@
     }
     const sold = p.stock <= 0 ? '<span class="badge-soldout">Ausverkauft</span>' : '';
     const quick = p.stock > 0
-      ? '<button class="quick-add" data-quick-add data-id="' + p.id + '" data-slug="' + p.slug + '" data-has-sizes="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>In den Warenkorb</span></button>'
+      ? '<button class="quick-add" data-quick-add data-id="' + p.id + '" data-slug="' + p.slug + '" data-has-sizes="' + (p.hasSizes ? '1' : '0') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>In den Warenkorb</span></button>'
       : '';
     const priceBlock = p.oldPriceText
       ? '<span class="price-sale">' + p.priceText + '</span><span class="price-old">' + p.oldPriceText + '</span>'
@@ -643,20 +653,10 @@
       '<div class="product-price">' + priceBlock + '</div></div></article>';
   }
 
-  // Buttons in dynamisch gerenderten Karten verdrahten
+  // Buttons in dynamisch gerenderten Karten verdrahten.
+  // Quick-Add läuft über den globalen delegierten Handler (siehe oben) – hier
+  // nur noch die Wunschlisten-Buttons verdrahten.
   function wireCardButtons(container) {
-    $$('[data-quick-add]', container).forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (btn.getAttribute('data-has-sizes') === '1') { window.location.href = BASE_PATH + '/produkt.php?slug=' + encodeURIComponent(btn.getAttribute('data-slug')); return; }
-        btn.classList.add('loading');
-        addToCart(btn.getAttribute('data-id'), '', 1).then(({ ok, d }) => {
-          btn.classList.remove('loading');
-          if (ok && d.ok) { renderDrawer(d); toast('„' + d.added + '" hinzugefügt ✓'); }
-          else toast(d.error || 'Konnte nicht hinzufügen', 'err');
-        }).catch(() => { btn.classList.remove('loading'); toast('Netzwerkfehler', 'err'); });
-      });
-    });
     $$('[data-wish]', container).forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();

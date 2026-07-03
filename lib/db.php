@@ -210,6 +210,7 @@ function db_init(PDO $pdo): void {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             code TEXT UNIQUE NOT NULL,
             account_id INTEGER,
+            used_by INTEGER,
             created_at TEXT DEFAULT (datetime('now')),
             used_at TEXT DEFAULT ''
         );
@@ -304,6 +305,13 @@ function db_init(PDO $pdo): void {
     foreach (['used_by' => 'INTEGER', 'used_at' => "TEXT DEFAULT ''"] as $col => $def) {
         if (!in_array($col, $pc_cols)) {
             try { $pdo->exec("ALTER TABLE promo_codes ADD COLUMN $col $def"); } catch (\Throwable $e) {}
+        }
+    }
+
+    $ac_cols = array_column($pdo->query("PRAGMA table_info(access_codes)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+    foreach (['used_by' => 'INTEGER', 'used_at' => "TEXT DEFAULT ''"] as $col => $def) {
+        if (!in_array($col, $ac_cols)) {
+            try { $pdo->exec("ALTER TABLE access_codes ADD COLUMN $col $def"); } catch (\Throwable $e) {}
         }
     }
 

@@ -217,85 +217,98 @@ h1, h2, h3, h4 {
   border: 0;
 }
 
-.account-activation-bar {
+.activation-strip {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 110;
-  background: linear-gradient(180deg, #f4d44a 0%, #e8be1d 100%);
-  color: #2f2500;
-  border-bottom: 1px solid rgba(74, 58, 0, .18);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+  z-index: 115;
+  background: linear-gradient(180deg, #ffd84f 0%, #f2c918 100%);
+  color: #2e2200;
+  border-bottom: 1px solid rgba(75, 57, 0, .22);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .10);
 }
-.account-activation-inner {
-  min-height: 3.6rem;
+.activation-strip-inner {
+  min-height: 2.6rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding-top: .45rem;
-  padding-bottom: .45rem;
+  gap: .75rem;
+  padding-top: .25rem;
+  padding-bottom: .25rem;
 }
-.account-activation-copy {
+.activation-strip-left {
   display: inline-flex;
   align-items: center;
-  gap: .65rem;
-  font-size: .86rem;
+  gap: .5rem;
+  font-size: .8rem;
   font-weight: 700;
-  letter-spacing: .02em;
+  letter-spacing: .01em;
 }
-.account-activation-copy svg {
-  width: 18px;
-  height: 18px;
+.activation-strip-icon {
+  width: 16px;
+  height: 16px;
   flex: none;
-  color: #5f4a00;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #5d4700;
 }
-.account-activation-form {
+.activation-strip-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.activation-strip-text strong {
+  margin-right: .3rem;
+}
+.activation-strip-form {
   margin: 0;
   display: flex;
   align-items: center;
-  gap: .55rem;
+  gap: .45rem;
   flex-wrap: wrap;
 }
-.account-activation-form input[type="text"] {
-  width: min(240px, 44vw);
-  border-color: rgba(69, 53, 0, .25);
-  background: rgba(255, 255, 255, .82);
+.activation-strip-form input[type="text"] {
+  width: min(190px, 34vw);
+  height: 2rem;
+  padding-top: .25rem;
+  padding-bottom: .25rem;
+  border-color: rgba(69, 53, 0, .24);
+  background: rgba(255, 255, 255, .88);
   color: #231a00;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
 }
-.account-activation-form input[type="text"]::placeholder { color: rgba(35, 26, 0, .55); }
-.account-activation-form .btn {
+.activation-strip-form input[type="text"]::placeholder { color: rgba(35, 26, 0, .55); }
+.activation-strip-form .btn {
   white-space: nowrap;
   border-color: rgba(69, 53, 0, .24);
 }
 body.has-activation-bar {
-  padding-top: 3.6rem;
+  padding-top: 2.6rem;
 }
 body.has-activation-bar .site-header {
-  top: 3.6rem;
+  top: 2.6rem;
 }
 @media (max-width: 720px) {
-  .account-activation-inner {
-    min-height: 5.2rem;
+  .activation-strip-inner {
+    min-height: 4.2rem;
     align-items: flex-start;
     flex-direction: column;
-    padding-top: .5rem;
-    padding-bottom: .6rem;
+    padding-top: .35rem;
+    padding-bottom: .35rem;
   }
-  .account-activation-form {
+  .activation-strip-form {
     width: 100%;
   }
-  .account-activation-form input[type="text"] {
-    width: min(100%, 16rem);
+  .activation-strip-form input[type="text"] {
+    width: min(100%, 11rem);
     flex: 1 1 10rem;
   }
   body.has-activation-bar {
-    padding-top: 5.2rem;
+    padding-top: 4.2rem;
   }
   body.has-activation-bar .site-header {
-    top: 5.2rem;
+    top: 4.2rem;
   }
 }
 

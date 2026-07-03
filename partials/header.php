@@ -4,8 +4,6 @@ $currentPath  = isset($currentPath) ? $currentPath : current_path();
 $announcement = setting_get('announcement') ?: '';
 $customer     = is_customer() ? current_customer() : null;
 $customerUnread = $customer ? account_messages_unread_count((int)$customer['id']) : 0;
-$customerAccount = $customer ? account_by_id((int)$customer['id']) : null;
-$customerNeedsActivation = $customerAccount ? !account_is_confirmed($customerAccount) : false;
 ?>
 <a class="skip-link" href="#main">Zum Inhalt springen</a>
 <div class="scroll-progress" data-progress aria-hidden="true"></div>
@@ -13,23 +11,6 @@ $customerNeedsActivation = $customerAccount ? !account_is_confirmed($customerAcc
 <?php if ($announcement): ?>
 <div class="announce">
   <div class="container"><?= h($announcement) ?></div>
-</div>
-<?php endif; ?>
-
-<?php if ($customerNeedsActivation): ?>
-<div class="account-activation-bar" role="note" aria-label="Konto aktivieren">
-  <div class="container account-activation-inner">
-    <div class="account-activation-copy">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01"/><path d="M10.3 4.4 2.8 18a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3l-7.5-13.6a2 2 0 0 0-3.4 0z"/></svg>
-      <span><strong>Achtung!</strong> Konto aktivieren</span>
-    </div>
-    <form class="account-activation-form" method="post" action="<?= url('/konto.php') ?>">
-      <input type="hidden" name="action" value="activate_code">
-      <label class="sr-only" for="activation-code">Aktivierungscode</label>
-      <input id="activation-code" type="text" name="access_code" maxlength="20" autocomplete="off" placeholder="Code eingeben">
-      <button class="btn btn-primary btn-sm" type="submit">Konto aktivieren</button>
-    </form>
-  </div>
 </div>
 <?php endif; ?>
 

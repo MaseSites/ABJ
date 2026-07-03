@@ -2,11 +2,6 @@
 $shopName  = setting_get('shop_name') ?: 'ABJ Store';
 $tagline   = setting_get('tagline') ?: '';
 $pageTitle = isset($pageTitle) ? $pageTitle . ' – ' . $shopName : $shopName . ($tagline ? ' – ' . $tagline : '');
-$bodyClasses = trim(($bodyClasses ?? '') . ' ' . (
-  is_customer() && ($customerAccount = account_by_id((int)current_customer()['id'])) && !account_is_confirmed($customerAccount)
-    ? 'has-activation-bar'
-    : ''
-));
 ?>
 <!DOCTYPE html>
 <html lang="de" data-base-path="<?= h(base_path()) ?>">
@@ -32,4 +27,4 @@ $bodyClasses = trim(($bodyClasses ?? '') . ' ' . (
   ?>
   </style>
 </head>
-<body<?= $bodyClasses !== '' ? ' class="' . h($bodyClasses) . '"' : '' ?>>
+<body>

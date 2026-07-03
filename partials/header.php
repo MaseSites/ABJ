@@ -17,18 +17,10 @@ $customerNeedsActivation = $customerAccount ? !account_is_confirmed($customerAcc
 <?php endif; ?>
 
 <?php if ($customerNeedsActivation): ?>
-<div class="account-activation-bar" role="note" aria-label="Konto aktivieren">
-  <div class="container account-activation-inner">
-    <div class="account-activation-copy">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01"/><path d="M10.3 4.4 2.8 18a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3l-7.5-13.6a2 2 0 0 0-3.4 0z"/></svg>
-      <span><strong>Achtung!</strong> Konto aktivieren</span>
-    </div>
-    <form class="account-activation-form" method="post" action="<?= url('/konto.php') ?>">
-      <input type="hidden" name="action" value="activate_code">
-      <label class="sr-only" for="activation-code">Aktivierungscode</label>
-      <input id="activation-code" type="text" name="access_code" maxlength="20" autocomplete="off" placeholder="Code eingeben">
-      <button class="btn btn-primary btn-sm" type="submit">Konto aktivieren</button>
-    </form>
+<div class="alert alert-warn" style="margin:0;border-radius:0">
+  <div class="container" style="display:flex;gap:.9rem;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-top:.85rem;padding-bottom:.85rem">
+    <div><strong>Achtung!</strong> Dein Konto ist noch nicht aktiviert. Du kannst den Shop nutzen, aber einige Funktionen bleiben eingeschränkt, bis du den Aktivierungscode eingibst oder wir dein Konto freischalten.</div>
+    <a class="btn btn-line btn-sm" href="<?= url('/konto.php?tab=overview') ?>">Konto aktivieren</a>
   </div>
 </div>
 <?php endif; ?>

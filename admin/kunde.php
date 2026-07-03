@@ -65,6 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/admin/kunde.php?id=' . $id . '&err=pw');
     }
 
+    if ($action === 'confirm_account') {
+      account_confirm($id, 'admin');
+      redirect('/admin/kunde.php?id=' . $id . '&saved=confirmed');
+    }
+
     if ($action === 'message_delete') {
         $messageId = (int)($_POST['message_id'] ?? 0);
         if ($messageId > 0) account_message_delete($id, $messageId);
@@ -88,7 +93,7 @@ $os = db()->prepare("SELECT reference, total_cents, payment_status, status, crea
 $os->execute([$acc['email']]);
 $custOrders = $os->fetchAll();
 $ordRevenue = 0;
-foreach ($custOrders as $o) if (($o['payment_status'] ?? '') === 'bezahlt') $ordRevenue += (int)$o['total_cents'];
+foreach ($custOrders as $o) $ordRevenue += (int)($o['paid_cents'] ?? 0);
 
 $inbox = account_messages_by_account($id);
 
@@ -104,6 +109,7 @@ include __DIR__ . '/partials/admin-layout-top.php';
 <?php if (($_GET['saved'] ?? '') === '1'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
 <?php if (($_GET['saved'] ?? '') === 'msg'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Nachricht gesendet.</div><?php endif; ?>
 <?php if (($_GET['saved'] ?? '') === 'msgdel'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Nachricht gelöscht.</div><?php endif; ?>
+<?php if (($_GET['saved'] ?? '') === 'confirmed'): ?><div class="alert alert-ok" style="margin-bottom:1rem">Konto freigeschaltet.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'email'): ?><div class="alert alert-error" style="margin-bottom:1rem">E-Mail ungültig oder bereits vergeben.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'pw'): ?><div class="alert alert-error" style="margin-bottom:1rem">Passwort muss mindestens 8 Zeichen lang sein.</div><?php endif; ?>
 <?php if (($_GET['err'] ?? '') === 'msg'): ?><div class="alert alert-error" style="margin-bottom:1rem">Bitte eine Nachricht eingeben.</div><?php endif; ?>
@@ -111,13 +117,14 @@ include __DIR__ . '/partials/admin-layout-top.php';
 <div class="stat-grid" style="margin-bottom:1.6rem">
   <div class="stat-card stat-highlight"><span class="stat-num"><?= $points ?></span><span class="stat-label">Promo Punkte</span></div>
   <div class="stat-card"><span class="stat-num"><?= count($custOrders) ?></span><span class="stat-label">Bestellungen</span></div>
-  <div class="stat-card"><span class="stat-num"><?= format_price($ordRevenue, $currency) ?></span><span class="stat-label">Umsatz (bezahlt)</span></div>
+  <div class="stat-card"><span class="stat-num"><?= format_price($ordRevenue, $currency) ?></span><span class="stat-label">Umsatz (eingezahlt)</span></div>
   <div class="stat-card"><span class="stat-num"><?= (int)$refStats['referrals'] ?></span><span class="stat-label">Geworbene Kunden</span></div>
 </div>
 
 <div class="admin-2col">
   <div class="admin-section">
     <h2>Profil &amp; Adresse</h2>
+    <p class="muted" style="font-size:.84rem;margin-top:-.4rem">Konto-Status: <strong><?= account_is_confirmed($acc) ? 'Bestätigt' : 'Eingeschränkt' ?></strong></p>
     <form method="post" data-cap="customers.manage" class="admin-form">
       <input type="hidden" name="action" value="profile">
       <div class="form-row-2">
@@ -146,6 +153,12 @@ include __DIR__ . '/partials/admin-layout-top.php';
       </label>
       <button class="btn btn-primary" type="submit" style="align-self:flex-start">Speichern</button>
     </form>
+    <?php if (!account_is_confirmed($acc)): ?>
+    <form method="post" data-cap="customers.manage" style="margin-top:1rem">
+      <input type="hidden" name="action" value="confirm_account">
+      <button class="btn btn-primary" type="submit">Konto freischalten</button>
+    </form>
+    <?php endif; ?>
   </div>
 
   <div>

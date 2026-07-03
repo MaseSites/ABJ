@@ -17,46 +17,88 @@ function account_by_id(int $id): ?array {
 
 /** Alle registrierten Kundenkonten (neueste zuerst). */
 function accounts_list(): array {
-    return db()->query('SELECT id, email, name, access_code, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
+    return db()->query('SELECT id, email, name, confirmed_at, created_at FROM accounts ORDER BY created_at DESC')->fetchAll();
 }
 
-// ---- Zugangs-/Promo-Codes: EIN System (Tabelle promo_codes) ----
-// account_id = 0  -> vom Admin erstellter Code (kein Werber)
-// account_id > 0  -> Promo-Code eines Kunden (Werber bekommt Punkte)
-function code_find(string $code): ?array {
+// ---- Zugangscodes zur Freigabe von Konten ----
+function access_code_find(string $code): ?array {
     $code = trim($code);
     if ($code === '') return null;
-    $stmt = db()->prepare("SELECT * FROM promo_codes WHERE upper(code) = upper(?)");
+    $stmt = db()->prepare("SELECT ac.*, a.email AS account_email, a.name AS account_name, u.email AS used_email, u.name AS used_name
+        FROM access_codes ac
+        LEFT JOIN accounts a ON a.id = ac.account_id
+        LEFT JOIN accounts u ON u.id = ac.used_by
+        WHERE upper(ac.code) = upper(?)");
     $stmt->execute([$code]);
     $row = $stmt->fetch();
     return $row ?: null;
 }
 
-/** Vom Admin erstellten Code (ohne Werber) erzeugen. */
-function code_generate(): string {
+function access_codes_all(): array {
+    return db()->query("SELECT ac.*, a.email AS account_email, a.name AS account_name, u.email AS used_email, u.name AS used_name
+        FROM access_codes ac
+        LEFT JOIN accounts a ON a.id = ac.account_id
+        LEFT JOIN accounts u ON u.id = ac.used_by
+        ORDER BY ac.created_at DESC")->fetchAll();
+}
+
+/** Vom Admin erstellten Freigabecode erzeugen. */
+function access_code_generate(): string {
     $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     do {
         $code = '';
         for ($i = 0; $i < 6; $i++) $code .= $chars[random_int(0, strlen($chars) - 1)];
-    } while (code_find($code));
-    db()->prepare("INSERT INTO promo_codes (account_id, code) VALUES (0, ?)")->execute([$code]);
+    } while (access_code_find($code));
+    db()->prepare("INSERT INTO access_codes (account_id, code) VALUES (0, ?)")->execute([$code]);
     return $code;
 }
 
-function code_delete(string $code): void {
-    db()->prepare("DELETE FROM promo_codes WHERE upper(code) = upper(?)")->execute([trim($code)]);
+function access_code_delete(string $code): void {
+    db()->prepare("DELETE FROM access_codes WHERE upper(code) = upper(?)")->execute([trim($code)]);
 }
 
 /** Ist der Code noch frei (einmal verwendbar, noch nicht eingelöst)? */
-function code_is_usable(?array $row): bool {
-    return $row !== null && empty($row['used_by']);
+function access_code_is_usable(?array $row): bool {
+    return $row !== null && empty($row['used_by']) && empty($row['used_at']);
 }
 
 /** Markiert einen Code als verwendet (durch Konto $userId). Nur falls noch frei. */
-function code_mark_used(string $code, int $userId): void {
-    db()->prepare("UPDATE promo_codes SET used_by = ?, used_at = datetime('now')
-                   WHERE upper(code) = upper(?) AND used_by IS NULL")
+function access_code_mark_used(string $code, int $userId): void {
+    db()->prepare("UPDATE access_codes SET used_by = ?, used_at = datetime('now')
+                   WHERE upper(code) = upper(?) AND used_by IS NULL AND COALESCE(used_at, '') = ''")
        ->execute([$userId, trim($code)]);
+}
+
+function account_is_confirmed(?array $account): bool {
+    if (!$account) return false;
+    return !empty($account['confirmed_at']);
+}
+
+function account_release_pending_orders(int $accountId): int {
+    $acc = account_by_id($accountId);
+    if (!$acc) return 0;
+    $stmt = db()->prepare("UPDATE orders SET status='neu', updated_at=datetime('now')
+        WHERE lower(email) = lower(?) AND status = 'wartet_auf_freigabe'");
+    $stmt->execute([$acc['email']]);
+    return $stmt->rowCount();
+}
+
+function account_confirm(int $accountId, string $method = 'admin'): bool {
+    $acc = account_by_id($accountId);
+    if (!$acc) return false;
+    if (account_is_confirmed($acc)) return true;
+    db()->prepare("UPDATE accounts SET confirmed_at = datetime('now') WHERE id = ?")->execute([$accountId]);
+    account_release_pending_orders($accountId);
+    account_message_create([
+        'account_id' => $accountId,
+        'sender_role' => 'system',
+        'subject' => 'Konto freigeschaltet',
+        'body' => $method === 'code'
+            ? 'Dein Konto wurde mit einem Freigabecode bestätigt. Du kannst jetzt alle Funktionen nutzen.'
+            : 'Dein Konto wurde im Adminbereich bestätigt. Du kannst jetzt alle Funktionen nutzen.',
+        'is_read' => 0,
+    ]);
+    return true;
 }
 
 function accounts_count(): int {
@@ -73,7 +115,7 @@ function account_delete(int $id): bool {
 /**
  * Legt ein Konto an. Rückgabe: ['ok'=>bool, 'error'=>?, 'id'=>?].
  */
-function account_create(string $email, string $password, string $name): array {
+function account_create(string $email, string $password, string $name, string $accessCode = ''): array {
     $email = trim($email);
     $name  = trim($name);
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -85,15 +127,28 @@ function account_create(string $email, string $password, string $name): array {
     if (account_by_email($email)) {
         return ['ok' => false, 'error' => 'Für diese E-Mail existiert bereits ein Konto. Bitte melde dich an.'];
     }
+    $accessCode = trim($accessCode);
+    if ($accessCode !== '') {
+        $row = access_code_find($accessCode);
+        if (!$row || !access_code_is_usable($row)) {
+            return ['ok' => false, 'error' => 'Der Freigabecode ist ungültig oder bereits verwendet.'];
+        }
+    }
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    db()->prepare('INSERT INTO accounts (email, password_hash, name) VALUES (?, ?, ?)')
-       ->execute([$email, $hash, mb_substr($name, 0, 120)]);
+    db()->prepare('INSERT INTO accounts (email, password_hash, name, confirmed_at) VALUES (?, ?, ?, ?)')
+       ->execute([$email, $hash, mb_substr($name, 0, 120), $accessCode !== '' ? date('Y-m-d H:i:s') : '']);
     $id = (int)db()->lastInsertId();
+    if ($accessCode !== '') {
+        access_code_mark_used($accessCode, $id);
+        account_confirm($id, 'code');
+    }
     account_message_create([
         'account_id' => $id,
         'sender_role' => 'system',
-        'subject' => 'Herzlich willkommen bei ABJ 🎉',
-        'body' => "Schön, dass du da bist! Dein Konto ist startklar.\n\nStöbere in Ruhe durch unsere Produkte – und falls du etwas Bestimmtes suchst, das du nicht findest, stell einfach eine Produktanfrage. Wir freuen uns auf dich!",
+        'subject' => $accessCode !== '' ? 'Herzlich willkommen bei ABJ 🎉' : 'Dein Konto ist angelegt',
+        'body' => $accessCode !== ''
+            ? "Schön, dass du da bist! Dein Konto ist freigeschaltet.\n\nStöbere in Ruhe durch unsere Produkte – und falls du etwas Bestimmtes suchst, das du nicht findest, stell einfach eine Produktanfrage. Wir freuen uns auf dich!"
+            : "Schön, dass du da bist! Dein Konto ist angelegt, aber noch nicht freigeschaltet. Du kannst dich bereits anmelden und Bestellungen aufgeben; sie werden erst aktiv, sobald wir dein Konto bestätigen.\n\nStöbere in Ruhe durch unsere Produkte – und falls du etwas Bestimmtes suchst, das du nicht findest, stell einfach eine Produktanfrage. Wir freuen uns auf dich!",
         'is_read' => 0,
     ]);
     return ['ok' => true, 'id' => $id];

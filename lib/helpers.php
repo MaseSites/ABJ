@@ -172,15 +172,22 @@ function save_uploaded_image(?array $file, string &$error = ''): ?string {
 
 /**
  * Anzeige-Label für den Zahlungsstatus einer Bestellung.
- * Alles ausser "bezahlt" gilt als noch offen → "Zahlung ausstehend".
+ * "teilbezahlt" zeigt den bereits bezahlten Anteil an.
  */
 function payment_status_label(string $status): string {
-    return $status === 'bezahlt' ? 'Bezahlt' : 'Zahlung ausstehend';
+    return match ($status) {
+        'bezahlt' => 'Bezahlt',
+        'teilbezahlt' => 'Teilbezahlt',
+        default => 'Zahlung ausstehend',
+    };
 }
 
 /**
- * Tag-CSS-Klasse: grün (tag-ok) für bezahlt, rot (tag-pending) für ausstehend.
+ * Tag-CSS-Klasse: grün (tag-ok) für bezahlt, gelb (tag-warn) für teilbezahlt,
+ * rot (tag-pending) für ausstehend.
  */
 function payment_status_class(string $status): string {
-    return $status === 'bezahlt' ? 'tag-ok' : 'tag-pending';
+    if ($status === 'bezahlt') return 'tag-ok';
+    if ($status === 'teilbezahlt') return 'tag-warn';
+    return 'tag-pending';
 }

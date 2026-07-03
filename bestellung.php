@@ -62,6 +62,8 @@ include __DIR__ . '/partials/header.php';
     <?php if ($order): ?>
       <?php if ($isAnfrage): ?>
         <p class="muted">Wir prüfen die Verfügbarkeit und setzen den Preis. Du findest die Anfrage in deinem <a href="<?= url('/konto.php?tab=orders') ?>" style="color:var(--accent-3)">Profil</a> — sobald der Preis steht, kannst du bestellen.</p>
+      <?php elseif (($order['status'] ?? '') === 'wartet_auf_freigabe'): ?>
+        <p class="muted">Dein Konto ist noch nicht freigeschaltet. Die Bestellung wartet auf Bestätigung und wird danach normal bearbeitet.</p>
       <?php elseif ($order['payment_status'] === 'bezahlt'): ?>
         <p class="muted">Zahlung erfolgreich &mdash; deine Bestellung wird bearbeitet.</p>
       <?php else: ?>
@@ -103,6 +105,10 @@ include __DIR__ . '/partials/header.php';
             <span>Gesamt</span>
             <span style="color:var(--gold)"><?= (int)$order['total_cents'] > 0 ? format_price((int)$order['total_cents'], $currency) : 'Preis folgt' ?></span>
           </div>
+          <?php if ((int)($order['paid_cents'] ?? 0) > 0): ?>
+          <div class="order-confirm-row"><span>Bereits bezahlt</span><span><?= format_price((int)$order['paid_cents'], $currency) ?></span></div>
+          <div class="order-confirm-row"><span>Noch offen</span><span><?= format_price(max(0, (int)$order['total_cents'] - (int)$order['paid_cents']), $currency) ?></span></div>
+          <?php endif; ?>
         </div>
 
         <?php if ($addr): ?>

@@ -1103,6 +1103,51 @@ body { font-family: "Inter", "Segoe UI", system-ui, sans-serif; }
 .message-card p { margin: 0 0 .8rem; color: #a8afc4; line-height: 1.65; font-size: .9rem; }
 .message-card form { margin: 0; }
 
+/* ---------- Produktanfragen (Karten-Layout) ---------- */
+.req-list { display: flex; flex-direction: column; gap: 1rem; }
+.req-card {
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  background: #161922;
+  padding: 1.25rem 1.35rem;
+}
+.req-card.req-done { opacity: .72; }
+.req-top { display: flex; gap: 1.1rem; align-items: flex-start; }
+.req-thumb {
+  flex: none; width: 72px; height: 72px; border-radius: 10px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12); display: block;
+}
+.req-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.req-thumb-empty { display: grid; place-items: center; color: #3d4258; background: #10131a; }
+.req-thumb-empty svg { width: 26px; height: 26px; }
+.req-info { flex: 1; min-width: 0; }
+.req-meta { display: flex; align-items: center; gap: .55rem .75rem; flex-wrap: wrap; margin-bottom: .55rem; }
+.req-id { font-weight: 700; color: #e0e2ea; font-size: .9rem; }
+.req-cust { color: #c4c9d8; font-weight: 600; font-size: .9rem; }
+.req-date { font-size: .8rem; }
+.req-price { margin-left: auto; font-weight: 700; color: #b89c67; font-size: .9rem; }
+.req-desc { margin: 0 0 .5rem; color: #cdd2e0; line-height: 1.6; font-size: .92rem; white-space: pre-line; word-break: break-word; }
+.req-link { color: #7e8bb8; font-size: .82rem; word-break: break-all; }
+
+.req-actions {
+  margin-top: 1.1rem; padding-top: 1.1rem;
+  border-top: 1px solid rgba(255,255,255,.07);
+  display: flex; flex-direction: column; gap: .75rem;
+}
+.req-form { display: flex; gap: .7rem; align-items: flex-end; flex-wrap: wrap; margin: 0; }
+.req-form .field { gap: .3rem; }
+.req-field-price { width: 130px; flex: none; }
+.req-field-note { flex: 1; min-width: 200px; }
+.req-form .btn { flex: none; }
+.req-form-row { display: flex; gap: .7rem; align-items: flex-end; flex-wrap: wrap; }
+.req-form-reject { flex: 1; min-width: 240px; }
+.req-del-form { margin: 0; flex: none; }
+@media (max-width: 640px) {
+  .req-field-price { width: 100%; }
+  .req-form .btn, .req-del-form .btn { width: 100%; }
+  .req-form-row { flex-direction: column; align-items: stretch; }
+}
+
 .bar-chart { max-width: 100%; }
 
 /* ---------- Analytics ---------- */

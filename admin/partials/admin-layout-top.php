@@ -27,7 +27,7 @@ try {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="<?= url('/css/styles.css') ?>?v=44">
-  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=44">
+  <link rel="stylesheet" href="<?= url('/css/admin.css') ?>?v=45">
 </head>
 <body class="<?= admin_is_root() ? '' : 'admin-lookup' ?>" data-admin-caps="<?= h(admin_is_root() ? '*' : implode(',', admin_lookup_caps())) ?>">
 <div class="admin-shell">

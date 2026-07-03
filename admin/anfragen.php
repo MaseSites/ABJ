@@ -53,52 +53,64 @@ include __DIR__ . '/partials/admin-layout-top.php';
 <?php if (!empty($_GET['saved'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Gespeichert.</div><?php endif; ?>
 <?php if (!empty($_GET['deleted'])): ?><div class="alert alert-ok" style="margin-bottom:1rem">Anfrage gelöscht.</div><?php endif; ?>
 
-<div class="admin-section">
-  <?php if (empty($requests)): ?>
-    <p class="muted" style="margin:0">Keine Anfragen vorhanden.</p>
-  <?php else: ?>
-    <div class="table-card">
-      <table class="data-table">
-        <thead><tr><th>ID</th><th>Bild</th><th>Kunde</th><th>Beschreibung</th><th>Status</th><th>Preis</th><th></th></tr></thead>
-        <tbody>
-          <?php foreach ($requests as $r): ?>
-          <tr>
-            <td><?= (int)$r['id'] ?></td>
-            <td style="width:72px">
-              <?php if (!empty($r['screenshot'])): ?>
-                <a href="<?= h($r['screenshot']) ?>" target="_blank" rel="noopener"><img src="<?= h($r['screenshot']) ?>" alt="Screenshot" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.12)"></a>
-              <?php else: ?><span class="muted">—</span><?php endif; ?>
-            </td>
-            <td><?= h($r['customer_name'] ?: $r['email']) ?></td>
-            <td><?= h($r['description']) ?><?php if (!empty($r['link'])): ?><br><a href="<?= h(secure_url($r['link'])) ?>" target="_blank" rel="noopener" class="muted" style="font-size:.82rem;word-break:break-all"><?= h($r['link']) ?></a><?php endif; ?></td>
-            <td><span class="tag"><?= h($r['status']) ?></span></td>
-            <td><?= (int)$r['price_cents'] > 0 ? format_price((int)$r['price_cents'], setting_get('currency') ?: 'CHF') : '—' ?></td>
-            <td>
-              <form method="post" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end">
-                <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-                <input type="hidden" name="action" value="accept">
-                <label class="field" style="max-width:160px"><span>Preis</span><input type="text" name="price" inputmode="decimal" placeholder="129.00" value="<?= (int)$r['price_cents'] > 0 ? number_format((int)$r['price_cents']/100, 2, '.', '') : '' ?>"></label>
-                <label class="field" style="min-width:220px;flex:1"><span>Nachricht</span><input type="text" name="note" placeholder="Nachricht an den Kunden"></label>
-                <button class="btn btn-primary" type="submit">Annehmen</button>
-              </form>
-              <form method="post" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;margin-top:.5rem">
-                <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-                <input type="hidden" name="action" value="reject">
-                <label class="field" style="min-width:220px;flex:1"><span>Ablehnungsnachricht</span><input type="text" name="note" placeholder="Optional"></label>
-                <button class="btn btn-danger" type="submit">Ablehnen</button>
-              </form>
-              <form method="post" onsubmit="return confirm('Anfrage wirklich löschen?')" style="margin-top:.5rem">
-                <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-                <input type="hidden" name="action" value="delete">
-                <button class="btn btn-ghost btn-sm btn-danger" type="submit">Löschen</button>
-              </form>
-            </td>
-          </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  <?php endif; ?>
-</div>
+<?php
+$currency = setting_get('currency') ?: 'CHF';
+function anfrage_status_tag(string $s): string {
+    return ['neu' => 'tag-new', 'angenommen' => 'tag-ok', 'abgelehnt' => 'tag-pending'][$s] ?? '';
+}
+?>
+<?php if (empty($requests)): ?>
+  <div class="admin-section"><p class="muted" style="margin:0">Keine Anfragen vorhanden.</p></div>
+<?php else: ?>
+  <div class="req-list">
+    <?php foreach ($requests as $r): $done = in_array($r['status'], ['angenommen', 'abgelehnt'], true); ?>
+    <article class="req-card<?= $done ? ' req-done' : '' ?>">
+      <div class="req-top">
+        <?php if (!empty($r['screenshot'])): ?>
+          <a class="req-thumb" href="<?= h($r['screenshot']) ?>" target="_blank" rel="noopener"><img src="<?= h($r['screenshot']) ?>" alt="Screenshot"></a>
+        <?php else: ?>
+          <div class="req-thumb req-thumb-empty" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+          </div>
+        <?php endif; ?>
+        <div class="req-info">
+          <div class="req-meta">
+            <span class="req-id">#<?= (int)$r['id'] ?></span>
+            <span class="tag <?= anfrage_status_tag($r['status']) ?>"><?= h($r['status']) ?></span>
+            <span class="req-cust"><?= h($r['customer_name'] ?: $r['email']) ?></span>
+            <?php if (!empty($r['created_at'])): ?><span class="muted req-date"><?= h(substr($r['created_at'], 0, 16)) ?></span><?php endif; ?>
+            <?php if ((int)$r['price_cents'] > 0): ?><span class="req-price">Preis: <?= format_price((int)$r['price_cents'], $currency) ?></span><?php endif; ?>
+          </div>
+          <?php if (!empty($r['description'])): ?><p class="req-desc"><?= h($r['description']) ?></p><?php endif; ?>
+          <?php if (!empty($r['link'])): ?><a class="req-link" href="<?= h(secure_url($r['link'])) ?>" target="_blank" rel="noopener"><?= h($r['link']) ?></a><?php endif; ?>
+        </div>
+      </div>
+
+      <div class="req-actions">
+        <form method="post" class="req-form">
+          <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+          <input type="hidden" name="action" value="accept">
+          <label class="field req-field-price"><span>Preis (<?= h($currency) ?>)</span><input type="text" name="price" inputmode="decimal" placeholder="129.00" value="<?= (int)$r['price_cents'] > 0 ? number_format((int)$r['price_cents']/100, 2, '.', '') : '' ?>"></label>
+          <label class="field req-field-note"><span>Nachricht an den Kunden</span><input type="text" name="note" placeholder="Optionaler Text"></label>
+          <button class="btn btn-primary" type="submit">Annehmen</button>
+        </form>
+        <div class="req-form-row">
+          <form method="post" class="req-form req-form-reject">
+            <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+            <input type="hidden" name="action" value="reject">
+            <label class="field req-field-note"><span>Ablehnungsnachricht</span><input type="text" name="note" placeholder="Optional"></label>
+            <button class="btn btn-line" type="submit">Ablehnen</button>
+          </form>
+          <form method="post" class="req-del-form" onsubmit="return confirm('Anfrage wirklich löschen?')">
+            <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+            <input type="hidden" name="action" value="delete">
+            <button class="btn btn-ghost btn-sm btn-danger" type="submit">Löschen</button>
+          </form>
+        </div>
+      </div>
+    </article>
+    <?php endforeach; ?>
+  </div>
+<?php endif; ?>
 
 <?php include __DIR__ . '/partials/admin-layout-bottom.php'; ?>

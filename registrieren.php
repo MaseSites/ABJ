@@ -13,18 +13,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $prefill  = ['name' => $name, 'email' => $email];
 
-  $accessCode = trim($_POST['access_code'] ?? '');
-  $promo = trim($_POST['promo'] ?? '');
+  $accessCode = trim($_POST['access_code'] ?? ($_POST['promo'] ?? ''));
   $res = account_create($email, $password, $name, $accessCode);
     if ($res['ok']) {
-        // Promo-/Empfehlungscode verknüpfen (optional, einmalig verwendbar)
-        $promoRow = $promo !== '' ? promo_code_find($promo) : null;
-        if ($promoRow && empty($promoRow['used_by'])) {
-            db()->prepare('UPDATE promo_codes SET used_by = ?, used_at = datetime(\'now\') WHERE upper(code) = upper(?) AND used_by IS NULL')
-              ->execute([(int)$res['id'], trim($promo)]);
-            $owner = promo_owner_of_code($promo);
-            if ($owner) account_set_referrer((int)$res['id'], $owner);
-        }
         customer_login($res['id'], $email, $name);
         redirect($weiter && $weiter[0] === '/' ? $weiter : '/konto.php');
     }
@@ -56,11 +47,8 @@ include __DIR__ . '/partials/header.php';
       <label class="field"><span>Passwort * <small class="muted">(min. 8 Zeichen)</small></span>
         <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="••••••••">
       </label>
-      <label class="field"><span>Freigabecode <small class="muted">(optional)</small></span>
-        <input type="text" name="access_code" value="<?= h($_GET['access_code'] ?? '') ?>" maxlength="20" autocomplete="off" placeholder="Code zur Freischaltung" style="letter-spacing:.06em">
-      </label>
-      <label class="field"><span>Promo-Code <small class="muted">(optional)</small></span>
-        <input type="text" name="promo" value="<?= h($_GET['promo'] ?? '') ?>" maxlength="20" autocomplete="off" placeholder="Code eines Freundes" style="letter-spacing:.06em">
+      <label class="field"><span>Aktivierungscode <small class="muted">(optional)</small></span>
+        <input type="text" name="access_code" value="<?= h($_GET['access_code'] ?? ($_GET['promo'] ?? '')) ?>" maxlength="20" autocomplete="off" placeholder="Code zur Freischaltung" style="letter-spacing:.06em">
       </label>
       <button class="btn btn-primary btn-block" type="submit">Konto erstellen</button>
     </form>

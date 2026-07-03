@@ -91,4 +91,11 @@ if (PHP_SAPI !== 'cli' && strpos($__reqPath, '/admin') !== 0) {
     // ausgewählte Besucher (IP/Konto) als "Seite nicht gefunden" ausblenden.
     notfound_guard();
 
+    // Sicherheitsmodus: Besucher sehen wieder die alte Gate-Seite. Die Seite
+    // selbst steuert, ob ein Freigabecode zum Registrieren/Anmelden nötig ist.
+    if (setting_get('security_mode') === '1') {
+        require __DIR__ . '/../partials/security-gate.php';
+        exit;
+    }
+
 }

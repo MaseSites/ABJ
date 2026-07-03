@@ -205,6 +205,100 @@ h1, h2, h3, h4 {
 }
 .announce .container { padding: .6em 1em; }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.account-activation-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 110;
+  background: linear-gradient(180deg, #f4d44a 0%, #e8be1d 100%);
+  color: #2f2500;
+  border-bottom: 1px solid rgba(74, 58, 0, .18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+}
+.account-activation-inner {
+  min-height: 3.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: .45rem;
+  padding-bottom: .45rem;
+}
+.account-activation-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: .65rem;
+  font-size: .86rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.account-activation-copy svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: #5f4a00;
+}
+.account-activation-form {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  flex-wrap: wrap;
+}
+.account-activation-form input[type="text"] {
+  width: min(240px, 44vw);
+  border-color: rgba(69, 53, 0, .25);
+  background: rgba(255, 255, 255, .82);
+  color: #231a00;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+}
+.account-activation-form input[type="text"]::placeholder { color: rgba(35, 26, 0, .55); }
+.account-activation-form .btn {
+  white-space: nowrap;
+  border-color: rgba(69, 53, 0, .24);
+}
+body.has-activation-bar {
+  padding-top: 3.6rem;
+}
+body.has-activation-bar .site-header {
+  top: 3.6rem;
+}
+@media (max-width: 720px) {
+  .account-activation-inner {
+    min-height: 5.2rem;
+    align-items: flex-start;
+    flex-direction: column;
+    padding-top: .5rem;
+    padding-bottom: .6rem;
+  }
+  .account-activation-form {
+    width: 100%;
+  }
+  .account-activation-form input[type="text"] {
+    width: min(100%, 16rem);
+    flex: 1 1 10rem;
+  }
+  body.has-activation-bar {
+    padding-top: 5.2rem;
+  }
+  body.has-activation-bar .site-header {
+    top: 5.2rem;
+  }
+}
+
 .site-header {
   position: sticky;
   top: 0;

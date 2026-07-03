@@ -290,20 +290,6 @@ function ko_render_order(array $o, string $currency): void {
       </div>
       <?php endif; ?>
 
-      <?php if (!$accountConfirmed): ?>
-        <div class="alert alert-warn" style="margin-bottom:1rem">
-          Achtung! Konto noch nicht aktiviert. Du kannst dich bereits bewegen, aber die Nutzung bleibt eingeschränkt, bis du einen Aktivierungscode eingibst oder wir dein Konto freischalten.
-        </div>
-        <form method="post" action="<?= url('/konto.php') ?>" class="acc-form" style="margin-bottom:1.4rem">
-          <input type="hidden" name="action" value="activate_code">
-          <div class="acc-card">
-            <h3>Konto freischalten</h3>
-            <label class="field" style="max-width:320px"><span>Aktivierungscode</span><input type="text" name="access_code" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="letter-spacing:.06em"></label>
-            <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-start">Freischalten</button>
-          </div>
-        </form>
-      <?php endif; ?>
-
       <!-- Übersicht -->
       <section class="acc-panel<?= $activeTab === 'overview' ? ' active' : '' ?>" data-panel="overview">
         <div class="acc-panel-head">

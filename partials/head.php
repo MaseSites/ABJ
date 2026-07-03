@@ -2,10 +2,11 @@
 $shopName  = setting_get('shop_name') ?: 'ABJ Store';
 $tagline   = setting_get('tagline') ?: '';
 $pageTitle = isset($pageTitle) ? $pageTitle . ' – ' . $shopName : $shopName . ($tagline ? ' – ' . $tagline : '');
-$customer = is_customer() ? current_customer() : null;
-$customerAccount = $customer ? account_by_id((int)$customer['id']) : null;
-$customerNeedsActivation = $customerAccount ? !account_is_confirmed($customerAccount) : false;
-$bodyClasses = trim(($bodyClasses ?? '') . ' ' . ($customerNeedsActivation ? 'has-activation-bar' : ''));
+$bodyClasses = trim(($bodyClasses ?? '') . ' ' . (
+  is_customer() && ($customerAccount = account_by_id((int)current_customer()['id'])) && !account_is_confirmed($customerAccount)
+    ? 'has-activation-bar'
+    : ''
+));
 ?>
 <!DOCTYPE html>
 <html lang="de" data-base-path="<?= h(base_path()) ?>">
@@ -32,21 +33,3 @@ $bodyClasses = trim(($bodyClasses ?? '') . ' ' . ($customerNeedsActivation ? 'ha
   </style>
 </head>
 <body<?= $bodyClasses !== '' ? ' class="' . h($bodyClasses) . '"' : '' ?>>
-<?php if ($customerNeedsActivation): ?>
-<div class="activation-strip" role="note" aria-label="Konto aktivieren">
-  <div class="container activation-strip-inner">
-    <div class="activation-strip-left">
-      <span class="activation-strip-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01"/><path d="M10.3 4.4 2.8 18a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3l-7.5-13.6a2 2 0 0 0-3.4 0z"/></svg>
-      </span>
-      <span class="activation-strip-text"><strong>Achtung!</strong> Konto aktivieren</span>
-    </div>
-    <form class="activation-strip-form" method="post" action="<?= url('/konto.php') ?>">
-      <input type="hidden" name="action" value="activate_code">
-      <label class="sr-only" for="activation-code">Aktivierungscode</label>
-      <input id="activation-code" type="text" name="access_code" maxlength="20" autocomplete="off" placeholder="Code">
-      <button class="btn btn-primary btn-sm" type="submit">Konto aktivieren</button>
-    </form>
-  </div>
-</div>
-<?php endif; ?>

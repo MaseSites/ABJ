@@ -137,6 +137,7 @@ session_write_close();
 // Daten neu laden (nach evtl. Profiländerung)
 $account    = account_by_id((int)$cust['id']);
 $accountConfirmed = account_is_confirmed($account);
+$accountActivatedBy = (string)($account['confirmed_by'] ?? '');
 $savedAddr  = account_address($account);
 $orders     = orders_by_email($cust['email']);
 $inbox      = account_messages_by_account((int)$cust['id']);
@@ -296,13 +297,13 @@ function ko_render_order(array $o, string $currency): void {
 
       <?php if (!$accountConfirmed): ?>
         <div class="alert alert-warn" style="margin-bottom:1rem">
-          Dein Konto ist noch nicht freigeschaltet. Du kannst Bestellungen aufgeben, sie werden aber erst aktiv, wenn wir dein Konto bestätigen oder du einen Freigabecode eingibst.
+          Achtung! Konto noch nicht aktiviert. Du kannst dich bereits bewegen, aber die Nutzung bleibt eingeschränkt, bis du einen Aktivierungscode eingibst oder wir dein Konto freischalten.
         </div>
         <form method="post" action="<?= url('/konto.php') ?>" class="acc-form" style="margin-bottom:1.4rem">
           <input type="hidden" name="action" value="activate_code">
           <div class="acc-card">
             <h3>Konto freischalten</h3>
-            <label class="field" style="max-width:320px"><span>Freigabecode</span><input type="text" name="access_code" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="letter-spacing:.06em"></label>
+            <label class="field" style="max-width:320px"><span>Aktivierungscode</span><input type="text" name="access_code" maxlength="20" autocomplete="off" placeholder="Code eingeben" style="letter-spacing:.06em"></label>
             <button class="btn btn-primary btn-sm" type="submit" style="align-self:flex-start">Freischalten</button>
           </div>
         </form>
